@@ -1,130 +1,87 @@
-% SIAM Article Template
-\documentclass[review,hidelinks,onefignum,onetabnum]{siamart250211}
-% Optional PDF information
-\usepackage{lipsum}
-\usepackage{amsfonts}
+\documentclass{article}
+\setlength{\oddsidemargin}{0.46cm}   % left margin ≈ 2.5cm
+\setlength{\evensidemargin}{0.46cm}
+\setlength{\textwidth}{16cm}         % width of text block
+\setlength{\topmargin}{-1cm}         % distance from top of page
+\setlength{\textheight}{23cm}        % width of text block
 \usepackage{graphicx}
-\usepackage{epstopdf}
-\usepackage{algorithmic}
-\usepackage{amsopn}
-\ifpdf
-  \DeclareGraphicsExtensions{.eps,.pdf,.png,.jpg}
-\else
-  \DeclareGraphicsExtensions{.eps}
-\fi
-% Add a serial/Oxford comma by default.
-\newcommand{\creflastconjunction}{, and~}
-% Sets running headers as well as PDF title and authors
-\headers{Bubble detachment}{I. Cannon, S. Endres, L. M\"adler, and M. Avila}
-% Title. If the supplement option is on, then "Supplementary Material"
-% is automatically inserted before the title.
-\title{Bubble detachment\thanks{Submitted to the editors \today.
-\funding{This work was funded by the Humans on Mars Initiative}}}
-% Authors: full names plus addresses.
+\title{Bubble detachment}
 \author{Ianto Cannon\thanks{ZARM – Center of Applied Space Technology and Microgravity, Faculty of Production Engineering, University of Bremen, 28359 Bremen, Germany
-(\email{ianto.cannon@zarm.uni-bremen.de}, \email{mavila@uni-bremen.de})}
+(\texttt{ianto.cannon@zarm.uni-bremen.de}, \texttt{mavila@uni-bremen.de})}
 \and Stefan Endres\thanks{Leibniz Institute of Materials Engineering – IWT, Faculty of Production Engineering, University of Bremen, 28359 Bremen, Germany 
-(\email{s.endres@iwt.uni-bremen.de}, \email{lmaedler@iwt.uni-bremen.de}).}
-\and Lutz M\"adler\footnotemark[3]
-\and Marc Avila\footnotemark[2]}
-%\url{https://www.zarm.uni-bremen.de/en/about-us/prof-dr-marc-avila}
-%\url{https://www.zarm.uni-bremen.de/en/research/fluid-simulation-and-modeling}
-%\url{https://www.iwt-bremen.de/institut/mitarbeiter/detail/lutz-maedler}
-%\url{https://www.iwt-bremen.de/en/institute/staff/detail/stefan-endres}
-\ifpdf
-\hypersetup{
-  pdftitle={Bubble detachment},
-  pdfauthor={I. Cannon, S. Endres, L. M\"adler, and M. Avila}
-}
-\fi
-% FundRef data to be entered by SIAM
-%<funding-group specific-use="FundRef">
-%<award-group>
-%<funding-source>
-%<named-content content-type="funder-name"> 
-%</named-content> 
-%<named-content content-type="funder-identifier"> 
-%</named-content>
-%</funding-source>
-%<award-id> </award-id>
-%</award-group>
-%</funding-group>
+(\texttt{s.endres@iwt.uni-bremen.de}, \texttt{lmaedler@iwt.uni-bremen.de}).}
+\and Lutz M\"adler\footnotemark[2]
+\and Marc Avila\footnotemark[1]}
 \begin{document}
 \maketitle
 \begin{abstract}
 We measure the detachment size of bubbles on flat surfaces.
 \end{abstract}
-\begin{keywords}
-bubbles, electrolysis, boiling, differential geometry.
-\end{keywords}
-
-% REQUIRED
-\begin{MSCcodes}
-76T10, %Liquid-gas two-phase flows, bubbly flows
-76T30, %Three or more component flows 
-35R35 %Free boundary problems for PDEs
-\end{MSCcodes}
-
 \section{Introduction}
+Pendant drops are physically equivalent to attached bubbles. We shall henceforth refer to the system as a bubble, but the results apply to both.
+
 Pinned bubbles are referred to as mode A by \cite{chesters_modes_1978} and spreading as mode B
 
-This paper is structured as follows. In \cref{sec:formulation}, we present the governing equations. The numerical discretisation is described in \cref{sec:method}, and its accuracy is assessed through validation tests in \cref{sec:validation}. In \cref{sec:results}, we report new findings obtained using the proposed approach. Finally, we summarise our conclusions in \cref{sec:conclusions}.
+This paper is structured as follows. In \ref{sec:formulation}, we present the governing equations. The numerical discretisation is described in \ref{sec:method}, and its accuracy is assessed through validation tests in \ref{sec:validation}. In \ref{sec:results}, we report new findings obtained using the proposed approach. Finally, we summarise our conclusions in \ref{sec:conclusions}.
 
 \section{Mathematical formulation}
 \label{sec:formulation}
-\begin{figure}[htbp]
-\centering
-\includegraphics[height=.4\textwidth]{bubbleCoords}
+\begin{figure}\centering
+\includegraphics[width=.2\textwidth]{bubbleCoords}
 \caption{The bubble profile}
 \label{fig:profile}
 \end{figure}
 
 \subsection{Capillary Shape of an Axisymmetric Bubble under Gravity}
 
-Consider a bubble attached to a solid horizontal surface, with height $z$ measured vertically from the substrate. The interface of the bubble satisfies the Young--Laplace equation:
+Consider a bubble attached to a solid horizontal surface, with width $z$ measured vertically from the substrate. The interface of the bubble satisfies the Young--Laplace equation:
 \begin{equation}\label{eq:laplace}
-\sigma \left( \frac{1}{R_1} + \frac{1}{R_2} \right) = p_\text{in} - p_\text{out},
+\sigma \left( \frac{1}{R_1} + \frac{1}{R_2} \right) = p_\mathrm{in} - p_\mathrm{out},
 \end{equation}
-where $\sigma$ is the surface tension, $R_1$ and $R_2$ are the principal radii of curvature at a point on the interface, and $p_\text{in}$, $p_\text{out}$ are the pressures inside and outside the bubble, respectively.
+where $\sigma$ is the surface tension, $R_1$ and $R_2$ are the principal radii of curvature at a point on the interface, and $p_\mathrm{in}$, $p_\mathrm{out}$ are the pressures inside and outside the bubble, respectively.
 
-Assume both fluid phases are in hydrostatic equilibrium. Then the pressures at height $z$ are given in terms of reference pressures $q_\text{in}$ and $q_\text{out}$ at the substrate ($z = 0$):
-\begin{align}
-p_\text{in}(z) &= q_\text{in} - \rho_\text{in} g z, \\
-p_\text{out}(z) &= q_\text{out} - \rho_\text{out} g z,
-\end{align}
-where $\rho_\text{in}$ and $\rho_\text{out}$ are the densities of the inner and outer fluids, and $g$ is the gravitational acceleration.
+Assume both fluid phases are in hydrostatic equilibrium. Then the pressures at width $z$ are given in terms of reference pressures $q_\mathrm{in}$ and $q_\mathrm{out}$ at the substrate ($z = 0$):
+\begin{equation}
+p_\mathrm{in}(z) = q_\mathrm{in} - \rho_\mathrm{in} g z, \\
+\end{equation}
+\begin{equation}
+p_\mathrm{out}(z) = q_\mathrm{out} - \rho_\mathrm{out} g z,
+\end{equation}
+where $\rho_\mathrm{in}$ and $\rho_\mathrm{out}$ are the densities of the inner and outer fluids, and $g$ is the gravitational acceleration.
 
-Substituting into equation~\eqref{eq:laplace} gives:
+Substituting into equation~\ref{eq:laplace} gives:
 \begin{equation}\label{eq:hydro_laplace}
-\sigma \left( \frac{1}{R_1} + \frac{1}{R_2} \right) = q_\text{in} - q_\text{out} + (\rho_\text{out} - \rho_\text{in}) g z.
+\sigma \left( \frac{1}{R_1} + \frac{1}{R_2} \right) = q_\mathrm{in} - q_\mathrm{out} + (\rho_\mathrm{out} - \rho_\mathrm{in}) g z.
 \end{equation}
 
-Let $\rho \equiv \rho_\text{out} - \rho_\text{in}$ be the density difference, and divide through by the surface tension,
+Let $\rho \equiv \rho_\mathrm{out} - \rho_\mathrm{in}$ be the density difference, and divide through by the surface tension,
 \begin{equation}\label{eq:pressure}
-  \frac{1}{R_1} + \frac{1}{R_2} = \frac{q_\text{in} - q_\text{out}}{\sigma} + \frac{\rho g z}{\sigma}.
+  \frac{1}{R_1} + \frac{1}{R_2} = \frac{q_\mathrm{in} - q_\mathrm{out}}{\sigma} + \frac{\rho g z}{\sigma}.
 \end{equation}
 
-To eliminate the pressure difference $q_\text{in} - q_\text{out}$, evaluate equation~\eqref{eq:pressure} at the apex of the bubble, where $z = h$ and the interface is spherical, so $R_1 = R_2 = R_\text{h}$:
+To eliminate the pressure difference $q_\mathrm{in} - q_\mathrm{out}$, evaluate equation~\ref{eq:pressure} at the apex of the bubble, where $z = h$ and the interface is spherical, so $R_1 = R_2 = R_\mathrm{h}$:
 \begin{equation}
-\frac{2}{R_\text{h}} = \frac{q_\text{in} - q_\text{out}}{\sigma} + \frac{\rho g h}{\sigma}.
+\frac{2}{R_\mathrm{h}} = \frac{q_\mathrm{in} - q_\mathrm{out}}{\sigma} + \frac{\rho g h}{\sigma}.
 \end{equation}
 
-Subtracting this from equation~\eqref{eq:pressure} gives:
+Subtracting this from equation~\ref{eq:pressure} gives:
 \begin{equation}
-\frac{1}{R_1} + \frac{1}{R_2} = \frac{2}{R_\text{h}} + \frac{\rho g}{\sigma} (z - h).
+\frac{1}{R_1} + \frac{1}{R_2} = \frac{2}{R_\mathrm{h}} + \frac{\rho g}{\sigma} (z - h).
 \end{equation}
 
 \subsection{Geometric Formulation in Axisymmetric Coordinates}
 
 Assuming the bubble is axisymmetric about the vertical $z$-axis, we describe the interface shape in terms of arc length $s$ from the apex, radial coordinate $r(s)$, and the angle $\theta(s)$ between the interface tangent and the horizontal. The two principal curvatures are:
-\begin{align}
-R_1 &= \frac{ds}{d\theta}, \\
-R_2 &= \frac{r}{\sin\theta}.
-\end{align}
+\begin{equation}
+R_1 = \frac{ds}{d\theta}, \\
+\end{equation}
+\begin{equation}
+R_2 = \frac{r}{\sin\theta}.
+\end{equation}
 
 Substituting into the pressure--curvature relation yields the governing equation for the bubble shape:
 \begin{equation}\label{eq:shape}
-\frac{d\theta}{ds} + \frac{\sin\theta}{r} = \frac{2}{R_\text{h}} + \frac{\rho g}{\sigma} (z - h).
+\frac{d\theta}{ds} + \frac{\sin\theta}{r} = \frac{2}{R_\mathrm{h}} + \frac{\rho g}{\sigma} (z - h).
 \end{equation}
 
 This equation governs the curvature of an axisymmetric interface under gravity, balancing surface tension and hydrostatic pressure variation.
@@ -136,7 +93,7 @@ This equation governs the curvature of an axisymmetric interface under gravity, 
 \section{bond}
 
 
-Group dimensional variables in the Bond number $\mathrm{Bo}=\dfrac{\rho gR^2}{\sigma}$;
+Group dimensional variables in the Bond number $\mathrm{Bo}=\frac{\rho gR^2}{\sigma}$;
 \begin{equation}
 \frac{d\theta}{d(s/R)} + \frac{R}{x}\sin\theta = \mathrm{Bo}\frac{z}{R}-2.
 \label{adam}
@@ -148,9 +105,9 @@ Group dimensional variables in the Bond number $\mathrm{Bo}=\dfrac{\rho gR^2}{\s
 Triangulate the interface so that the vertices lie on the surface. Compute the total curvature at each
 vertex
 \begin{equation}
-\widehat{H \mathbf{N}A_i}=\frac{1}{2} \sum_{j \in s t\left(\mathbf{f_i}\right)}\left(\cot \alpha_{i j}+\cot \beta_{i j}\right)\left(\boldsymbol{f}_i-\boldsymbol{f}_{\boldsymbol{j}}\right).
+\widehat{H \mathbf{N}A_i}=\frac{1}{2} \sum_{j \in s t\left(\mathbf{f_i}\right)}\left(\cot \alpha_{i j}+\cot \beta_{i j}\right)\left(\mathbf{f}_i-\mathbf{f}_{\mathbf{j}}\right).
 \end{equation}
-Apply a surface tension force $\boldsymbol{S_i}=\sigma \widehat{H \mathbf{N}A_i}$ \cite{endres_discrete_2022}.
+Apply a surface tension force $\mathbf{S_i}=\sigma \widehat{H \mathbf{N}A_i}$ \cite{endres_discrete_2022}.
 
 \subsection{Pressure force}
 Outer pressure is assumed to be hydrostatic.
@@ -170,56 +127,43 @@ The pressure acts on each triangle
 \mathbf{P_i}=\mathbf{N_i}A_i(p_\mathrm{in}-p_\mathrm{out}).
 \end{equation}
 
-\subsection{Remeshing}
-Use the method described in \cite{unverdi_front-tracking_1992};
-\begin{enumerate}
-\item Split edges longer than $0.2R$
-\item Merge edges shorter than $0.1R$
-\item Reconnect diagonals if it shortens them by more than a factor of $1.5$.
-\end{enumerate}
-
-\section{Validation}
-\label{sec:validation}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[height=.4\textwidth]{profileVsGridSize}
-\includegraphics[height=.4\textwidth]{centroidVsGridSize}
-\caption{\textbf{Left:} 
-\textbf{Right:} The error in the height of the centre of mass has a quadratic dependence on the grid size, $\frac{\langle z_l\rangle}{\langle z_0\rangle}-1=0.1 \left(\frac{R}{l}\right)^{-2}$.}
-\label{fig:spread}
-\end{figure}
 
 \section{Numerical results and discussion}
 \label{sec:results}
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[height=0.46\linewidth]{profile_spread}
-\includegraphics[height=0.46\linewidth]{detachRadVsContAngle}
-\caption{\textbf{Left:} Profiles of spreading bubbles at their maximum size before detachment. $R$ is the radius of curvature at the top of the bubble, and $\phi$ is the three-phase contact angle. 
-\textbf{Right:} Detachment size $R_{\text{det}}$ of spreading bubbles. The capillary length is defined as $\lambda = \sqrt{\sigma / \rho g}$. Significant values of the Bond number $Bo$ are marked with circles. The dotted line, 
-$R_{\text{det}}/\lambda = \frac{\sqrt{3} \sin\phi}{2^{1/6} (1 - \cos\phi) \sqrt{2 + \cos\phi}}$, assumes the bubble is a spherical cap. The dashed line, $R_{\text{det}}/\lambda = 0.596 \phi$, 
-is the result of \cite{fritz_berechnung_1935}.}
+\begin{figure}\centering
+\includegraphics[height=0.49\textwidth]{pin0}
+\includegraphics[height=0.49\textwidth]{pin1}
+\includegraphics[height=0.49\textwidth]{pin2}
+\includegraphics[height=0.49\textwidth]{pin3}\\
+\includegraphics[height=0.49\textwidth]{spread0}
+\includegraphics[height=0.49\textwidth]{spread1}
+\includegraphics[height=0.49\textwidth]{spread2}
+\includegraphics[height=0.49\textwidth]{spread3}
+\caption{The volume-equivalent radius $R_V=(3V/4\pi)^{1/3}$ of bubbles with radius of curvature $R_t$ at the top. \textbf{Left} shows paths with constant contact angle $\phi_c$, corresponding to spreading bubbles. \textbf{Right} shows paths with constant contact radius $r_c$ followed by pinned bubbles. TODO add arrow to show bubble growth, label points and plot the profile.}
 \label{fig:spread}
 \end{figure}
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[height=0.46\linewidth]{profile_pin}
-\includegraphics[height=0.46\linewidth]{detachRadVsContRad}
-\caption{\textbf{Left:} Profiles of pinned bubbles at their maximum size before detachment. $R$ is the radius of curvature at the top of the bubble, and $r_{cont}$ is the radius of the contact circle. 
-\textbf{Right:} Detachment size $R_d$ of pinned bubbles. The capillary length is defined as $\lambda = \sqrt{\sigma / \rho g}$. Significant values of the Bond number $Bo$ are marked with circles. The dotted line $R_d/\lambda=\left(\frac{3}{2}r_{cont}/\lambda\right)^{1/3}$ assumes the bubble is a spherical cap. \cite{pitts_stability_1974} predicts a maximum stable contact radius of 2.408}
+\begin{figure}\centering
+\includegraphics[width=0.49\textwidth]{heightVsVol_rad}
+\includegraphics[width=0.49\textwidth]{heightVsVol_ang}
+\caption{The volume-equivalent radius $R_V=(3V/4\pi)^{1/3}$ of bubbles with radius of curvature $R_t$ at the top. \textbf{Left} shows paths with constant contact angle $\phi_c$, corresponding to spreading bubbles. \textbf{Right} shows paths with constant contact radius $r_c$ followed by pinned bubbles. TODO add arrow to show bubble growth, label points and plot the profile.}
+\label{fig:spread}
+\end{figure}
+
+\begin{figure}\centering
+\includegraphics[width=0.46\textwidth]{MaxVolVs_rad}
+\includegraphics[width=0.46\textwidth]{MaxVolVs_ang}
+\caption{The maximum equivalent bubble radius $R_V$ as a function of the contact radius $r_c$ (\textbf{left}), and contact angle $\theta_c$ (\textbf{right}), corresponding to the detachment size of pinned and spreading bubbles respectively. The dotted line, $R_{\mathrm{det}}/\lambda = \frac{\sqrt{3} \sin\phi}{2^{1/6} (1 - \cos\phi) \sqrt{2 + \cos\phi}}$, assumes the bubble is a spherical cap. The dashed line, $R_{\mathrm{det}}/\lambda = 0.104 \phi$, is the result of \cite{fritz_berechnung_1935}.}
 \label{fig:pin}
 \end{figure}
 
-\begin{table}[htbp]
-\footnotesize
+\begin{table}\footnotesize
 \caption{Curvature, detachment size, contact radius and contact angle of significant bubbles.}\label{tab:foo}
 \begin{center}
 \begin{tabular}{|c|c|c|c|c|} \hline
-$R_\text{top}\sqrt\frac{\rho g}{\sigma}$ & $R_{\text{det}}\sqrt\frac{\rho g}{\sigma}$ & $r_{\text{con}}\sqrt\frac{\rho g}{\sigma}$ & $\phi$ & Significance \\ \hline
-%$Bo$ & $R_{\text{det}}/\lambda$ & $r_{\text{cont}}/\lambda$ & $\phi/\pi$ & Significance \\ \hline
+$R_\mathrm{top}\sqrt\frac{\rho g}{\sigma}$ & $R_{\mathrm{det}}\sqrt\frac{\rho g}{\sigma}$ & $r_{\mathrm{con}}\sqrt\frac{\rho g}{\sigma}$ & $\phi$ & Significance \\ \hline
+%$Bo$ & $R_{\mathrm{det}}/\lambda$ & $r_{\mathrm{cont}}/\lambda$ & $\phi/\pi$ & Significance \\ \hline
 0.566 & 0.934 & 0.842 & $90^\circ$ & largest pinned bubble with $\phi=90^\circ$\\
 0.607 & 0.883 & 0.917 & $90^\circ$ & the spreading bubble with $\phi=90^\circ$\\
 1.28 & 0.975 & 1.42 & $119^\circ$ & largest bubble \\
@@ -231,7 +175,27 @@ $1.07\times10^9$ & 0.0366 & 1.84 & $180^\circ$ & largest contact radius\\ \hline
 \section{Conclusions}
 \label{sec:conclusions}
 
-\section*{Acknowledgments}
+\section{Acknowledgments}
+
+\section{Appendix}
+\subsection{Remeshing}
+Use the method described in \cite{unverdi_front-tracking_1992};
+\begin{enumerate}
+\item Split edges longer than $0.2R$
+\item Merge edges shorter than $0.1R$
+\item Reconnect diagonals if it shortens them by more than a factor of $1.5$.
+\end{enumerate}
+
+\section{Validation}
+\label{sec:validation}
+
+\begin{figure}\centering
+\includegraphics[width=.4\textwidth]{profileVsGridSize}
+\includegraphics[width=.4\textwidth]{centroidVsGridSize}
+\caption{\textbf{Left:} 
+\textbf{Right:} The error in the width of the centre of mass has a quadratic dependence on the grid size, $\frac{\langle z_l\rangle}{\langle z_0\rangle}-1=0.1 \left(\frac{R}{l}\right)^{-2}$.}
+\label{fig:spread}
+\end{figure}
 
 \bibliographystyle{siamplain}
 \bibliography{electrolysis}
