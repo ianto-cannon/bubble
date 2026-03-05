@@ -4,7 +4,11 @@
 \setlength{\textwidth}{16cm}         % width of text block
 \setlength{\topmargin}{-1cm}         % distance from top of page
 \setlength{\textheight}{23cm}        % width of text block
+\usepackage[colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue]{hyperref}
+\usepackage{xcolor}
 \usepackage{graphicx}
+\usepackage{biblatex}
+\addbibresource{electrolysis.bib}
 \title{Bubble detachment}
 \author{Ianto Cannon\thanks{ZARM – Center of Applied Space Technology and Microgravity, Faculty of Production Engineering, University of Bremen, 28359 Bremen, Germany
 (\texttt{ianto.cannon@zarm.uni-bremen.de}, \texttt{mavila@uni-bremen.de})}
@@ -20,7 +24,17 @@ We measure the detachment size of bubbles on flat surfaces.
 \section{Introduction}
 Pendant drops are physically equivalent to attached bubbles. We shall henceforth refer to the system as a bubble, but the results apply to both.
 
-Pinned bubbles are referred to as mode A by \cite{chesters_modes_1978} and spreading as mode B
+Pinned bubbles are referred to as mode A by \cite{chesters78modes} and spreading as mode B
+
+Demirkir \cite{demirkir24life} developed a formaula for the bubble detachment size which depends on the advancing and receeding contanct angle.
+
+\cite{allred21role} includes spreading and receding contact angles in a model of detachment size.
+
+\cite{phan09surface} models depatrure size for bubbles with contac angle less than $90^\circ$.
+
+The drop is unstable to an asymmetical perturbation when the contact radius is greater than $3.219\lambda$ \textcite{michael76equilibrium}.
+
+It is impossible to form stable drops under constant pressure if the radius of the tube exceeds $2.40483\lambda$ \textcite{pitts74stability}, and constant volume if the radius exceeds $3.812\lambda$ \textcite{plateau73statique}.
 
 This paper is structured as follows. In \ref{sec:formulation}, we present the governing equations. The numerical discretisation is described in \ref{sec:method}, and its accuracy is assessed through validation tests in \ref{sec:validation}. In \ref{sec:results}, we report new findings obtained using the proposed approach. Finally, we summarise our conclusions in \ref{sec:conclusions}.
 
@@ -107,7 +121,7 @@ vertex
 \begin{equation}
 \widehat{H \mathbf{N}A_i}=\frac{1}{2} \sum_{j \in s t\left(\mathbf{f_i}\right)}\left(\cot \alpha_{i j}+\cot \beta_{i j}\right)\left(\mathbf{f}_i-\mathbf{f}_{\mathbf{j}}\right).
 \end{equation}
-Apply a surface tension force $\mathbf{S_i}=\sigma \widehat{H \mathbf{N}A_i}$ \cite{endres_discrete_2022}.
+Apply a surface tension force $\mathbf{S_i}=\sigma \widehat{H \mathbf{N}A_i}$ \cite{endres22discrete}.
 
 \subsection{Pressure force}
 Outer pressure is assumed to be hydrostatic.
@@ -127,34 +141,38 @@ The pressure acts on each triangle
 \mathbf{P_i}=\mathbf{N_i}A_i(p_\mathrm{in}-p_\mathrm{out}).
 \end{equation}
 
-
 \section{Numerical results and discussion}
 \label{sec:results}
 
 \begin{figure}\centering
-\includegraphics[height=0.49\textwidth]{pin0}
-\includegraphics[height=0.49\textwidth]{pin1}
-\includegraphics[height=0.49\textwidth]{pin2}
-\includegraphics[height=0.49\textwidth]{pin3}\\
-\includegraphics[height=0.49\textwidth]{spread0}
-\includegraphics[height=0.49\textwidth]{spread1}
-\includegraphics[height=0.49\textwidth]{spread2}
-\includegraphics[height=0.49\textwidth]{spread3}
-\caption{The volume-equivalent radius $R_V=(3V/4\pi)^{1/3}$ of bubbles with radius of curvature $R_t$ at the top. \textbf{Left} shows paths with constant contact angle $\phi_c$, corresponding to spreading bubbles. \textbf{Right} shows paths with constant contact radius $r_c$ followed by pinned bubbles. TODO add arrow to show bubble growth, label points and plot the profile.}
+\includegraphics[width=\textwidth]{pin}
+\caption{Profiles of pinned bubbles with contact radius $r_c/\lambda\in\{0.5,1.0,1.5,2.0,2.5,3.0\}$, from left to right. The radius of curvature at the top of the bubble $R_t/\lambda\in\{0.1,0.2,0.3,...,1.8,1.9,2.0\}$ is represented by colours ranging from red to blue, as shown by the colourbar on the left.}
 \label{fig:spread}
 \end{figure}
 
 \begin{figure}\centering
-\includegraphics[width=0.49\textwidth]{heightVsVol_rad}
-\includegraphics[width=0.49\textwidth]{heightVsVol_ang}
-\caption{The volume-equivalent radius $R_V=(3V/4\pi)^{1/3}$ of bubbles with radius of curvature $R_t$ at the top. \textbf{Left} shows paths with constant contact angle $\phi_c$, corresponding to spreading bubbles. \textbf{Right} shows paths with constant contact radius $r_c$ followed by pinned bubbles. TODO add arrow to show bubble growth, label points and plot the profile.}
+\includegraphics[width=\textwidth]{spr}
+\caption{Profiles of spreading bubbles with contact angle $\theta_c\in\{30^\circ,60^\circ,90^\circ,120^\circ,150^\circ,180^\circ\}$, from left to right. The radius of curvature at the top of the bubble $R_t/\lambda\in\{0.1,0.2,0.3,...,1.8,1.9,2.0\}$ is represented by colours ranging from red to blue, as shown by the colourbar on the left.}
 \label{fig:spread}
 \end{figure}
 
 \begin{figure}\centering
-\includegraphics[width=0.46\textwidth]{MaxVolVs_rad}
-\includegraphics[width=0.46\textwidth]{MaxVolVs_ang}
-\caption{The maximum equivalent bubble radius $R_V$ as a function of the contact radius $r_c$ (\textbf{left}), and contact angle $\theta_c$ (\textbf{right}), corresponding to the detachment size of pinned and spreading bubbles respectively. The dotted line, $R_{\mathrm{det}}/\lambda = \frac{\sqrt{3} \sin\phi}{2^{1/6} (1 - \cos\phi) \sqrt{2 + \cos\phi}}$, assumes the bubble is a spherical cap. The dashed line, $R_{\mathrm{det}}/\lambda = 0.104 \phi$, is the result of \cite{fritz_berechnung_1935}.}
+\includegraphics[width=0.495\textwidth]{heightVsVol_loop_rad}
+\includegraphics[width=0.495\textwidth]{heightVsVol_loop_ang}
+\caption{Bubble height $h$ and volume $V$. \textbf{Left:} pinned bubbles with constant contact radius $r_c$, black lines are labelled with the value of $r_c/\lambda$. \textbf{Right:} spreading bubbles constant contact angle $\theta_c$, black lines are labelled with the contact angle $\theta_c$ in degrees.}
+\label{fig:spread}
+\end{figure}
+
+\begin{figure}\centering
+\includegraphics[width=0.49\textwidth]{MaxVolVs_loop_rad}
+\includegraphics[width=0.49\textwidth]{MaxVolVs_loop_ang}
+\caption{The maximum volume for each contact radius $r_c$ (\textbf{left}), and contact angle $\theta_c$ (\textbf{right}), corresponding to the detachment size of pinned and spreading bubbles respectively. Up triangles are pendant drop measurements from \textcite{gunde01measurement}.
+The dashed line $V_m=2\pi\lambda^2 r_c$ balances buoyancy and surface tension, assuming $\theta_c=90^\circ$ \textcite{tate64magnitude}.
+The dotted line, $V_m\lambda^{-3} = 4.71\times10^{-6} \theta_c^3$, is the result of \textcite{fritz35berechnung}.
+Diamonds are the measurements of air bubbles in water made by \textcite{huang26effects}. Error bars show the advancing and receeding contact angles.
+Pendant drops are commonly used for measuring surface tension \textcite{lee08critical}.
+%The dotted line, $R_{\mathrm{det}}/\lambda = \frac{\sqrt{3} \sin\phi}{2^{1/6} (1 - \cos\phi) \sqrt{2 + \cos\phi}}$, assumes the bubble is a spherical cap. 
+}
 \label{fig:pin}
 \end{figure}
 
@@ -173,13 +191,15 @@ $1.07\times10^9$ & 0.0366 & 1.84 & $180^\circ$ & largest contact radius\\ \hline
 \end{table}
 
 \section{Conclusions}
+
+We measure the bubble volume above the contact line, however, some gas may remain after bubble breakage, so the true volume may be less.
 \label{sec:conclusions}
 
 \section{Acknowledgments}
 
 \section{Appendix}
 \subsection{Remeshing}
-Use the method described in \cite{unverdi_front-tracking_1992};
+Use the method described in \cite{unverdi92front-tracking};
 \begin{enumerate}
 \item Split edges longer than $0.2R$
 \item Merge edges shorter than $0.1R$
@@ -196,7 +216,7 @@ Use the method described in \cite{unverdi_front-tracking_1992};
 \textbf{Right:} The error in the width of the centre of mass has a quadratic dependence on the grid size, $\frac{\langle z_l\rangle}{\langle z_0\rangle}-1=0.1 \left(\frac{R}{l}\right)^{-2}$.}
 \label{fig:spread}
 \end{figure}
-
-\bibliographystyle{siamplain}
-\bibliography{electrolysis}
+\printbibliography
+%\bibliographystyle{siamplain}
+%\bibliography{electrolysis}
 \end{document}
