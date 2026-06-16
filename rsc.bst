@@ -1064,7 +1064,10 @@ FUNCTION {misc}
   year output
   format.url output
   note output
-  format.doi
+  doi empty$                  % Check if the doi field exists
+    'skip$
+    { "\doi{" doi * "}" * output } % Add this line to output the DOI
+  if$
   fin.entry
   empty.misc.check
 }

@@ -1,7 +1,7 @@
 \documentclass[twoside,9pt]{article}
 \usepackage{rsc}
 \hypersetup{colorlinks=true, allcolors=blue}
-\usepackage{graphicx}
+\newcommand{\doi}[1]{\href{https://doi.org/#1}{doi:#1}}
 \usepackage{amsmath}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta, positioning, shapes.geometric}
@@ -30,10 +30,11 @@ For pinned bubbles, the classical Tate volume~\cite{tate64magnitude} assumes tha
 The study of spreading bubble departure dates back to Fritz~\cite{fritz35berechnung}, who numerically estimated the maximum bubble volume as a function of contact angle $\phi_c$, $V=0.887\lambda^3\phi_c^3$. Phan et al.~\cite{phan09surface} proposed an empirical model for nucleate pool boiling. More recent models account for contact angle hysteresis~\cite{degennes85wetting}, using advancing, receding~\cite{allred21role,demirkir24life}, or dynamic~\cite{mukherjee07numerical} contact angles as inputs. Experiments, however, reveal systematic deviations from these predictions~\cite{huang26effects}, particularly for bubbles on superhydrophobic or high-contact-angle surfaces.
 \subsection{Aims}
 Here we treat pinned and spreading bubbles together, rather than as separate problems. We address two fundamental questions: 
-\begin{description}
-\item[Q1] How large does a bubble grow before it detaches?
-\item[Q2] How does it detach?
-\end{description}
+
+\textbf{Q1} How large does a bubble grow before it detaches?
+
+\textbf{Q2} How does it detach?
+
 We consider a simplified system consisting of a circular cavity of radius $r_c$ containing an already-nucleated bubble, surrounded by a smooth horizontal surface with a single-valued, non-hysteretic contact angle $\phi_c$—that is, the contact angle is independent of whether the bubble foot advances or recedes. The fluid is quiescent, so forces are purely hydrostatic, and the system is physically equivalent to a pendant drop. Throughout this paper we refer to it as a bubble, but our results apply equally to pendant drops. We determine the detachment size for pinned and spreading bubbles across the full range of cavity sizes, capillary lengths ($0\le r_c/\lambda\le\infty$), and contact angles ($0\le\phi_c\le\pi$).
 \section{Methods}
 \subsection{Governing equation}
@@ -165,10 +166,10 @@ Largest stable foot radius& 1.000  &\textbf{3.832}& 0.000        & $\infty$    &
 \section{Conclusions}
 \subsection{Answers to the two key questions}
 We now return to the two questions posed at the outset. 
-\begin{description}
-\item[Answer to Q1.] The detachment volume depends on whether the bubble is pinned or spreading. For pinned bubbles, the detachment volume rises nearly linearly with cavity radius, closely following the Tate prediction $V = 2\pi\lambda^2 r_c$, with quantitative corrections arising from the non-spherical interface shape under buoyancy (figure~\ref{figPinVol}). For spreading bubbles, the detachment volume increases monotonically with contact angle and saturates at $V_s = 18.96\,\lambda^3$ as $\phi_c \to \pi$, below the Fritz extrapolation (figure~\ref{figSpreVol}). Both results are confirmed by independent experimental datasets spanning electrolytic, boiling, and carbonated bubbles, as well as pendant drops. 
-\item[Answer to Q2.] The detachment mode is determined by which threshold is reached first during bubble growth (figure~\ref{figTree}). A pinned bubble detaches axisymmetrically from the cavity centre when its volume reaches the maximum of the $r_c$ curve; it detaches laterally when the foot angle reaches $\phi_0 = \pi$, which occurs only for $r_c > 3.219\,\lambda$; and it transitions to spreading mode when the foot angle $\phi_0$ falls below the contact angle $\phi_c$ on the surrounding substrate. A spreading bubble then detaches from the surface when its volume reaches $V_s$. No stable bubble exists for $r_c > 3.832\,\lambda$, above which lateral detachment is immediate.
-\end{description}
+
+\textbf{Answer to Q1.} The detachment volume depends on whether the bubble is pinned or spreading. For pinned bubbles, the detachment volume rises nearly linearly with cavity radius, closely following the Tate prediction $V = 2\pi\lambda^2 r_c$, with quantitative corrections arising from the non-spherical interface shape under buoyancy (figure~\ref{figPinVol}). For spreading bubbles, the detachment volume increases monotonically with contact angle and saturates at $V_s = 18.96\,\lambda^3$ as $\phi_c \to \pi$, below the Fritz extrapolation (figure~\ref{figSpreVol}). Both results are confirmed by independent experimental datasets spanning electrolytic, boiling, and carbonated bubbles, as well as pendant drops. 
+
+\textbf{Answer to Q2.} The detachment mode is determined by which threshold is reached first during bubble growth (figure~\ref{figTree}). A pinned bubble detaches axisymmetrically from the cavity centre when its volume reaches the maximum of the $r_c$ curve; it detaches laterally when the foot angle reaches $\phi_0 = \pi$, which occurs only for $r_c > 3.219\,\lambda$; and it transitions to spreading mode when the foot angle $\phi_0$ falls below the contact angle $\phi_c$ on the surrounding substrate. A spreading bubble then detaches from the surface when its volume reaches $V_s$. No stable bubble exists for $r_c > 3.832\,\lambda$, above which lateral detachment is immediate.
 \subsection{Outlook}
 In summary, we have computed the maximum stable volume of axisymmetric bubbles on flat surfaces as a function of contact radius and contact angle, using a numerical solution of the Young--Laplace equation. The results unify the pinned and spreading detachment modes within a single framework, recover the classical Tate and Fritz limits, and identify the thresholds at which non-axisymmetric instabilities govern departure. All results scale universally with the capillary length $\lambda$ and apply equally to pendant drops. The numerical code used in this study is freely available~\cite{cannon26bubble}. These findings provide quantitative guidance for designing electrodes with optimised wettability and cavity geometry to promote early bubble detachment and improve electrolysis efficiency. In future work, the model can be extended to account for heterogeneous surfaces, which give rise to contact angle hysteresis.
 \section{Data availability}
