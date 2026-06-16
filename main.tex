@@ -1,25 +1,21 @@
-\documentclass[aps,prfluids,reprint,superscriptaddress]{revtex4-2}
+\documentclass[twoside,9pt]{article}
+\usepackage{rsc}
+\hypersetup{colorlinks=true, allcolors=blue}
 \usepackage{graphicx}
-\usepackage[colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue]{hyperref}
 \usepackage{amsmath}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta, positioning, shapes.geometric}
 \begin{document}
-\title{Bubble detachment from circular cavities and flat surfaces}
-\author{Ianto Cannon}
-\affiliation{ZARM – Center of Applied Space Technology and Microgravity, Faculty of Production Engineering, University of Bremen, 28359 Bremen, Germany}
-\author{Stefan Endres}
-\affiliation{Leibniz Institute of Materials Engineering – IWT, Faculty of Production Engineering, University of Bremen, 28359 Bremen, Germany}
-\author{Lutz M\"adler}
-\affiliation{Leibniz Institute of Materials Engineering – IWT, Faculty of Production Engineering, University of Bremen, 28359 Bremen, Germany}
-\author{Marc Avila}
-\affiliation{ZARM – Center of Applied Space Technology and Microgravity, Faculty of Production Engineering, University of Bremen, 28359 Bremen, Germany}
-\date{\today}
-\begin{abstract}
-We determine the maximum stable volume of bubbles attached to flat surfaces as a function of the contact radius, contact angle, and capillary length. Using a shooting method to solve the Young--Laplace equation, we compute equilibrium bubble profiles and identify the conditions under which three detachment modes occur: axisymmetric necking from the cavity centre, lateral instability for large cavities, and spreading followed by axisymmetric necking from the surrounding substrate. The predicted detachment volumes agree well with experimental measurements of electrolytic, boiling, and carbonated bubbles, as well as pendant drops. Our results unify and extend previous analytical estimates and apply directly to pendant drops by symmetry.
-\end{abstract}
-\maketitle
+\begin{flushleft}
+{\fontsize{18pt}{20pt}\selectfont\textbf{Bubble detachment from circular cavities and flat surfaces}}
+\end{flushleft}
+{\fontsize{12pt}{14pt}\selectfont Ianto Cannon\textsuperscript{a\dag}, Stefan Endres\textsuperscript{b} Lutz M\"adler\textsuperscript{b} and Marc Avila\textsuperscript{a}}\\\\
+Received 00th January 20xx, Accepted 00th January 20xx
+DOI: 10.1039/x0xx00000x\vspace{0.5cm}
 
+We determine the maximum stable volume of bubbles attached to flat surfaces as a function of the contact radius, contact angle, and capillary length. Using a shooting method to solve the Young--Laplace equation, we compute equilibrium bubble profiles and identify the conditions under which three detachment modes occur: axisymmetric necking from the cavity centre, lateral instability for large cavities, and spreading followed by axisymmetric necking from the surrounding substrate. The predicted detachment volumes agree well with experimental measurements of electrolytic, boiling, and carbonated bubbles, as well as pendant drops. Our results unify and extend previous analytical estimates and apply directly to pendant drops by symmetry.
+\vspace{1cm}
+\section*{Introduction}
 Annually, around $10^{11}$\,kg of hydrogen gas is used in industry, mostly to produce fertilisers via the Haber process and to reduce metal ores in steelmaking and aluminium production~\cite{kullmann23role}. Currently, more than 95\% of hydrogen is produced from fossil fuels, largely from natural gas via steam methane reforming~\cite{franchi20hydrogen}, which releases significant quantities of CO$_2$. Diversifying away from fossil fuels is essential to maintain a stable Earth climate system and ensure the long-term survival of human society~\cite{steffen18trajectories}. Water electrolysis driven by renewable electricity is the most promising alternative~\cite{kullmann23role}, splitting water into hydrogen and oxygen without direct CO$_2$ emissions. However, gas bubbles that form and remain attached to the electrode surface limit the efficiency of water electrolysis. These bubbles block the active area, impede ion transport, and increase ohmic resistance~\cite{vogt89problem,angulo20influence,ross25impact}. Understanding and controlling the conditions for bubble detachment is therefore essential to optimise electrode geometry and wettability and promote early departure.
 
 The scale over which surface tension $\sigma$ balances fluid density contrast $\rho_\mathrm{out} - \rho_\mathrm{in}$ and gravity $g$ is the capillary length~\cite{laplace98traite},
@@ -33,7 +29,7 @@ For pinned bubbles, the classical Tate volume~\cite{tate64magnitude} assumes tha
 The study of spreading bubble departure dates back to Fritz~\cite{fritz35berechnung}, who numerically estimated the maximum bubble volume as a function of contact angle $\phi_c$, $V=0.887\lambda^3\phi_c^3$. Phan et al.~\cite{phan09surface} proposed an empirical model for nucleate pool boiling. More recent models account for contact angle hysteresis~\cite{degennes85wetting}, using advancing, receding~\cite{allred21role,demirkir24life}, or dynamic~\cite{mukherjee07numerical} contact angles as inputs. Experiments, however, reveal systematic deviations from these predictions~\cite{huang26effects}, particularly for bubbles on superhydrophobic or high-contact-angle surfaces.
 
 We unify past research by treating pinned and spreading behaviour within a single framework. We address two fundamental questions: 1.~\emph{How large does a bubble grow before it detaches?} And 2.~\emph{How does it detach?} We consider a simplified system consisting of a circular cavity of radius $r_c$ containing an already-nucleated bubble, surrounded by a smooth horizontal surface with a single-valued, non-hysteretic contact angle $\phi_c$—that is, the contact angle is independent of whether the bubble foot advances or recedes. The fluid is quiescent, so forces are purely hydrostatic, and the system is physically equivalent to a pendant drop. Throughout this Letter we refer to it as a bubble, but our results apply equally to pendant drops. We determine the detachment size for pinned and spreading bubbles across the full range of cavity sizes, capillary lengths ($0\le r_c/\lambda\le\infty$), and contact angles ($0\le\phi_c\le\pi$).
-
+\section*{Methods}
 \begin{figure*}%[!htbp]
 \includegraphics[width=\textwidth]{pin}
 \caption{(a) Profiles of pinned bubbles with contact radius $r_c/\lambda\in\{0.5,1.5,2.5,3.5\}$, from left to right. The coordinate system used for solving equation~\ref{eqShape} is shown in grey. (b) Profiles of spreading bubbles with contact angle $\phi_c/\pi\in\{0.2,0.4,0.6,0.8,1.0\}$, from left to right. Colour shading shows the radius of curvature at the bubble apex $R_h$.}
@@ -74,7 +70,7 @@ Substituting into equation~\ref{eqPressCurv} and multiplying by the capillary le
 This equation describes the curvature of an axisymmetric interface under gravity. All lengths appear scaled by the capillary length, implying self-similar bubble shapes and universal scaling with $\lambda$. We solve it using a shooting method, starting from the apex ($r=0$, $z=h$, $\phi=\pi$) with $10^4$ logarithmically spaced initial guesses for $R_h$ in the range $10^{-2}\lambda<R_h<10^2\lambda$. The equation is integrated along the arc length $s$ with step size $10^{-4}\lambda$ using the Adams--Bashforth method~\cite{bashforth83attempt}. The code and data are freely available~\cite{cannon26bubble}.
 
 For pinned bubbles, the integration is terminated when $r=r_c$. For a given cavity radius $r_c$, this yields a family of equilibrium profiles parameterized by $R_h$, shown in figure~\ref{figProfile}a. Each profile originates from a flat interface spanning the cavity, and the foot angle decreases from $\phi_0=\pi$ as the bubble inflates. For spreading bubbles, the integration is terminated when $\phi=\phi_c$. The resulting profiles are shown in figure~\ref{figProfile}b, for a sequence of contact angles. Here we see the contact radii increase from $r_0=0$ as the bubbles inflate.
-
+\section*{Results and Discussion}
 \begin{figure*}
 \includegraphics[width=\textwidth]{heightVsVol_loop_ang}
 \caption{Bubble height $h$ and volume $V$. (a) Pinned bubbles with constant contact radius $r_c$; black lines are labelled with the value of $r_c/\lambda$. (b) Spreading bubbles with constant contact angle $\phi_c$; black lines are labelled with the value of $\phi_c/\pi$. Circle markers show the heights and volumes of the bubbles in figure~\ref{figProfile} using the same colour scale for $R_h$.}
@@ -160,10 +156,18 @@ Largest stable foot radius& 1.000  &\textbf{3.832}& 0.000        & $\infty$    &
 \end{tabular}
 \end{center}
 \end{table}
-
+\section*{Conclusions}
 We now return to the two questions posed at the outset. \textit{Answer to Q1:} The detachment volume depends on whether the bubble is pinned or spreading. For pinned bubbles, the detachment volume rises nearly linearly with cavity radius, closely following the Tate prediction $V = 2\pi\lambda^2 r_c$, with quantitative corrections arising from the non-spherical interface shape under buoyancy (figure~\ref{figPinVol}). For spreading bubbles, the detachment volume increases monotonically with contact angle and saturates at $V_s = 18.96\,\lambda^3$ as $\phi_c \to \pi$, below the Fritz extrapolation (figure~\ref{figSpreVol}). Both results are confirmed by independent experimental datasets spanning electrolytic, boiling, and carbonated bubbles, as well as pendant drops. \textit{Answer to Q2:} The detachment mode is determined by which threshold is reached first during bubble growth (figure~\ref{figTree}). A pinned bubble detaches axisymmetrically from the cavity centre when its volume reaches the maximum of the $r_c$ curve; it detaches laterally when the foot angle reaches $\phi_0 = \pi$, which occurs only for $r_c > 3.219\,\lambda$; and it transitions to spreading mode when the foot angle $\phi_0$ falls below the contact angle $\phi_c$ on the surrounding substrate. A spreading bubble then detaches from the surface when its volume reaches $V_s$. No stable bubble exists for $r_c > 3.832\,\lambda$, above which lateral detachment is immediate.
 
 In summary, we have computed the maximum stable volume of axisymmetric bubbles on flat surfaces as a function of contact radius and contact angle, using a numerical solution of the Young--Laplace equation. The results unify the pinned and spreading detachment modes within a single framework, recover the classical Tate and Fritz limits, and identify the thresholds at which non-axisymmetric instabilities govern departure. All results scale universally with the capillary length $\lambda$ and apply equally to pendant drops. The numerical code used in this study is freely available~\cite{cannon26bubble}. These findings provide quantitative guidance for designing electrodes with optimised wettability and cavity geometry to promote early bubble detachment and improve electrolysis efficiency. In future work, the model can be extended to account for heterogeneous surfaces, which give rise to contact angle hysteresis.
-\bibliographystyle{apsrev4-2}
+\section*{Data availability}
+A data availability statement (DAS) is required to be submitted alongside all articles. Please read our \href{https://www.rsc.org/journals-books-databases/author-and-reviewer-hub/authors-information/prepare-and-format/data-sharing/#dataavailabilitystatements}{full guidance on data availability statements} for more details and examples of suitable statements you can use.
+\renewcommand{\thefootnote}{\alph{footnote}}
+\footnotetext{\textit{\textsuperscript{a}~Center of Applied Space Technology and Microgravity (ZARM), University of Bremen, 28359 Bremen, Germany.}}
+\footnotetext{\textit{\textsuperscript{b}~Leibniz Institute of Materials Engineering (IWT), University of Bremen, 28359 Bremen, Germany.}}
+\footnotetext{\textit{$^{\dag}$~E-mail: ianto.cannon@zarm.uni-bremen.de}}
+\section*{Author Contributions}
+We strongly encourage authors to include author contributions and recommend using \href{https://casrai.org/credit/}{CRediT} for standardised contribution descriptions. Please refer to our general \href{https://www.rsc.org/journals-books-databases/journal-authors-reviewers/author-responsibilities/}{author guidelines} for more information about authorship.
 \bibliography{electrolysis,supplemental}
+\bibliographystyle{rsc} %the RSC's .bst file
 \end{document}
