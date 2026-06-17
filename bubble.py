@@ -39,7 +39,7 @@ def AdamsBashforthProfile(capLen, RadTop, contactAng=-1, fname=None, angleSave=0
       angBin = int(np.floor(psi/np.pi / angleSave))
       angBinPrev = int(np.floor((psi-dPsi)/np.pi / angleSave))
       if angBin != angBinPrev:
-        angFname=f'data/ang{max(angBin,angBinPrev):05}.txt'
+        angFname=f'simData/ang{max(angBin,angBinPrev):05}.txt'
         ang_txt = open(angFname, "a") 
         print(r, -z, psi, dPsi, capLen, RadTop, Volume, area, centroid/Volume, file=ang_txt)
     if radSave and i:
@@ -47,7 +47,7 @@ def AdamsBashforthProfile(capLen, RadTop, contactAng=-1, fname=None, angleSave=0
       radBin = int(np.floor(r / radSave))
       radBinPrev = int(np.floor( (r-dr) / radSave))
       if radBin != radBinPrev:
-        angFname=f'data/'+nam+f'{max(radBin,radBinPrev):05}.txt'
+        angFname=f'simData/'+nam+f'{max(radBin,radBinPrev):05}.txt'
         ang_txt = open(angFname, "a") 
         print(r, -z, psi, dPsi, capLen, RadTop, Volume, area, centroid/Volume, file=ang_txt)
     if psi<0: break
@@ -61,7 +61,7 @@ def AdamsBashforthProfile(capLen, RadTop, contactAng=-1, fname=None, angleSave=0
 def reorder_drop_height_vs_vol(nam=''):
   import os
   from scipy.spatial import cKDTree
-  folName = 'data/'
+  folName = 'simData/'
   for fname in sorted(os.listdir(folName)):
     if 'loop' in fname or 'txt' not in fname or nam not in fname: continue
     df = np.loadtxt(folName + fname)

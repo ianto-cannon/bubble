@@ -3,19 +3,21 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrowPatch
 plt.rcdefaults()
 plt.rcParams.update({"text.usetex": True,'font.size' : 14,})
+
+def colRB(cont,r):
+  if r<1: 
+    colVal = r**.5
+    if 'rad' in cont: return ( colVal, 0, 0 )
+    else:             return ( 0, 0, colVal )
+  else: 
+    colVal = 1 - 1/r
+    if 'rad' in cont: return ( 1, colVal, colVal )
+    else:             return ( colVal, colVal, 1 )
+
 def plot_drop_height_vs_rad(nam='rad ang bub'): 
   import os
   from matplotlib.patches import RegularPolygon
   from bubble import AdamsBashforthProfile
-  def colRB(cont,r):
-    if r<1: 
-      colVal = r**.5
-      if 'rad' in cont: return ( colVal, 0, 0 )
-      else:             return ( 0, 0, colVal )
-    else: 
-      colVal = 1 - 1/r
-      if 'rad' in cont: return ( 1, colVal, colVal )
-      else:             return ( colVal, colVal, 1 )
   inFol = '../mergeDdgc/data/'
   outFol = 'plots/'
   figProf, axProf = plt.subplots(2, sharex=True)
@@ -360,6 +362,66 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
   axProf[1].set_xlabel('$x/\\lambda$',labelpad=-5)
   figProf.subplots_adjust(hspace=-.05)
   outName = outFol+f'pin.pdf'
+  print('savin ',outName)
+  figProf.savefig(outName, transparent=True, bbox_inches='tight', pad_inches=0)
+  return
+
+def plot_graphical_abstract(nam='rad ang'): 
+  import os
+  from bubble import AdamsBashforthProfile
+  simFol = '../mergeDdgc/data/'
+  plotFol = 'plots/'
+  figProf, axProf = plt.subplots(1)
+  figProf.set_figwidth(4)
+  p=-1.2
+  s=1.2
+  for cont in nam.split():
+    for fname in reversed(sorted(os.listdir(simFol))):
+      if 'prof' in fname: continue
+      if 'txt' not in fname: continue
+      if cont not in fname: continue
+      with open(simFol+fname, encoding = 'utf-8') as f: df = np.loadtxt(f)
+      if df.ndim<2: continue
+      df[:,0] /= df[:,4]
+      df[:,1] /= df[:,4]
+      df[:,5] /= df[:,4]
+      df[:,6] /= df[:,4]**3
+      df[:,7] /= df[:,4]**2
+      df[:,8] /= df[:,4]
+      df[:,4] /= df[:,4]
+      indVol = np.argmax(df[:,6])
+      angl = 1 - df[indVol,2]/np.pi
+      #print('angl',angl,round(angl*100))
+      if '0.txt' not in fname: continue
+      if 'rad' in cont and round(df[0,0]*10)!=5: continue 
+      if 'ang' in cont and round(angl*100)!=40:continue
+      if 'rad' in cont: spac=p
+      if 'ang' in cont: spac=s
+      for hei in range(5):#5
+        heiInd = np.argmin( abs( (hei+1)*df[indVol,1]/5 - df[:indVol+1,1] ) )
+        #AdamsBashforthProfile(1, df[heiInd,5], fname=simFol+f'prof{hei:05}'+fname)
+        with open(simFol+f'prof{hei:05}'+fname, encoding = 'utf-8') as f: prof = np.loadtxt(f)
+        print(f'loaded '+simFol+f'prof{hei:05}'+fname)
+        footInd = np.argmin( abs( df[heiInd,6] - prof[:,6] ))
+        xProf=np.concatenate(( -prof[:footInd,0][::-1] , prof[:footInd,0] ))
+        xProf=xProf+spac
+        yProf=np.concatenate(( prof[:footInd,1][::-1] - prof[footInd,1] , prof[:footInd,1] - prof[footInd,1] ))
+        axProf.plot(xProf,yProf, c=colRB(cont,df[heiInd,5]), clip_on=False, zorder=4)
+  axProf.set_axis_off()
+  axProf.set_ylim([-.5,2.5])
+  axProf.set_xlim([-3,3])
+  #axProf.set_ylabel('$\\frac{ z }{\\lambda}$',rotation=0,size=22,labelpad=15)
+  axProf.get_xaxis().set_visible(False)
+  axProf.tick_params(which='both', direction='in', top=True, right=True)
+  axProf.set_aspect('equal', adjustable='box')
+  axProf.plot([-3,p-.5],[0,0], c='k', clip_on=False)
+  axProf.plot([p+.5,3],[0,0], c='k', clip_on=False)
+  #axProf.plot([-1.5,-.5],[0,0], c='w', clip_on=False, zorder=3)
+  axProf.plot([-2.5,-2.5],[.5,1.5], c='k', clip_on=False)
+  axProf.text(-2.6, 1, "$\\lambda$", ha='right', va='center', c='k') 
+  axProf.text(p, -.3, "$\\textrm{pinned}$", ha='center', va='center', c='k') 
+  axProf.text(s, -.3, "$\\textrm{spreading}$", ha='center', va='center', c='k') 
+  outName = 'plots/abstract.pdf'
   print('savin ',outName)
   figProf.savefig(outName, transparent=True, bbox_inches='tight', pad_inches=0)
   return

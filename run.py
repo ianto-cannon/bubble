@@ -1,6 +1,6 @@
 #Ianto Cannon 2026 Feb 4. Find the maximum volume for each contact angle.
 import numpy as np
-from plot import plot_drop_height_vs_rad
+from plot import plot_drop_height_vs_rad, plot_graphical_abstract
 from bubble import AdamsBashforthProfile, reorder_drop_height_vs_vol
 for b in range(0):
   RadTop = .1*b+.1
@@ -26,8 +26,8 @@ RadTops = np.concatenate([
     #np.logspace(-2,            np.log10(.3),  200, endpoint=False),
     #np.logspace(np.log10(.3),  np.log10(1.5), 400, endpoint=False),
     #np.logspace(np.log10(1.5), 2,             100),
-    #np.logspace(-2, 2,             1000),
-    np.logspace(-2, 2,            10000),
+    np.logspace(-2, 2,             100),
+    #np.logspace(-2, 2,            10000),
     ])
 #RadTops = np.logspace(np.log10(.5),np.log10(1.5), 500)
 #RadTops = np.logspace(np.log10(.5),np.log10(1.5), 200)
@@ -43,7 +43,8 @@ for b in range(0):
 #reorder_drop_height_vs_vol(nam='rad')
 #plot_drop_height_vs_rad(nam='bub loop_rad loop_ang')
 #plot_drop_height_vs_rad(nam='loop_rad loop_ang')
-plot_drop_height_vs_rad(nam='loop_rad loop_ang')
+#plot_drop_height_vs_rad(nam='loop_rad loop_ang')
+plot_graphical_abstract(nam='loop_rad loop_ang')
 for b in range(0):#500
   #RadTop = (1+b)/100
   print(b,RadTop)
