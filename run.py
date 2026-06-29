@@ -42,9 +42,8 @@ for b in range(0):
 #reorder_drop_height_vs_vol(nam='ang')
 #reorder_drop_height_vs_vol(nam='rad')
 #plot_drop_height_vs_rad(nam='bub loop_rad loop_ang')
-#plot_drop_height_vs_rad(nam='loop_rad loop_ang')
-#plot_drop_height_vs_rad(nam='loop_rad loop_ang')
-plot_graphical_abstract(nam='loop_rad loop_ang')
+plot_drop_height_vs_rad(nam='loop_rad loop_ang')
+#plot_graphical_abstract(nam='loop_rad loop_ang')
 for b in range(0):#500
   #RadTop = (1+b)/100
   print(b,RadTop)

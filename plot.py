@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import FancyArrowPatch
 plt.rcdefaults()
 plt.rcParams.update({"text.usetex": True,'font.size' : 14,})
 
@@ -20,6 +19,7 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
   from bubble import AdamsBashforthProfile
   inFol = '../mergeDdgc/data/'
   outFol = 'plots/'
+  cav=.3
   figProf, axProf = plt.subplots(2, sharex=True)
   fig, ax = plt.subplots(1, 2, sharey=True)
   for cont in nam.split():
@@ -74,7 +74,8 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
       ax[axInd].plot(df[:indVol+1,6], -df[:indVol+1,1], c='k', zorder=3)
       if 'rad' in cont and round(df[0,0]*10)%10==0: continue 
       if 'ang' in cont and round(angl*100)%20!=0:continue
-      axRt = axProf[axInd].inset_axes((15/18.5, 2.6/3, (18.1-15)/18.5, .2/3))
+      #axRt = axProf[axInd].inset_axes((15/18.5, 2.6/3, (18.1-15)/18.5, .2/3))
+      axRt = axProf[axInd].inset_axes((18/21.5, 2.6/3, (21.1-18)/21.5, .2/3))
       axRt.set_xscale('log')
       axRt.set_xlabel('$R_h/\\lambda$')
       axRt.set_xlim([.1,10])
@@ -87,12 +88,20 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
       #tri = RegularPolygon( (5.5,1.5), 3, radius=0.1, orientation=np.pi, color='grey', zorder=3)
       #axProf[axInd].add_patch(tri)
       #axProf[axInd].text(6, 2, '$g$', va='center', ha='left', c='grey')
-      if 'rad' in cont: spac=(1,3.5,8,14.5,20,30,40,50)[ round(df[0,0]-.5) ] 
-      if 'ang' in cont: spac=(.5,1.8,4.1,8,14.5,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160)[ round( 4-df[indVol,2]*5/np.pi) ]
-      if spac>6 and spac<10: drawCoord=True
+      #if 'ang' in cont: spac=(.5,1.8,4.1,8,14.5,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160)[ round( 4-df[indVol,2]*5/np.pi) ]
+      if 'ang' in cont: spac=(.5,2.3,5.1,9.5,17)[ round( 4-df[indVol,2]*5/np.pi) ]
+      if 'rad' in cont: 
+        #spac=(1,3.5,8,14.5,20,30,40,50)[ round(df[0,0]-.5) ] 
+        spac=(1,4.5,10,17.5)[ round(df[0,0]-.5) ] 
+        axProf[axInd].plot((spac-df[0,0], spac+df[0,0]), (0,0), c='w', clip_on=False, zorder=3)
+        axProf[axInd].plot((spac-df[0,0], spac+df[0,0]), (-cav,-cav), c='k', clip_on=False, zorder=3, lw=1)
+        axProf[axInd].plot((spac-df[0,0], spac-df[0,0]), (-cav,0), c='k', clip_on=False, zorder=3, lw=1)
+        axProf[axInd].plot((spac+df[0,0], spac+df[0,0]), (-cav,0), c='k', clip_on=False, zorder=3, lw=1)
+      #if spac>6 and spac<10: drawCoord=True
+      if spac>6 and spac<11: drawCoord=True
       else: drawCoord=False
-      for hei in range(5):#5
-        if drawCoord and hei<4: continue
+      for hei in reversed(range(5)):
+        #if drawCoord and hei<4: continue
         heiInd = np.argmin( abs( (hei+1)*df[indVol,1]/5 - df[:indVol+1,1] ) )
         #AdamsBashforthProfile(1, df[heiInd,5], fname=folName+f'prof{hei:05}'+fname)
         with open(inFol+f'prof{hei:05}'+fname, encoding = 'utf-8') as f: prof = np.loadtxt(f)
@@ -101,12 +110,13 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
         xProf=np.concatenate(( -prof[:footInd,0][::-1] , prof[:footInd,0] ))
         xProf=xProf+spac
         yProf=np.concatenate(( prof[:footInd,1][::-1] - prof[footInd,1] , prof[:footInd,1] - prof[footInd,1] ))
-        axProf[axInd].plot(xProf,yProf, c=colRB(cont,df[heiInd,5]), clip_on=False)
+        axProf[axInd].plot(xProf,yProf, c=colRB(cont,df[heiInd,5]), clip_on=False, zorder=4)
         #if hei!=4:continue
         #if 'rad' in cont: axProf[axInd].plot(xProf,yProf*0, c='w', clip_on=False)
         #if 'ang' in cont: continue
         #if round(df[0,0]-.5): continue
         if not drawCoord: continue
+        if hei<4: continue
         xAn = xProf[-1]
         yAn = yProf[-1]
         #axProf[axInd].plot((xAn,xAn+.3), (yAn,yAn), color='grey')
@@ -120,27 +130,28 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
           if yProf[i]>Y: break
           Xarr.append(X)
           Yarr.append(Y)
-        axProf[axInd].plot(Xarr,Yarr,c='grey')
-        if 'rad' in cont: axProf[axInd].text(xAn+.1, yAn+.1, "$\\phi_0$", ha='left', va='bottom', c='grey') 
-        if 'ang' in cont: axProf[axInd].text(xAn+.1, yAn+.1, "$\\phi_c$", ha='left', va='bottom', c='grey') 
-        axProf[axInd].plot((spac,xProf[0]), (0,0), 'o', ls='solid', color='grey', clip_on=False, zorder=3)
-        #axProf[axInd].plot((spac,xProf[0]), (0,0), c='grey', clip_on=False, zorder=3)
-        if 'rad' in cont: axProf[axInd].text( (spac+xProf[0])/2, .1, "$r_c$", ha='center', va='bottom', c='grey') 
-        if 'ang' in cont: axProf[axInd].text( (spac+xProf[0])/2, .1, "$r_0$", ha='center', va='bottom', c='grey') 
+        axProf[axInd].plot(Xarr,Yarr,c='k', zorder=5, lw=2)
+        if 'rad' in cont: 
+          axProf[axInd].text(xAn+.1, yAn+.1, "$\\phi_0$", ha='left', va='bottom', c='k') 
+          axProf[axInd].plot((spac,xProf[-1]), (-cav,-cav), c='k', clip_on=False, zorder=4, lw=2)
+          axProf[axInd].text( (spac+xProf[-1])/2, .1-cav, "$r_c$", ha='center', va='bottom', c='k') 
+        if 'ang' in cont: 
+          axProf[axInd].text(xAn+.1, yAn+.1, "$\\phi_c$", ha='left', va='bottom', c='k') 
+          axProf[axInd].plot((spac,xProf[-1]), (0,0), c='k', clip_on=False, zorder=5, lw=2)
+          axProf[axInd].text( (spac+xProf[-1])/2, -.1, "$r_0$", ha='center', va='top', c='k') 
         h=int(0.5*(len(xProf)))
-        axProf[axInd].plot( (xProf[h],xProf[h]), (0,yProf[h]), c='grey')
-        axProf[axInd].text( xProf[h]-.1, yProf[h]/2, "$h$", ha='right', va='center', c='grey') 
-        axProf[axInd].plot(xProf[h],yProf[h],'o', c='grey')
+        #axProf[axInd].plot( (xProf[h],xProf[h]), (0,yProf[h]), c='k', zorder=4)
+        #axProf[axInd].text( xProf[h]-.1, yProf[h]/2, "$h$", ha='right', va='center', c='k') 
         t=int(0.8*(len(xProf)))
-        axProf[axInd].plot(xProf[h:t],yProf[h:t], c='grey')
+        axProf[axInd].plot(xProf[h:t],yProf[h:t], c='k', zorder=5, lw=2)
         theta = np.arctan2(yProf[t+1]-yProf[t], xProf[t+1]-xProf[t])-np.pi/2
-        tri = RegularPolygon( (xProf[t], yProf[t]), 3, radius=0.1, orientation=theta, color='grey', zorder=3)
+        tri = RegularPolygon( (xProf[t], yProf[t]), 3, radius=0.1, orientation=theta, color='k', zorder=5)
         axProf[axInd].add_patch(tri)
-        axProf[axInd].text(xProf[t]+0.1, yProf[t], '$s$', va='center', ha='left', c='grey')
+        axProf[axInd].text(xProf[t]+0.1, yProf[t], '$s$', va='center', ha='left', c='k', zorder=4)
         t=int(0.63*(len(xProf)))
         xAn = xProf[t]
         yAn = yProf[t]
-        axProf[axInd].plot((xAn,xAn+.3), (yAn,yAn), color='grey')
+        axProf[axInd].plot((xAn,xAn+.3), (yAn,yAn), color='k', zorder=4, lw=2)
         Xarr = []
         Yarr = []
         for phi in range(51):
@@ -151,15 +162,15 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
           if yProf[i]>Y: break
           Xarr.append(X)
           Yarr.append(Y)
-        axProf[axInd].plot(Xarr,Yarr,c='grey')
-        axProf[axInd].text(xAn+.1, yAn+.1, "$\\phi$", ha='left', va='bottom', c='grey') 
-        gravX=18
-        gravTailY=1.8
-        gravHeadY=1
-        axProf[axInd].plot([gravX,gravX],[gravTailY,gravHeadY], c='grey')
-        tri = RegularPolygon( (gravX, gravHeadY), 3, radius=0.1, orientation=np.pi, color='grey', zorder=3)
+        axProf[axInd].plot(Xarr,Yarr,c='k', zorder=4)
+        axProf[axInd].text(xAn+.1, yAn+.1, "$\\phi$", ha='left', va='bottom', c='k', zorder=4) 
+        gravX=21
+        gravTailY=1.6
+        gravHeadY=.8
+        axProf[axInd].plot([gravX,gravX],[gravTailY,gravHeadY], c='k')
+        tri = RegularPolygon( (gravX, gravHeadY), 3, radius=0.1, orientation=np.pi, color='k', zorder=4)
         axProf[axInd].add_patch(tri)
-        axProf[axInd].text(gravX+0.1, (gravHeadY+gravTailY)/2, '$g$', va='center', ha='left', c='grey')
+        axProf[axInd].text(gravX+0.1, (gravHeadY+gravTailY)/2, '$g$', va='center', ha='left', c='k')
     x = np.asarray(x)
     dfDet = np.asarray(dfDet)
     z = np.asarray(z)
@@ -178,10 +189,12 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
     axM.text(5e-3,.99,'$\\mathrm{(b)}$',transform=axM.transAxes,va='top',ha='left')
     ax2.tick_params(which='both', direction='in', top=True, right=True)
     ax[0].set_ylabel('$\\frac{h}{\\lambda}$',rotation=0,size=22,labelpad=10)
-    axProf[axInd].tick_params(which='both', direction='in', top=True, right=True)
+    axProf[axInd].tick_params(axis='y', which='both', direction='in', right=True)
+    axProf[axInd].tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
     axProf[axInd].set_ylabel('$\\frac{ z }{\\lambda}$',rotation=0,size=22,labelpad=15)
     axProf[axInd].set_ylim([0,3])
-    axProf[axInd].set_xlim([0,18.5])
+    #axProf[axInd].set_xlim([0,18.5])
+    axProf[axInd].set_xlim([0,21.5])
     axProf[axInd].set_aspect('equal', adjustable='box')
     ax[axInd].set_ylim([0,3])
     ax[axInd].set_xlim([0,20])
@@ -289,6 +302,8 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
       axI.set_yscale('log')
       axI.set_xlim([6e-2,1.2])
       axI.set_ylim([.3,8])
+      axI.set_yticks([.5,1,2,5])
+      axI.set_yticklabels(['$0.5$','$1$','$2$','$5$'])
       axI.plot(x,dfDet[:,6],c='r')
       #axM.plot( x, z, c='r', clip_on=False, zorder=3)
       #axM.plot( (x[:-2]+x[1:-1]+x[2:])/3, (z[:-2]+z[1:-1]+z[2:])/3, c='r', clip_on=False, zorder=3)
@@ -359,7 +374,7 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
   fig.tight_layout(pad=.7)
   fig.savefig(fname, transparent=True, bbox_inches='tight', pad_inches=0)
   figProf.set_figwidth(12)
-  axProf[1].set_xlabel('$x/\\lambda$',labelpad=-5)
+  #axProf[1].set_xlabel('$x/\\lambda$',labelpad=-5)
   figProf.subplots_adjust(hspace=-.05)
   outName = outFol+f'pin.pdf'
   print('savin ',outName)
@@ -372,7 +387,7 @@ def plot_graphical_abstract(nam='rad ang'):
   simFol = '../mergeDdgc/data/'
   plotFol = 'plots/'
   figProf, axProf = plt.subplots(1)
-  figProf.set_figwidth(4)
+  figProf.set_figwidth(6)
   p=-1.2
   s=1.2
   for cont in nam.split():
@@ -416,11 +431,13 @@ def plot_graphical_abstract(nam='rad ang'):
   axProf.set_aspect('equal', adjustable='box')
   axProf.plot([-3,p-.5],[0,0], c='k', clip_on=False)
   axProf.plot([p+.5,3],[0,0], c='k', clip_on=False)
-  #axProf.plot([-1.5,-.5],[0,0], c='w', clip_on=False, zorder=3)
+  axProf.plot([p-.5,p+.5],[-.2,-.2], c='k', clip_on=False)
+  axProf.plot([p-.5,p-.5],[-.2,0], c='k', clip_on=False)
+  axProf.plot([p+.5,p+.5],[-.2,0], c='k', clip_on=False)
   axProf.plot([-2.5,-2.5],[.5,1.5], c='k', clip_on=False)
   axProf.text(-2.6, 1, "$\\lambda$", ha='right', va='center', c='k') 
-  axProf.text(p, -.3, "$\\textrm{pinned}$", ha='center', va='center', c='k') 
-  axProf.text(s, -.3, "$\\textrm{spreading}$", ha='center', va='center', c='k') 
+  axProf.text(p, -.35, "$\\textrm{pinned}$", ha='center', va='center', c='k') 
+  axProf.text(s, -.35, "$\\textrm{spreading}$", ha='center', va='center', c='k') 
   outName = 'plots/abstract.pdf'
   print('savin ',outName)
   figProf.savefig(outName, transparent=True, bbox_inches='tight', pad_inches=0)
