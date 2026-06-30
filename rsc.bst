@@ -63,14 +63,14 @@ INTEGERS { is.use.title etal.number use.doi.all }
 
 %% #0 turns off the display of the title for articles
 %% #1 enables
-FUNCTION {default.is.use.title} { #0 }
+FUNCTION {default.is.use.title} { #1 }
 
 %% The number of names that force "et al." to be used
 FUNCTION {default.etal.number} { #0 }
 
 %% #0 turns off the display of the DOI for articles
 %% #1 enables
-FUNCTION {default.use.doi.all} { #0 }
+FUNCTION {default.use.doi.all} { #1 }
 
 FUNCTION {add.comma}
 { ", " * }
@@ -502,8 +502,8 @@ FUNCTION {format.editors}
 FUNCTION {format.doi}
 { use.doi.all
     { doi empty$
-        { bbl.doi doi tie.or.space.connect output }
         'skip$
+        { "DOI: \href{https://doi.org/" doi * "}{" * doi * "}" * output }
       if$
     }
     'skip$
@@ -1064,10 +1064,7 @@ FUNCTION {misc}
   year output
   format.url output
   note output
-  doi empty$                  % Check if the doi field exists
-    'skip$
-    { "\doi{" doi * "}" * output } % Add this line to output the DOI
-  if$
+  format.doi
   fin.entry
   empty.misc.check
 }
