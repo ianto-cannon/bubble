@@ -17,7 +17,7 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
   import os
   from matplotlib.patches import RegularPolygon
   from bubble import AdamsBashforthProfile
-  inFol = '../mergeDdgc/data/'
+  inFol = 'simData/'
   outFol = 'plots/'
   cav=.3
   figProf, axProf = plt.subplots(2, sharex=True)
@@ -30,6 +30,7 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
     dfDet=[]
     z=[]
     zM=[]
+    radM=[]
     for fname in reversed(sorted(os.listdir(inFol))):
       if 'prof' in fname: continue
       if 'txt' not in fname: continue
@@ -50,11 +51,13 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
         else: x.append(angl)
         z.append(df[indVol,0])
         zM.append(np.max(df[:indVol+1,0]))
+        radM.append(np.max(df[:indVol+1,9]))
         axInd=1
       if 'rad' in cont: 
         x.append(df[indVol,0])
         z.append( 1 - df[indVol,2]/np.pi )
         zM.append(np.min( 1 - df[:indVol+1,2]/np.pi ))
+        radM.append(np.max(df[:indVol+1,9]))
         axInd=0
       if 'bub' in cont: 
         x.append(df[indVol,5])
@@ -104,7 +107,12 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
         #if drawCoord and hei<4: continue
         heiInd = np.argmin( abs( (hei+1)*df[indVol,1]/5 - df[:indVol+1,1] ) )
         #AdamsBashforthProfile(1, df[heiInd,5], fname=folName+f'prof{hei:05}'+fname)
-        with open(inFol+f'prof{hei:05}'+fname, encoding = 'utf-8') as f: prof = np.loadtxt(f)
+        fPath = os.path.join(inFol, f'prof{hei:05}' + fname)
+        if os.path.exists(fPath): 
+          with open(fPath, encoding='utf-8') as f: prof = np.loadtxt(f)
+        else: 
+          print(f"File not found: {fPath}")
+          continue
         footInd = np.argmin( abs( df[heiInd,6] - prof[:,6] ))
         ax[axInd].plot(prof[footInd,6], -prof[footInd,1], 'o', ms=5, c=colRB( cont, df[heiInd,5] ), clip_on=False, zorder=4)#, mfc='None'
         xProf=np.concatenate(( -prof[:footInd,0][::-1] , prof[:footInd,0] ))
@@ -176,6 +184,7 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
     z = np.asarray(z)
     ax2.plot(x,dfDet[:,5],c='b')
     ax2.plot(x,-dfDet[:,1],c='k')
+    ax2.plot(x,radM,c='g', clip_on=False, zorder=3)
     ax2.set_ylim([0,3.219])
     axV = axVV[0]
     axM = axVV[1]
@@ -222,6 +231,7 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
       axI.plot(x,dfDet[:,6],c='b')
       axM.plot( x[::30], z[::30], '.', c='b', clip_on=False, zorder=3)
       axM.plot( x, zM, '-', c='b', clip_on=False, zorder=3)
+      axM.plot( x, radM, '-.', c='g', clip_on=False, zorder=3)
       fig2.subplots_adjust(left=0.1, right=0.97, bottom=0.2, top=0.98)
       #figProf.subplots_adjust(left=0.05, right=0.97, bottom=0.2, top=0.98)
       xx=np.linspace(0,1)
@@ -384,7 +394,7 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
 def plot_graphical_abstract(nam='rad ang'): 
   import os
   from bubble import AdamsBashforthProfile
-  simFol = '../mergeDdgc/data/'
+  simFol = 'simData/'
   plotFol = 'plots/'
   figProf, axProf = plt.subplots(1)
   figProf.set_figwidth(6)

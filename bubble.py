@@ -16,6 +16,7 @@ def AdamsBashforthProfile(capLen, RadTop, contactAng=-1, fname=None, angleSave=0
   centroid=0
   area=0
   dPsiPrev=0
+  maxRad=0
   if fname: adams_txt = open(fname, "w") 
   for i in range(int(1e6)):
     dr = ds * np.cos(psi)
@@ -32,16 +33,17 @@ def AdamsBashforthProfile(capLen, RadTop, contactAng=-1, fname=None, angleSave=0
     Volume += np.pi*r**2*dz
     centroid += z*np.pi*r**2*dz
     area+= 2*np.pi*r*ds
+    if r>maxRad: maxRad=r
     if fname: 
       if not i%100 or dPsi>1e-2: 
-        print(r, -z, psi, dPsi, capLen, RadTop, Volume, area, centroid/Volume, file=adams_txt)
+        print(r, -z, psi, dPsi, capLen, RadTop, Volume, area, centroid/Volume, maxRad, file=adams_txt)
     if angleSave and i:
       angBin = int(np.floor(psi/np.pi / angleSave))
       angBinPrev = int(np.floor((psi-dPsi)/np.pi / angleSave))
       if angBin != angBinPrev:
         angFname=f'simData/ang{max(angBin,angBinPrev):05}.txt'
         ang_txt = open(angFname, "a") 
-        print(r, -z, psi, dPsi, capLen, RadTop, Volume, area, centroid/Volume, file=ang_txt)
+        print(r, -z, psi, dPsi, capLen, RadTop, Volume, area, centroid/Volume, maxRad, file=ang_txt)
     if radSave and i:
       nam='rad'
       radBin = int(np.floor(r / radSave))
@@ -49,7 +51,7 @@ def AdamsBashforthProfile(capLen, RadTop, contactAng=-1, fname=None, angleSave=0
       if radBin != radBinPrev:
         angFname=f'simData/'+nam+f'{max(radBin,radBinPrev):05}.txt'
         ang_txt = open(angFname, "a") 
-        print(r, -z, psi, dPsi, capLen, RadTop, Volume, area, centroid/Volume, file=ang_txt)
+        print(r, -z, psi, dPsi, capLen, RadTop, Volume, area, centroid/Volume, maxRad, file=ang_txt)
     if psi<0: break
     if psi>np.pi: break
     if dPsi>0 and dPsiPrev<0: break
@@ -86,7 +88,7 @@ def reorder_drop_height_vs_vol(nam=''):
       y_prev = np.cbrt(dfLoop[j-1, 6]) / dfLoop[j-1, 4]
       vol_prev = dfLoop[j-1, 6] / dfLoop[j-1, 4]**3
       # Query multiple nearest neighbors (important!)
-      dists, idxs = tree.query([x_prev, y_prev], k=20)
+      dists, idxs = tree.query([x_prev, y_prev], k=min(20,N))
       # Ensure arrays
       idxs = np.atleast_1d(idxs)
       # Filter valid candidates
