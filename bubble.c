@@ -4,37 +4,31 @@
  * Functions for calculating the interface shape of bubbles on surfaces.
  * Adapted from code written by Stefan Endres.
  *
- * C port of bubble.py.  No external libraries beyond the C standard library
- * and POSIX dirent are required.
+ * Combined C port of bubble.py and run.py.
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <ctype.h>    /* Added for isspace() */
+#include <ctype.h>
 #include <dirent.h>
 #include <float.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #define PI 3.14159265358979323846
 #define MAX_ITER 1000000
-#define PROFILE_NCOLS 11   /* r, -z, psi, dPsi, capLen, RadTop, Volume, area, centroid/Volume, maxRad */
-#define BIN_NCOLS    10    /* same as profile but without the trailing maxRad... actually
-                              Python prints 11 for the profile file and 10 for the bin files.
-                              Keeping that asymmetry faithful. */
 
 /* ------------------------------------------------------------------------- */
 /* AdamsBashforthProfile                                                     */
 /* ------------------------------------------------------------------------- */
 int AdamsBashforthProfile(double capLen, double RadTop,
-                          double contactAng /* unused in py */, const char *fname,
+                          double contactAng, const char *fname,
                           double angleSave, double radSave,
                           double *outVolume, double *out_r, double *out_z,
                           double *out_centroid, double *out_psi)
 {
-    /* compute analytical interface shape according to eq 1 of Demirkir2024Langmuir.
-       Input the Bond number Bo (=1/capLen^2) and the radius of curvature at bubble top RadTop.
-       Returns: volume, contact-patch radius, bubble height, height of centre of mass. */
-
     double ds = fmin(fmin(1e-4 * fabs(RadTop), 1e-4 * fabs(capLen)), 1e-4);
     double psi = 0.0, r = 0.0, z = 0.0;
     double Volume = 0.0, centroid = 0.0, area = 0.0;
@@ -55,7 +49,6 @@ int AdamsBashforthProfile(double capLen, double RadTop,
         drPrev = dr;
         dzPrev = dz;
 
-        /* guard r==0 (only at i=0) */
         double sinpsi_over_r = (r > 0.0) ? (sin(psi) / r) : 0.0;
         double dPsi = ds * (2.0 / RadTop - z / (capLen * capLen) - sinpsi_over_r);
         psi += 1.5 * dPsi - 0.5 * dPsiPrev;
@@ -68,7 +61,7 @@ int AdamsBashforthProfile(double capLen, double RadTop,
         if (adams_txt) {
             if ((i % 100 == 0) || (dPsi > 1e-2)) {
                 fprintf(adams_txt,
-                        "%.6g %.6g %.6g %.6g %.6g %.6g %.6g %.6g %.6g %.6g\n",
+                        "%.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g\n",
                         r, -z, psi, dPsi, capLen, RadTop, Volume, area,
                         (Volume != 0.0 ? centroid / Volume : 0.0), maxRad);
             }
@@ -84,7 +77,7 @@ int AdamsBashforthProfile(double capLen, double RadTop,
                 FILE *ang_txt = fopen(angFname, "a");
                 if (ang_txt) {
                     fprintf(ang_txt,
-                            "%.6g %.6g %.6g %.6g %.6g %.6g %.6g %.6g %.6g %.6g\n",
+                            "%.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g\n",
                             r, -z, psi, dPsi, capLen, RadTop, Volume, area,
                             (Volume != 0.0 ? centroid / Volume : 0.0), maxRad);
                     fclose(ang_txt);
@@ -102,7 +95,7 @@ int AdamsBashforthProfile(double capLen, double RadTop,
                 FILE *rad_txt = fopen(radFname, "a");
                 if (rad_txt) {
                     fprintf(rad_txt,
-                            "%.6g %.6g %.6g %.6g %.6g %.6g %.6g %.6g %.6g %.6g\n",
+                            "%.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g\n",
                             r, -z, psi, dPsi, capLen, RadTop, Volume, area,
                             (Volume != 0.0 ? centroid / Volume : 0.0), maxRad);
                     fclose(rad_txt);
@@ -118,7 +111,7 @@ int AdamsBashforthProfile(double capLen, double RadTop,
 
     if (adams_txt) fclose(adams_txt);
 
-    printf("saved %s capLen %.6g RadTop%10.6g i %d\n",
+    printf("saved %s capLen %.10g RadTop%10.6g i %d\n",
            fname ? fname : "(null)", capLen, RadTop, i);
 
     if (outVolume)  *outVolume  = Volume;
@@ -130,11 +123,9 @@ int AdamsBashforthProfile(double capLen, double RadTop,
 }
 
 /* ------------------------------------------------------------------------- */
-/* reorder_drop_height_vs_vol                                                */
+/* reorder_drop_height_vs_vol helpers and main                               */
 /* ------------------------------------------------------------------------- */
 
-/* Tokenise a whitespace-separated line into doubles.
-   Returns the number of fields parsed (<= max_cols). */
 static int parse_line_doubles(const char *line, double *out, int max_cols)
 {
     int n = 0;
@@ -151,21 +142,16 @@ static int parse_line_doubles(const char *line, double *out, int max_cols)
     return n;
 }
 
-/* Load a whitespace-separated numeric file into a row-major matrix.
-   Returns 0 on success, sets *out_rows, *out_cols, *out_data (malloc'd). */
 static int load_txt(const char *path, double **out_data, int *out_rows, int *out_cols)
 {
     FILE *f = fopen(path, "r");
     if (!f) return -1;
 
-    /* First pass: count rows and max columns. */
     int rows = 0, cols = 0;
     char *line = NULL; size_t cap = 0; ssize_t len;
     double *buf = NULL; int buf_cap = 0;
 
-    /* We need two passes; simplest: read into a growable list. */
     while ((len = getline(&line, &cap, f)) != -1) {
-        /* count tokens */
         int c = 0;
         const char *p = line;
         while (*p) {
@@ -183,11 +169,9 @@ static int load_txt(const char *path, double **out_data, int *out_rows, int *out
             buf = realloc(buf, (size_t)buf_cap * cols * sizeof(double));
             if (!buf) { fclose(f); free(line); return -1; }
         }
-        /* Re-parse with current row stride = cols */
         {
             double tmp[64];
             int n = parse_line_doubles(line, tmp, (c < 64 ? c : 64));
-            /* If c>64 we'd need a bigger tmp; for these inputs c<=11 so it's fine. */
             for (int k = 0; k < n; ++k) buf[(size_t)rows * cols + k] = tmp[k];
             for (int k = n; k < cols; ++k) buf[(size_t)rows * cols + k] = 0.0;
         }
@@ -215,18 +199,12 @@ static int save_txt(const char *path, const double *data, int rows, int cols)
     return 0;
 }
 
-/* Brute-force k nearest neighbours.  Writes the indices of the k nearest
-   points (to the query point qx,qy) into out_idx, sorted by distance.
-   Excluded points (mask==1) are skipped.
-   Returns the actual number of neighbours found (<= k, <= N). */
 static int knn_bruteforce(const double *x, const double *y, const unsigned char *mask,
                           int N, double qx, double qy, int k, int *out_idx)
 {
-    /* We do a simple selection: compute all distances, then partial-sort. */
     if (k > N) k = N;
     if (k <= 0) return 0;
 
-    /* Allocate temporary arrays. */
     double *dist = malloc(sizeof(double) * N);
     int   *idx   = malloc(sizeof(int)   * N);
     if (!dist || !idx) { free(dist); free(idx); return 0; }
@@ -241,7 +219,6 @@ static int knn_bruteforce(const double *x, const double *y, const unsigned char 
         cnt++;
     }
 
-    /* Partial selection sort to get the first k. */
     int found = (cnt < k) ? cnt : k;
     for (int j = 0; j < found; ++j) {
         int best = j;
@@ -266,7 +243,6 @@ int reorder_drop_height_vs_vol(const char *nam)
     while ((de = readdir(dir)) != NULL) {
         const char *fname = de->d_name;
 
-        /* skip if "loop" in name or "txt" not in name or nam not in name */
         if (strstr(fname, "loop")) continue;
         if (!strstr(fname, "txt")) continue;
         if (nam && *nam && !strstr(fname, nam)) continue;
@@ -278,15 +254,9 @@ int reorder_drop_height_vs_vol(const char *nam)
         if (load_txt(path, &df, &N, &ncols) != 0) continue;
         if (N < 2) { free(df); continue; }
 
-        /* dfLoop = zeros_like(df); dfLoop[:,4] = 1 */
         double *dfLoop = calloc((size_t)N * ncols, sizeof(double));
         for (int i = 0; i < N; ++i) dfLoop[(size_t)i * ncols + 4] = 1.0;
 
-        /* Feature space:
-           x   = df[:,1] / df[:,4]
-           y   = cbrt(df[:,6]) / df[:,4]
-           vol = df[:,6] / df[:,4]^3
-           Python uses NaN-aware division; C produces inf/nan naturally. */
         double *x   = malloc(sizeof(double) * N);
         double *y   = malloc(sizeof(double) * N);
         double *vol = malloc(sizeof(double) * N);
@@ -300,10 +270,6 @@ int reorder_drop_height_vs_vol(const char *nam)
         }
 
         unsigned char *used = calloc(N, sizeof(unsigned char));
-
-        /* dfLoop[0] = df[0]   (Note: Python code has these two lines
-           commented out, so the loop starts with all-zero dfLoop except col4=1.
-           To match Python exactly we leave row 0 of dfLoop as zeros with col4=1.) */
 
         for (int j = 1; j < N; ++j) {
             double row1 = dfLoop[(size_t)(j-1) * ncols + 1];
@@ -324,13 +290,12 @@ int reorder_drop_height_vs_vol(const char *nam)
                 if (used[i] || isnan(x[i])) continue;
                 double dx = x[i] - x_prev, dy = y[i] - y_prev;
                 double dis = dx*dx + dy*dy;
-                if (vol[i] < vol_prev) dis += 1.0; /* volume penalty */
+                if (vol[i] < vol_prev) dis += 1.0;
                 if (dis < best_dist) { best = i; best_dist = dis; }
             }
             free(idxs);
 
             if (best < 0) {
-                /* Fallback: first unused index. */
                 for (int i = 0; i < N; ++i) if (!used[i]) { best = i; break; }
             }
             if (best < 0) break;
@@ -348,5 +313,33 @@ int reorder_drop_height_vs_vol(const char *nam)
         free(df); free(dfLoop); free(x); free(y); free(vol); free(used);
     }
     closedir(dir);
+    return 0;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Main execution (from run.py)                                              */
+/* ------------------------------------------------------------------------- */
+int main(void)
+{
+    /* Create the simData directory if it doesn't exist */
+    mkdir("simData", 0755);
+
+    /* Build RadTops = logspace(-2, 2, 1000) and use RadTop = 1 / RadTops[b]. */
+    int N = 1000;
+    double log_start = -2.0, log_stop = 2.0;
+    for (int b = 0; b < N; ++b) {
+        double t = (N == 1) ? 0.0 : (double)b / (double)(N - 1);
+        double log_val = log_start + t * (log_stop - log_start);
+        double radTop_entry = pow(10.0, log_val);
+        double RadTop = 1.0 / radTop_entry;
+        printf("%d %.10g\n", b, RadTop);
+        AdamsBashforthProfile(1.0, RadTop, -1.0, NULL,
+                              0.001, 0.01,
+                              NULL, NULL, NULL, NULL, NULL);
+    }
+
+    reorder_drop_height_vs_vol("ang");
+    reorder_drop_height_vs_vol("rad");
+
     return 0;
 }

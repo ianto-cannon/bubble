@@ -52,7 +52,7 @@ pip install numpy scipy matplotlib
 Run the primary execution pipeline to trigger profiling routines and process structural spatial data maps:
 
 ```bash
-gcc -O2 -o run run.c bubble.c -lm
+gcc -O2 -o run bubble.c -lm
 ./run
 python plot.py
 ```
