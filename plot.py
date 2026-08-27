@@ -98,15 +98,10 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
       for hei in reversed(range(5)):
         heiInd = np.argmin( abs( (hei+1)*df[indVol,1]/5 - df[:indVol+1,1] ) )
         fPath = os.path.join(inFol, f'prof{hei:05}' + fname)
-        if os.path.exists(fPath): 
-          with open(fPath, encoding='utf-8') as f: prof = np.loadtxt(f)
-        else: 
+        if not os.path.exists(fPath): 
           print("run",'./run', '1', str(df[heiInd,5]), fPath)
           subprocess.run(['./run', '1', str(df[heiInd,5]), fPath])
-          with open(fPath, encoding='utf-8') as f: prof = np.loadtxt(f)
-          #AdamsBashforthProfile(1, df[heiInd,5], fname=folName+f'prof{hei:05}'+fname)
-          #print(f"File not found: {fPath}")
-          #continue
+        with open(fPath, encoding='utf-8') as f: prof = np.loadtxt(f)
         footInd = np.argmin( abs( df[heiInd,6] - prof[:,6] ))
         axHei[axInd].plot(prof[footInd,6], -prof[footInd,1], 'o', ms=5, c=colRB( cont, df[heiInd,5] ), clip_on=False, zorder=4)#, mfc='None'
         xProf=np.concatenate(( -prof[:footInd,0][::-1] , prof[:footInd,0] ))
@@ -369,6 +364,7 @@ def plot_graphical_abstract(nam='rad ang'):
   for cont in nam.split():
     for fname in reversed(sorted(os.listdir(simFol))):
       if 'prof' in fname: continue
+      if 'loop' not in fname: continue
       if 'txt' not in fname: continue
       if cont not in fname: continue
       with open(simFol+fname, encoding = 'utf-8') as f: df = np.loadtxt(f)
@@ -390,9 +386,11 @@ def plot_graphical_abstract(nam='rad ang'):
       if 'ang' in cont: spac=s
       for hei in range(5):#5
         heiInd = np.argmin( abs( (hei+1)*df[indVol,1]/5 - df[:indVol+1,1] ) )
-        subprocess.run(['./run', '1', str(df[heiInd,5]), simFol+f'prof{hei:05}'+fname])
-        with open(simFol+f'prof{hei:05}'+fname, encoding = 'utf-8') as f: prof = np.loadtxt(f)
-        print(f'loaded '+simFol+f'prof{hei:05}'+fname)
+        fPath = simFol+f'prof{hei:05}'+fname
+        if not os.path.exists(fPath): 
+          subprocess.run(['./run', '1', str(df[heiInd,5]), fPath])
+        with open(fPath, encoding = 'utf-8') as f: prof = np.loadtxt(f)
+        print(f'loaded '+fPath)
         footInd = np.argmin( abs( df[heiInd,6] - prof[:,6] ))
         xProf=np.concatenate(( -prof[:footInd,0][::-1] , prof[:footInd,0] ))
         xProf=xProf+spac
