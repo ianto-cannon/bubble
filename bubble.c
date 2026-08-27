@@ -191,7 +191,7 @@ static int save_txt(const char *path, const double *data, int rows, int cols)
     if (!f) return -1;
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
-            fprintf(f, "%.18e%s", data[(size_t)i * cols + j],
+            fprintf(f, "%.10e%s", data[(size_t)i * cols + j],
                     (j == cols - 1) ? "\n" : " ");
         }
     }
@@ -270,7 +270,7 @@ int reorder_drop_height_vs_vol(const char *nam)
         }
 
         unsigned char *used = calloc(N, sizeof(unsigned char));
-
+        
         for (int j = 1; j < N; ++j) {
             double row1 = dfLoop[(size_t)(j-1) * ncols + 1];
             double row4 = dfLoop[(size_t)(j-1) * ncols + 4];
@@ -308,7 +308,8 @@ int reorder_drop_height_vs_vol(const char *nam)
         char outpath[1024];
         snprintf(outpath, sizeof(outpath), "%sloop_%s", folName, fname);
         printf("save %s\n", outpath);
-        save_txt(outpath, dfLoop, N, ncols);
+        /* Pass dfLoop + ncols to skip the first row, and N - 1 for the row count */
+        save_txt(outpath, dfLoop + ncols, N - 1, ncols);
 
         free(df); free(dfLoop); free(x); free(y); free(vol); free(used);
     }
@@ -319,8 +320,16 @@ int reorder_drop_height_vs_vol(const char *nam)
 /* ------------------------------------------------------------------------- */
 /* Main execution (from run.py)                                              */
 /* ------------------------------------------------------------------------- */
-int main(void)
+int main(int argc, char *argv[])
 {
+    /* If called with 3 arguments: ./run <capLen> <RadTop> <fname> */
+    if (argc == 4) {
+        double capLen = atof(argv[1]);
+        double RadTop = atof(argv[2]);
+        const char *fname = argv[3];
+        AdamsBashforthProfile(capLen, RadTop, -1.0, fname, 0.0, 0.0, NULL, NULL, NULL, NULL, NULL);
+        return 0;
+    }
     /* Create the simData directory if it doesn't exist */
     mkdir("simData", 0755);
 

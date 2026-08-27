@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+import subprocess
 plt.rcdefaults()
 plt.rcParams.update({"text.usetex": True,'font.size' : 14,})
 
@@ -14,9 +16,7 @@ def colRB(cont,r):
     else:             return ( colVal, colVal, 1 )
 
 def plot_drop_height_vs_rad(nam='rad ang bub'): 
-  import os
   from matplotlib.patches import RegularPolygon
-  #from bubble import AdamsBashforthProfile
   inFol = 'simData/'
   outFol = 'plots/'
   cav=.3
@@ -101,8 +101,12 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
         if os.path.exists(fPath): 
           with open(fPath, encoding='utf-8') as f: prof = np.loadtxt(f)
         else: 
-          print(f"File not found: {fPath}")
-          continue
+          print("run",'./run', '1', str(df[heiInd,5]), fPath)
+          subprocess.run(['./run', '1', str(df[heiInd,5]), fPath])
+          with open(fPath, encoding='utf-8') as f: prof = np.loadtxt(f)
+          #AdamsBashforthProfile(1, df[heiInd,5], fname=folName+f'prof{hei:05}'+fname)
+          #print(f"File not found: {fPath}")
+          #continue
         footInd = np.argmin( abs( df[heiInd,6] - prof[:,6] ))
         axHei[axInd].plot(prof[footInd,6], -prof[footInd,1], 'o', ms=5, c=colRB( cont, df[heiInd,5] ), clip_on=False, zorder=4)#, mfc='None'
         xProf=np.concatenate(( -prof[:footInd,0][::-1] , prof[:footInd,0] ))
@@ -127,9 +131,9 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
         if 'rad' in cont: 
           axProf[axInd].text(xAn+.1, yAn+.1, "$\\phi_0$", ha='left', va='bottom', c='k') 
           axProf[axInd].plot((spac,xProf[-1]), (-cav,-cav), c='k', clip_on=False, zorder=4, lw=2)
-          axProf[axInd].text( (spac+xProf[-1])/2, .1-cav, "$r_c$", ha='center', va='bottom', c='k') 
+          axProf[axInd].text( (spac+xProf[-1])/2, .1-cav, "$r_0$", ha='center', va='bottom', c='k') 
         if 'ang' in cont: 
-          axProf[axInd].text(xAn+.1, yAn+.1, "$\\phi_c$", ha='left', va='bottom', c='k') 
+          axProf[axInd].text(xAn+.1, yAn+.1, "$\\phi_0$", ha='left', va='bottom', c='k') 
           axProf[axInd].plot((spac,xProf[-1]), (0,0), c='k', clip_on=False, zorder=5, lw=2)
           axProf[axInd].text( (spac+xProf[-1])/2, -.1, "$r_0$", ha='center', va='top', c='k') 
         h=int(0.5*(len(xProf)))
@@ -176,7 +180,6 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
     axAng[axInd].tick_params(direction='in')
     axHei[axInd].tick_params(which='both', direction='in', top=True, right=True)
     axHei[axInd].set_xlabel('$V_\\mathrm{max}/\\lambda^3$')
-    axAng[axInd].text(5e-3,.99,'$\\mathrm{(b)}$',transform=axAng[axInd].transAxes,va='top',ha='left')
     axWid[axInd].tick_params(which='both', direction='in', top=True, right=True)
     axHei[0].set_ylabel('$\\frac{h}{\\lambda}$',rotation=0,size=22,labelpad=10)
     axProf[axInd].tick_params(axis='y', which='both', direction='in', right=True)
@@ -190,6 +193,8 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
     axVol[axInd].set_ylim([0,30])
     axVol[axInd].tick_params(which='both', direction='in', top=True, right=True)
     axAng[axInd].tick_params(which='both', direction='in', top=True, right=True)
+    axAng[axInd].set_xlim([0,4])
+    axAng[axInd].set_xlabel('$r_0/\\lambda$')
     if 'bub' in cont:
       axVol[axInd].plot(x,dfDet[:,6],c='k',clip_on=False)
       axVol[axInd].set_xlabel('$R_h$')
@@ -205,23 +210,21 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
       axI.set_xlim([.07,1])
       axI.set_ylim([.01,100])
       axI.plot(x,dfDet[:,6],c='b')
+      axI.text(.03,.97,'$\\mathrm{(b)~spreading}$',transform=axI.transAxes,va='top',ha='left')
       axAng[axInd].plot( z[::30], x[::30], '.', c='b', clip_on=False, zorder=3)
       axAng[axInd].plot( zM, x, '-', c='b', clip_on=False, zorder=3)
-      axAng[axInd].plot( radM, x, '-.', c='g', clip_on=False, zorder=3)
+      axAng[axInd].text(.02,.99,'$\\mathrm{(b)~spreading}$',transform=axAng[axInd].transAxes,va='top',ha='left')
       figAng.subplots_adjust(left=0.1, right=0.97, bottom=0.2, top=0.98)
       xx=np.linspace(0,1)
       axVol[axInd].plot(xx, 4*np.pi*(.0104*xx*180)**3/3, ls='dashed', c='k')
       axI.plot(xx, 4*np.pi*(.0104*xx*180)**3/3, ls='dashed', c='k')
       axAng[axInd].plot(3.219*xx**2, xx, ls='dashed', c='k', zorder=3)
-      axAng[axInd].set_ylabel('$\\phi_c/\\pi$')
-      axWid[axInd].set_xlabel('$\\phi_c/\\pi$')
-      axProf[axInd].text(5e-3,.99,'$\\mathrm{(b)}$',transform=axProf[axInd].transAxes,va='top',ha='left')
-      axHei[axInd].text(5e-3,.99,'$\\mathrm{(b)}$',transform=axHei[axInd].transAxes,va='top',ha='left')
+      axWid[axInd].set_xlabel('$\\phi_0/\\pi$')
+      axProf[axInd].text(5e-3,.99,'$\\mathrm{(b)~spreading}$',transform=axProf[axInd].transAxes,va='top',ha='left')
+      axHei[axInd].text(5e-3,.99,'$\\mathrm{(b)~spreading}$',transform=axHei[axInd].transAxes,va='top',ha='left')
       axWid[axInd].set_xlim([0,1])
       axVol[axInd].set_xlim([0,1])
-      axVol[axInd].text(1-5e-3,.99,'$\\mathrm{(a)}$',transform=axVol[axInd].transAxes,va='top',ha='right')
-      axAng[axInd].set_xlabel('$\\frac{r_0}{\\lambda}$',size=22,rotation=0,labelpad=10)
-      axAng[axInd].set_xlim([0,4])
+      axWid[axInd].text(.02,.97,'$\\mathrm{(d)~spreading}$',transform=axWid[axInd].transAxes,va='top',ha='left')
       fname = 'exptData/demirkir24life.txt'
       print('open',fname)
       with open(fname) as f: df = np.loadtxt(f, skiprows=1)
@@ -286,19 +289,20 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
       axVol[axInd].plot( xx, 2*np.pi*xx, linestyle='dashed', c='k')
       axI.plot( xx, 2*np.pi*xx, linestyle='dashed', c='k')
       axAng[axInd].plot( xx, (xx/3.5)**.5, linestyle='dashed', c='k', zorder=3)
-      axAng[axInd].set_xlabel('$r_c/\\lambda$')
-      axWid[axInd].set_xlabel('$r_c/\\lambda$')
+      axWid[axInd].set_xlabel('$r_0/\\lambda$')
       axAng[axInd].set_ylim([0,1.05])
       axAng[axInd].set_yticks([0,.25,.5,.75,1])
-      axWid[axInd].plot(x, x, ls='dotted', c='k', label='$r_c/\\lambda$')
+      axWid[axInd].plot(x, x, ls='dotted', c='k', label='$r_0/\\lambda$')
       axWid[axInd].axvspan(3.219, 4, color='lightgrey')
       axVol[axInd].axvspan(3.219, 4, color='lightgrey')
-      axVol[axInd].text(1-5e-3,.99,'$\\mathrm{(a)}$',transform=axVol[axInd].transAxes,va='top',ha='right')
+      axI.text(.03,.97,'$\\mathrm{(a)~pinned}$',transform=axI.transAxes,va='top',ha='left')
+      axWid[axInd].text(.02,.97,'$\\mathrm{(c)~pinned}$',transform=axWid[axInd].transAxes,va='top',ha='left')
       axVol[axInd].set_ylabel('$\\frac{V_\\mathrm{max}}{\\lambda^3}$',size=22,rotation=0,labelpad=15)
       axAng[axInd].axvspan(3.219, 4, color='lightgrey')
       axAng[axInd].set_ylabel('$\\frac{\\phi_0}{\\pi}$',size=22,rotation=0,labelpad=10)
-      axProf[axInd].text(5e-3,.99,'$\\mathrm{(a)}$',transform=axProf[axInd].transAxes,va='top',ha='left')
-      axHei[axInd].text(5e-3,.99,'$\\mathrm{(a)}$',transform=axHei[axInd].transAxes,va='top',ha='left')
+      axAng[axInd].text(.02,.99,'$\\mathrm{(a)~pinned}$',transform=axAng[axInd].transAxes,va='top',ha='left')
+      axProf[axInd].text(5e-3,.99,'$\\mathrm{(a)~pinned}$',transform=axProf[axInd].transAxes,va='top',ha='left')
+      axHei[axInd].text(5e-3,.99,'$\\mathrm{(a)~pinned}$',transform=axHei[axInd].transAxes,va='top',ha='left')
       axWid[axInd].set_xlim([0,4])
       fname = 'exptData/LesageVolVsContRadSq.txt'
       print('open',fname)
@@ -324,8 +328,14 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
       axVol[axInd].plot(df[:,0]*1e-3/capLen, df[:,4]*1e-6*1e-3/capLen**3, '^', mec='r', mfc='None', clip_on=False)
       axI.plot(df[:,0]*1e-3/capLen, df[:,4]*1e-6*1e-3/capLen**3, '^', mec='r', mfc='None')
       axVol[axInd].set_xlim([0,4])
-    axWid[axInd].legend()
+    axWid[axInd].legend(
+      loc="upper left",
+      bbox_to_anchor=(0.01, 0.9),
+      frameon=False,
+      borderaxespad=0,
+    )
   figV.tight_layout(pad=0)
+  figAng.tight_layout(pad=0)
   figV.set_figwidth(10)
   figAng.set_figwidth(10)
   figV.set_figheight(6)
@@ -335,7 +345,7 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
   figV.savefig(fname, transparent=True, format='pdf', bbox_inches='tight', pad_inches=0)
   fname = outFol+'Ang_'+cont+'.pdf'
   print('savin ',fname)
-  figAng.savefig(fname, transparent=True, format='pdf')
+  figAng.savefig(fname, transparent=True, format='pdf', bbox_inches='tight', pad_inches=0)
   fname = outFol+'heightVsVol_'+cont+'.pdf'
   print('savin ',fname)
   figHei.set_figwidth(10)
@@ -350,8 +360,6 @@ def plot_drop_height_vs_rad(nam='rad ang bub'):
   return
 
 def plot_graphical_abstract(nam='rad ang'): 
-  import os
-  #from bubble import AdamsBashforthProfile
   simFol = 'simData/'
   plotFol = 'plots/'
   figProf, axProf = plt.subplots(1)
@@ -382,7 +390,7 @@ def plot_graphical_abstract(nam='rad ang'):
       if 'ang' in cont: spac=s
       for hei in range(5):#5
         heiInd = np.argmin( abs( (hei+1)*df[indVol,1]/5 - df[:indVol+1,1] ) )
-        #AdamsBashforthProfile(1, df[heiInd,5], fname=simFol+f'prof{hei:05}'+fname)
+        subprocess.run(['./run', '1', str(df[heiInd,5]), simFol+f'prof{hei:05}'+fname])
         with open(simFol+f'prof{hei:05}'+fname, encoding = 'utf-8') as f: prof = np.loadtxt(f)
         print(f'loaded '+simFol+f'prof{hei:05}'+fname)
         footInd = np.argmin( abs( df[heiInd,6] - prof[:,6] ))
@@ -412,3 +420,4 @@ def plot_graphical_abstract(nam='rad ang'):
   return
 
 plot_drop_height_vs_rad(nam='loop_rad loop_ang')
+#plot_graphical_abstract() 
