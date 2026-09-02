@@ -12,67 +12,39 @@
 
 #define PI 3.14159265358979323846
 #define MAX_ITER 1000000
-#define MAX_BINS 1000000   /* large enough for expected bin indices */
+#define SENTINEL_VOLUME (-1.0)
+
+/* Indices for double[10] array (BinData) */
+enum {
+    IDX_R = 0,
+    IDX_Z = 1,
+    IDX_PSI = 2,
+    IDX_DPSI = 3,
+    IDX_CAPLEN = 4,
+    IDX_RADTOP = 5,
+    IDX_VOLUME = 6,
+    IDX_AREA = 7,
+    IDX_CENTROID = 8,
+    IDX_MAXRAD = 9
+};
+
+typedef double BinData[10];
 
 /* ------------------------------------------------------------------------- */
-/* Data structures                                                           */
+/* Grid-based nearest neighbour routines (unchanged)                         */
 /* ------------------------------------------------------------------------- */
-
-/* Structure to hold all data that was previously printed for a bin */
-typedef struct {
-    int valid;               /* 1 if this bin has been seen */
-    double r;
-    double minus_z;
-    double psi;
-    double dPsi;
-    double capLen;
-    double RadTop;
-    double Volume;
-    double area;
-    double centroid;
-    double maxRad;
-} BinData;
-
-/* Global arrays for radius and angle bins, different selection criteria */
-BinData radBinsVol[MAX_BINS];
-BinData angBinsVol[MAX_BINS];
-BinData angBinsMaxRad[MAX_BINS];
-BinData radBinsMaxAng[MAX_BINS];
-
-/* Highest bin indices ever used, for final file writing */
-int maxRadBinVolUsed = -1;
-int maxAngBinVolUsed = -1;
-int maxAngBinRadUsed = -1;
-int maxRadBinAngUsed = -1;
-
-/* ------------------------------------------------------------------------- */
-/* Forward declarations                                                      */
-/* ------------------------------------------------------------------------- */
-void write_bin_file(const char *filename, BinData *bins, int max_bin_used);
-int AdamsBashforthProfile(double capLen, double RadTop,
-                          double contactAng, const char *fname,
-                          double angleSave, double radSave,
-                          double angleSaveLarge, double radSaveLarge,
-                          double *outVolume, double *out_r, double *out_z,
-                          double *out_centroid, double *out_psi,
-                          int *out_i);
-
-/* ------------------------------------------------------------------------- */
-/* Grid-based nearest neighbour routines                                     */
-/* ------------------------------------------------------------------------- */
-
 typedef struct {
     double dist;
     int idx;
 } Neighbor;
 
 typedef struct {
-    const double *x, *y;    // point coordinates (not owned)
+    const double *x, *y;
     double min_x, min_y, max_x, max_y;
     double cell_size;
     int nx, ny;
-    int *head;              // head of linked list for each cell (size nx*ny)
-    int *next;              // next pointer for each point (size N)
+    int *head;
+    int *next;
 } Grid;
 
 static void build_grid(Grid *g, const double *x, const double *y, int N) {
@@ -248,9 +220,8 @@ static int knn_grid(const Grid *g, const unsigned char *used,
 }
 
 /* ------------------------------------------------------------------------- */
-/* File utilities                                                            */
+/* File utilities (unchanged)                                                */
 /* ------------------------------------------------------------------------- */
-
 static int parse_line_doubles(const char *line, double *out, int max_cols) {
     int n = 0;
     const char *p = line;
@@ -323,182 +294,138 @@ static int save_txt(const char *path, const double *data, int rows, int cols) {
 /* Adams-Bashforth profile integration                                       */
 /* ------------------------------------------------------------------------- */
 int AdamsBashforthProfile(double capLen, double RadTop,
-                          double contactAng, const char *fname,
+                          const char *fname,
                           double angleSave, double radSave,
                           double angleSaveLarge, double radSaveLarge,
-                          double *outVolume, double *out_r, double *out_z,
-                          double *out_centroid, double *out_psi,
+                          BinData *angBinsVol, int nAngBins,
+                          BinData *angBinsMaxRad, int nAngBinsMaxRad,
+                          BinData *radBinsVol, int nRadBins,
+                          BinData *radBinsMaxAng, int nRadBinsMaxAng,
                           int *out_i)
 {
-    double ds = fmin(fmin(1e-5 * fabs(RadTop), 1e-5 * fabs(capLen)), 1e-5);
-    double psi = 0.0, r = 0.0, z = 0.0;
-    double Volume = 0.0, centroid = 0.0, area = 0.0;
-    double dPsiPrev = 0.0, maxRad = 0.0;
-    double drPrev = 0.0, dzPrev = 0.0;
     int i;
+    double ds = fmin(fmin(1e-5 * fabs(RadTop), 1e-5 * fabs(capLen)), 1e-5);
+    double state[10];
+    memset(state, 0, sizeof(state));
+    state[IDX_CAPLEN] = capLen;
+    state[IDX_RADTOP] = RadTop;
+
+    double drPrev = 0.0, dzPrev = 0.0, dPsiPrev = 0.0;
+    double centroid_sum = 0.0;
 
     FILE *adams_txt = NULL;
     if (fname) adams_txt = fopen(fname, "w");
 
     for (i = 0; i < MAX_ITER; ++i) {
-        double dr = ds * cos(psi);
-        double dz = ds * sin(psi);
+        double dr = ds * cos(state[IDX_PSI]);
+        double dz = ds * sin(state[IDX_PSI]);
         if (i == 0) { drPrev = dr; dzPrev = dz; }
 
-        r += 1.5 * dr - 0.5 * drPrev;
-        z += 1.5 * dz - 0.5 * dzPrev;
+        state[IDX_R] += 1.5 * dr - 0.5 * drPrev;
+        state[IDX_Z] += 1.5 * dz - 0.5 * dzPrev;
         drPrev = dr;
         dzPrev = dz;
 
-        double sinpsi_over_r = (r > 0.0) ? (sin(psi) / r) : 0.0;
-        double dPsi = ds * (2.0 / RadTop - z / (capLen * capLen) - sinpsi_over_r);
-        psi += 1.5 * dPsi - 0.5 * dPsiPrev;
+        double sinpsi_over_r = (state[IDX_R] > 0.0) ? (sin(state[IDX_PSI]) / state[IDX_R]) : 0.0;
+        state[IDX_DPSI] = ds * (2.0 / RadTop - state[IDX_Z] / (capLen * capLen) - sinpsi_over_r);
+        state[IDX_PSI] += 1.5 * state[IDX_DPSI] - 0.5 * dPsiPrev;
 
-        Volume  += PI * r * r * dz;
-        centroid+= z * PI * r * r * dz;
-        area    += 2.0 * PI * r * ds;
-        if (r > maxRad) maxRad = r;
+        state[IDX_VOLUME]  += PI * state[IDX_R] * state[IDX_R] * dz;
+        centroid_sum       += state[IDX_Z] * PI * state[IDX_R] * state[IDX_R] * dz;
+        state[IDX_AREA]    += 2.0 * PI * state[IDX_R] * ds;
+        if (state[IDX_R] > state[IDX_MAXRAD]) state[IDX_MAXRAD] = state[IDX_R];
+
+        state[IDX_CENTROID] = (state[IDX_VOLUME] != 0.0 ? centroid_sum / state[IDX_VOLUME] : 0.0);
 
         if (adams_txt) {
-            if ((i % 100 == 0) || (dPsi > 1e-2)) {
-                fprintf(adams_txt,
-                        "%.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g\n",
-                        r, -z, psi, dPsi, capLen, RadTop, Volume, area,
-                        (Volume != 0.0 ? centroid / Volume : 0.0), maxRad);
+            if ((i % 100 == 0) || (state[IDX_DPSI] > 1e-2)) {
+                for (int j = 0; j < 10; ++j) {
+                    double val = state[j];
+                    if (j == IDX_Z) val = -val;
+                    fprintf(adams_txt, " %.10g", val);
+                }
+                fprintf(adams_txt, "\n");
             }
         }
 
-        /* Fine angle bin handling (for consolidated max) */
+        /* Fine angle bins */
         if (angleSave > 0.0 && i > 0) {
-            int b = (int)floor(psi / PI / angleSave);
-            if (b >= 0 && b < MAX_BINS) {
-                /* 1. Max volume for angle bins */
-                if (!angBinsVol[b].valid || Volume > angBinsVol[b].Volume) {
-                    angBinsVol[b].valid = 1;
-                    angBinsVol[b].r = r;
-                    angBinsVol[b].minus_z = -z;
-                    angBinsVol[b].psi = psi;
-                    angBinsVol[b].dPsi = dPsi;
-                    angBinsVol[b].capLen = capLen;
-                    angBinsVol[b].RadTop = RadTop;
-                    angBinsVol[b].Volume = Volume;
-                    angBinsVol[b].area = area;
-                    angBinsVol[b].centroid = (Volume != 0.0 ? centroid / Volume : 0.0);
-                    angBinsVol[b].maxRad = maxRad;
-                    if (b > maxAngBinVolUsed) maxAngBinVolUsed = b;
-                }
-                /* 2. Max radius for angle bins */
-                if (!angBinsMaxRad[b].valid || r > angBinsMaxRad[b].r) {
-                    angBinsMaxRad[b].valid = 1;
-                    angBinsMaxRad[b].r = r;
-                    angBinsMaxRad[b].minus_z = -z;
-                    angBinsMaxRad[b].psi = psi;
-                    angBinsMaxRad[b].dPsi = dPsi;
-                    angBinsMaxRad[b].capLen = capLen;
-                    angBinsMaxRad[b].RadTop = RadTop;
-                    angBinsMaxRad[b].Volume = Volume;
-                    angBinsMaxRad[b].area = area;
-                    angBinsMaxRad[b].centroid = (Volume != 0.0 ? centroid / Volume : 0.0);
-                    angBinsMaxRad[b].maxRad = maxRad;
-                    if (b > maxAngBinRadUsed) maxAngBinRadUsed = b;
-                }
+            int b = (int)floor(state[IDX_PSI] / PI / angleSave);
+            if (b >= 0 && b < nAngBins) {
+                if (angBinsVol[b][IDX_VOLUME] < SENTINEL_VOLUME || state[IDX_VOLUME] > angBinsVol[b][IDX_VOLUME])
+                    memcpy(angBinsVol[b], state, sizeof(state));
+                if (angBinsMaxRad[b][IDX_VOLUME] < SENTINEL_VOLUME || state[IDX_R] > angBinsMaxRad[b][IDX_R])
+                    memcpy(angBinsMaxRad[b], state, sizeof(state));
             }
         }
 
-        /* Fine radius bin handling (for consolidated max) */
+        /* Fine radius bins */
         if (radSave > 0.0 && i > 0) {
-            int b = (int)floor(r / radSave);
-            if (b >= 0 && b < MAX_BINS) {
-                /* 1. Max volume for radius bins */
-                if (!radBinsVol[b].valid || Volume > radBinsVol[b].Volume) {
-                    radBinsVol[b].valid = 1;
-                    radBinsVol[b].r = r;
-                    radBinsVol[b].minus_z = -z;
-                    radBinsVol[b].psi = psi;
-                    radBinsVol[b].dPsi = dPsi;
-                    radBinsVol[b].capLen = capLen;
-                    radBinsVol[b].RadTop = RadTop;
-                    radBinsVol[b].Volume = Volume;
-                    radBinsVol[b].area = area;
-                    radBinsVol[b].centroid = (Volume != 0.0 ? centroid / Volume : 0.0);
-                    radBinsVol[b].maxRad = maxRad;
-                    if (b > maxRadBinVolUsed) maxRadBinVolUsed = b;
-                }
-                /* 2. Max angle for radius bins */
-                if (!radBinsMaxAng[b].valid || psi > radBinsMaxAng[b].psi) {
-                    radBinsMaxAng[b].valid = 1;
-                    radBinsMaxAng[b].r = r;
-                    radBinsMaxAng[b].minus_z = -z;
-                    radBinsMaxAng[b].psi = psi;
-                    radBinsMaxAng[b].dPsi = dPsi;
-                    radBinsMaxAng[b].capLen = capLen;
-                    radBinsMaxAng[b].RadTop = RadTop;
-                    radBinsMaxAng[b].Volume = Volume;
-                    radBinsMaxAng[b].area = area;
-                    radBinsMaxAng[b].centroid = (Volume != 0.0 ? centroid / Volume : 0.0);
-                    radBinsMaxAng[b].maxRad = maxRad;
-                    if (b > maxRadBinAngUsed) maxRadBinAngUsed = b;
-                }
+            int b = (int)floor(state[IDX_R] / radSave);
+            if (b >= 0 && b < nRadBins) {
+                if (radBinsVol[b][IDX_VOLUME] < SENTINEL_VOLUME || state[IDX_VOLUME] > radBinsVol[b][IDX_VOLUME])
+                    memcpy(radBinsVol[b], state, sizeof(state));
+                if (radBinsMaxAng[b][IDX_VOLUME] < SENTINEL_VOLUME || state[IDX_PSI] > radBinsMaxAng[b][IDX_PSI])
+                    memcpy(radBinsMaxAng[b], state, sizeof(state));
             }
         }
 
-        /* Large angle bin handling (per‑bin files) */
+        /* Large angle bins (per‑bin files) */
         if (angleSaveLarge > 0.0 && i > 0) {
-            int angBinLarge     = (int)floor((psi      / PI) / angleSaveLarge);
-            int angBinLargePrev = (int)floor(((psi-dPsi)/ PI) / angleSaveLarge);
+            int angBinLarge     = (int)floor((state[IDX_PSI]        / PI) / angleSaveLarge);
+            int angBinLargePrev = (int)floor(((state[IDX_PSI] - state[IDX_DPSI]) / PI) / angleSaveLarge);
             if (angBinLarge != angBinLargePrev) {
                 int b = (angBinLarge > angBinLargePrev) ? angBinLarge : angBinLargePrev;
                 char angFname[256];
                 snprintf(angFname, sizeof(angFname), "simData/ang%05d.txt", b);
                 FILE *ang_txt = fopen(angFname, "a");
                 if (ang_txt) {
-                    fprintf(ang_txt,
-                            "%.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g\n",
-                            r, -z, psi, dPsi, capLen, RadTop, Volume, area,
-                            (Volume != 0.0 ? centroid / Volume : 0.0), maxRad);
+                    for (int j = 0; j < 10; ++j) {
+                        double val = state[j];
+                        if (j == IDX_Z) val = -val;
+                        fprintf(ang_txt, " %.10g", val);
+                    }
+                    fprintf(ang_txt, "\n");
                     fclose(ang_txt);
                 }
             }
         }
 
-        /* Large radius bin handling (per‑bin files) */
+        /* Large radius bins (per‑bin files) */
         if (radSaveLarge > 0.0 && i > 0) {
-            int radBinLarge     = (int)floor(r       / radSaveLarge);
-            int radBinLargePrev = (int)floor((r - dr) / radSaveLarge);
+            int radBinLarge     = (int)floor(state[IDX_R] / radSaveLarge);
+            int radBinLargePrev = (int)floor((state[IDX_R] - dr) / radSaveLarge);
             if (radBinLarge != radBinLargePrev) {
                 int b = (radBinLarge > radBinLargePrev) ? radBinLarge : radBinLargePrev;
                 char radFname[256];
                 snprintf(radFname, sizeof(radFname), "simData/rad%05d.txt", b);
                 FILE *rad_txt = fopen(radFname, "a");
                 if (rad_txt) {
-                    fprintf(rad_txt,
-                            "%.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g\n",
-                            r, -z, psi, dPsi, capLen, RadTop, Volume, area,
-                            (Volume != 0.0 ? centroid / Volume : 0.0), maxRad);
+                    for (int j = 0; j < 10; ++j) {
+                        double val = state[j];
+                        if (j == IDX_Z) val = -val;
+                        fprintf(rad_txt, " %.10g", val);
+                    }
+                    fprintf(rad_txt, "\n");
                     fclose(rad_txt);
                 }
             }
         }
 
-        if (psi < 0.0) break;
-        if (psi > PI)  break;
-        if (dPsi > 0.0 && dPsiPrev < 0.0) break;
-        dPsiPrev = dPsi;
+        if (state[IDX_PSI] < 0.0) break;
+        if (state[IDX_PSI] > PI)  break;
+        if (state[IDX_DPSI] > 0.0 && dPsiPrev < 0.0) break;
+        dPsiPrev = state[IDX_DPSI];
     }
 
     if (adams_txt) fclose(adams_txt);
 
-    if (outVolume)  *outVolume  = Volume;
-    if (out_r)      *out_r      = r;
-    if (out_z)      *out_z      = z;
-    if (out_centroid)*out_centroid = (Volume != 0.0 ? centroid / Volume : 0.0);
-    if (out_psi)    *out_psi    = psi;
-    if (out_i)      *out_i      = i;
+    if (out_i) *out_i = i;
     return 0;
 }
 
 /* ------------------------------------------------------------------------- */
-/* write_bin_file                                                            */
+/* write_bin_file (uses loop over data)                                      */
 /* ------------------------------------------------------------------------- */
 void write_bin_file(const char *filename, BinData *bins, int max_bin_used)
 {
@@ -509,20 +436,21 @@ void write_bin_file(const char *filename, BinData *bins, int max_bin_used)
     }
     fprintf(fp, "# bin r -z psi dPsi capLen RadTop Volume area centroid maxRad\n");
     for (int b = 0; b <= max_bin_used; b++) {
-        if (bins[b].valid) {
-            fprintf(fp,
-                    "%d %.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g %.10g\n",
-                    b, bins[b].r, bins[b].minus_z, bins[b].psi,
-                    bins[b].dPsi, bins[b].capLen, bins[b].RadTop,
-                    bins[b].Volume, bins[b].area, bins[b].centroid,
-                    bins[b].maxRad);
+        if (bins[b][IDX_VOLUME] >= 0.0) {  // sentinel check
+            fprintf(fp, "%d", b);
+            for (int j = 0; j < 10; ++j) {
+                double val = bins[b][j];
+                if (j == IDX_Z) val = -val;
+                fprintf(fp, " %.10g", val);
+            }
+            fprintf(fp, "\n");
         }
     }
     fclose(fp);
 }
 
 /* ------------------------------------------------------------------------- */
-/* reorder_drop_height_vs_vol                                                */
+/* reorder_drop_height_vs_vol (unchanged)                                    */
 /* ------------------------------------------------------------------------- */
 int reorder_drop_height_vs_vol(const char *nam)
 {
@@ -562,7 +490,6 @@ int reorder_drop_height_vs_vol(const char *nam)
 
         unsigned char *used = calloc(N, sizeof(unsigned char));
 
-        // Build spatial grid for fast neighbour search
         Grid grid;
         build_grid(&grid, x, y, N);
 
@@ -618,73 +545,77 @@ int reorder_drop_height_vs_vol(const char *nam)
 /* ------------------------------------------------------------------------- */
 int main(int argc, char *argv[])
 {
-    /* If called with 3 arguments: ./run <capLen> <RadTop> <fname> */
     if (argc == 4) {
         double capLen = atof(argv[1]);
         double RadTop = atof(argv[2]);
         const char *fname = argv[3];
-        AdamsBashforthProfile(capLen, RadTop, -1.0, fname,
+        AdamsBashforthProfile(capLen, RadTop, fname,
                               0.0, 0.0, 0.0, 0.0,
-                              NULL, NULL, NULL, NULL, NULL, NULL);        
+                              NULL, 0, NULL, 0, NULL, 0, NULL, 0,
+                              NULL);
         return 0;
     }
 
-    /* Create the simData directory if it doesn't exist */
     mkdir("simData", 0755);
 
-    /* Initialize global bin arrays (valid = 0) */
-    for (int i = 0; i < MAX_BINS; i++) {
-        radBinsVol[i].valid = 0;
-        angBinsVol[i].valid = 0;
-        angBinsMaxRad[i].valid = 0;
-        radBinsMaxAng[i].valid = 0;
+    const double angleSave_fine = 0.001;
+    const double radSave_fine   = 0.01;
+    const double angleSave_coarse = 0.01;
+    const double radSave_coarse   = 0.1;
+
+    int nAng = (angleSave_fine > 0) ? (int)ceil(1.0 / angleSave_fine) + 1 : 0;
+    int nRad = (radSave_fine   > 0) ? (int)ceil(4.0 / radSave_fine)   + 1 : 0;
+
+    BinData *angBinsVol    = malloc(nAng * sizeof(BinData));
+    BinData *angBinsMaxRad = malloc(nAng * sizeof(BinData));
+    BinData *radBinsVol    = malloc(nRad * sizeof(BinData));
+    BinData *radBinsMaxAng = malloc(nRad * sizeof(BinData));
+
+    if ((nAng > 0 && (!angBinsVol || !angBinsMaxRad)) ||
+        (nRad > 0 && (!radBinsVol || !radBinsMaxAng))) {
+        fprintf(stderr, "Memory allocation failed\n");
+        return 1;
     }
 
-    /* Build RadTops = logspace(-1, 1, 0) => no profiles for fine bins */
-    double log_start = -1.0, log_stop = 1.0;
+    // Initialize sentinel volumes to -1
+    for (int i = 0; i < nAng; ++i) {
+        angBinsVol[i][IDX_VOLUME]    = SENTINEL_VOLUME;
+        angBinsMaxRad[i][IDX_VOLUME] = SENTINEL_VOLUME;
+    }
+    for (int i = 0; i < nRad; ++i) {
+        radBinsVol[i][IDX_VOLUME]    = SENTINEL_VOLUME;
+        radBinsMaxAng[i][IDX_VOLUME] = SENTINEL_VOLUME;
+    }
+
     int N = 10000;
+    double log_start = -2.0, log_stop = 2.0;
     for (int b = 0; b < N; ++b) {
         double t = (N == 1) ? 0.0 : (double)b / (double)(N - 1);
         double log_val = log_start + t * (log_stop - log_start);
         double RadTop = pow(10.0, log_val);
-        
-        int i;   // will hold the internal iteration count
-        AdamsBashforthProfile(1.0, RadTop, -1.0, NULL,
-                              0.001, 0.01,   /* fine bins for consolidated max */
-                              0,  0,    /* coarse bins for per‑bin files   */
-                              NULL, NULL, NULL, NULL, NULL, &i);
 
-        if (b % 100 == 0) {
-            printf("b %d of %d RadTop %.10g i %d\n", b, N, RadTop, i);
-        }
-    }
-
-    /* Write all consolidated files (only if N > 0) */
-    if (N) {
-        write_bin_file("simData/ConstAngMaxVol.txt", angBinsVol, maxAngBinVolUsed);
-        write_bin_file("simData/ConstRadMaxVol.txt", radBinsVol, maxRadBinVolUsed);
-        write_bin_file("simData/ConstAngMaxRad.txt", angBinsMaxRad, maxAngBinRadUsed);
-        write_bin_file("simData/ConstRadMaxAng.txt", radBinsMaxAng, maxRadBinAngUsed);
-    }
-
-    /* Now run coarse bins for per‑bin files */
-    N = 10000;
-    log_start = -2.0; log_stop = 2.0;
-    for (int b = 0; b < N; ++b) {
-        double t = (N == 1) ? 0.0 : (double)b / (double)(N - 1);
-        double log_val = log_start + t * (log_stop - log_start);
-        double RadTop = pow(10.0, log_val);
-        
         int i;
-        AdamsBashforthProfile(1.0, RadTop, -1.0, NULL,
-                              0, 0,   /* fine bins for consolidated max */
-                              0.01,  0.1,    /* coarse bins for per‑bin files   */
-                              NULL, NULL, NULL, NULL, NULL, &i);
-
-        if (b % 100 == 0) {
+        AdamsBashforthProfile(1.0, RadTop, NULL,
+                              angleSave_fine, radSave_fine,
+                              angleSave_coarse, radSave_coarse,
+                              angBinsVol, nAng,
+                              angBinsMaxRad, nAng,
+                              radBinsVol, nRad,
+                              radBinsMaxAng, nRad,
+                              &i);
+        if (b % 100 == 0)
             printf("b %d of %d RadTop %.10g i %d\n", b, N, RadTop, i);
-        }
     }
+
+    write_bin_file("simData/ConstAngMaxVol.txt", angBinsVol, nAng - 1);
+    write_bin_file("simData/ConstRadMaxVol.txt", radBinsVol, nRad - 1);
+    write_bin_file("simData/ConstAngMaxRad.txt", angBinsMaxRad, nAng - 1);
+    write_bin_file("simData/ConstRadMaxAng.txt", radBinsMaxAng, nRad - 1);
+
+    free(angBinsVol);
+    free(angBinsMaxRad);
+    free(radBinsVol);
+    free(radBinsMaxAng);
 
     reorder_drop_height_vs_vol("ang");
     reorder_drop_height_vs_vol("rad");
