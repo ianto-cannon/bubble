@@ -268,7 +268,7 @@ def plot_volume_and_angle():
   with open(inFol + 'BinRadMaxVol.txt', encoding='utf-8') as f: df = np.loadtxt(f)
   axV[0,0].plot(df[:,1], df[:, 7], c='r', clip_on=False)
   axV[1,0].plot(df[:,1], df[:, 6], c='r', label='$R_h/\\lambda$')
-  axA[0].plot(df[:,1], 1 - df[:,3]/np.pi, c='r', clip_on=False, zorder=3)
+  axA[0].plot(df[10:,1], 1 - df[10:,3]/np.pi, c='r', clip_on=False, zorder=3)
   axI = inset_axes(axV[0,0], width="40%", height="50%", loc='upper left')
   axI.yaxis.set_label_position("right")
   axI.yaxis.tick_right()
@@ -378,6 +378,7 @@ def plot_volume_and_angle():
   axV[0,1].plot(xx, 4 * np.pi * (0.0104 * xx * 180) ** 3 / 3, ls='dotted', c='k')
   axI.plot(xx, 4 * np.pi * (0.0104 * xx * 180) ** 3 / 3, ls='dotted', c='k')
   axA[1].plot(3.219 * xx ** 2, xx, ls='dotted', c='k', zorder=3)
+  axA[1].axvspan(3.219, 3.832, color='lightgrey')
   axV[1,1].set_xlabel('$\\phi_0/\\pi$')
   axV[1,1].text(0.02, 0.97, '$\\mathrm{(d)~spreading}$', transform=axV[1,1].transAxes, va='top', ha='left')
 

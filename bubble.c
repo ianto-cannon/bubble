@@ -386,7 +386,7 @@ int AdamsBashforthProfile(double capLen, double RadTop,
     state[IDX_CENTROID] = (state[IDX_VOLUME] != 0.0 ? centroid_sum / state[IDX_VOLUME] : 0.0);
 
     if (adams_txt) {
-      if ((i % 100 == 0) || (state[IDX_DPSI] > 1e-2)) {
+      if ((i % 1000 == 0) || (state[IDX_DPSI] > 1e-2)) {
         for (int j = 0; j < 10; ++j) {
           double val = state[j];
           if (j == IDX_Z) val = -val;
@@ -613,7 +613,7 @@ int main(int argc, char *argv[])
   mkdir(SIMDATA_DIR, 0755);
 
   const double angleSave_fine = 0.001;
-  const double radSave_fine   = 0.01;
+  const double radSave_fine   = 0.0001;
   const double angleSave_coarse = 0.01;
   const double radSave_coarse   = 0.1;
 
@@ -666,7 +666,7 @@ int main(int argc, char *argv[])
       printf("b %d of %d RadTop %.10g i %d\n", b, N, RadTop, i);
     
     t = (N == 1) ? 0.0 : (double)b / (double)(N - 1);
-    log_start = -2.0, log_stop = 3.0;
+    log_start = -3.0, log_stop = 3.0;
     log_val = log_start + t * (log_stop - log_start);
     RadTop = pow(10.0, log_val);
     AdamsBashforthProfile(1.0, RadTop, NULL,
