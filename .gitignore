@@ -1,3 +1,8 @@
 .DS_Store
 __pycache__/
 run
+main.aux
+main.bbl
+main.blg
+main.log
+main.out
