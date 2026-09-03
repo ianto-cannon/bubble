@@ -646,13 +646,29 @@ int main(int argc, char *argv[])
   }
 
   int N = 10000;
-  double log_start = -2.0, log_stop = 2.0;
   for (int b = 0; b < N; ++b) {
     double t = (N == 1) ? 0.0 : (double)b / (double)(N - 1);
+    double log_start = -1.0, log_stop = 0.0;
     double log_val = log_start + t * (log_stop - log_start);
     double RadTop = pow(10.0, log_val);
-
     int i;
+    AdamsBashforthProfile(1.0, RadTop, NULL,
+                angleSave_fine, radSave_fine,
+                angleSave_coarse, radSave_coarse,
+                angBinsMaxVol, nAng,
+                angBinsMaxRad, nAng,
+                angBinsMaxWid, nAng,
+                radBinsMaxVol, nRad,
+                radBinsMaxAng, nRad,
+                radBinsMaxWid, nRad,
+                &i);
+    if (b % 100 == 0)
+      printf("b %d of %d RadTop %.10g i %d\n", b, N, RadTop, i);
+    
+    t = (N == 1) ? 0.0 : (double)b / (double)(N - 1);
+    log_start = -2.0, log_stop = 3.0;
+    log_val = log_start + t * (log_stop - log_start);
+    RadTop = pow(10.0, log_val);
     AdamsBashforthProfile(1.0, RadTop, NULL,
                 angleSave_fine, radSave_fine,
                 angleSave_coarse, radSave_coarse,
