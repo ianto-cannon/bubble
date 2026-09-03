@@ -268,7 +268,11 @@ def plot_volume_and_angle():
   with open(inFol + 'BinRadMaxVol.txt', encoding='utf-8') as f: df = np.loadtxt(f)
   axV[0,0].plot(df[:,1], df[:, 7], c='r', clip_on=False)
   axV[1,0].plot(df[:,1], df[:, 6], c='r', label='$R_h/\\lambda$')
-  axA[0].plot(df[10:,1], 1 - df[10:,3]/np.pi, c='r', clip_on=False, zorder=3)
+  #Remove noise
+  minLen=100
+  minAng = [ np.min(1 - df[i:i+minLen, 3] / np.pi) for i in range(0, len(df[:,3])-minLen, minLen )]
+  rad = [ df[i + minLen//2, 1] for i in range( 0, len(df[:,3])-minLen, minLen )]
+  axA[0].plot(rad, minAng, c='r', clip_on=False, zorder=3)
   axI = inset_axes(axV[0,0], width="40%", height="50%", loc='upper left')
   axI.yaxis.set_label_position("right")
   axI.yaxis.tick_right()
