@@ -1,0 +1,41 @@
+\ProvidesPackage{rsc}[2026/06/16 RSC Faraday Package]
+\RequirePackage{extsizes}
+\RequirePackage[super,sort&compress,comma]{natbib}
+\RequirePackage[version=3]{mhchem}
+\RequirePackage[left=1.5cm, right=1.5cm, top=1.785cm, bottom=2.0cm]{geometry}
+\RequirePackage{mathptmx}
+\RequirePackage{etoolbox}
+\RequirePackage{sectsty}
+\RequirePackage{graphicx}
+\RequirePackage[format=plain,justification=justified,singlelinecheck=false,font={stretch=1.125,small,sf},labelfont=bf,labelsep=space]{caption}
+\RequirePackage{float}
+\RequirePackage{fancyhdr}
+\RequirePackage{fnpos}
+\RequirePackage[english]{babel}
+\RequirePackage{array}
+\RequirePackage[T1]{fontenc}
+\RequirePackage[dvipsnames]{xcolor}
+\RequirePackage{setspace}
+\RequirePackage[compact]{titlesec}
+\RequirePackage{hyperref}
+%\usepackage{balance}
+%\usepackage{tcolorbox}
+%\usepackage{lastpage}
+%\patchcmd{\@maketitle}{\begin{center}}{\begin{flushleft}}{}{}
+%\patchcmd{\@maketitle}{\begin{tabular}[t]{c}}{\begin{tabular}[t]{@{}l}}{}{}
+%\patchcmd{\@maketitle}{\end{center}}{\end{flushleft}}{}{}
+%\usepackage{droidsans}
+%\usepackage{charter}
+\renewcommand{\familydefault}{\sfdefault}
+\setlength{\parindent}{0pt}
+\pagestyle{fancy}
+\definecolor{cream}{RGB}{222,217,201}
+\titleformat{\section}
+  {\bfseries\fontsize{12pt}{14pt}\selectfont}
+  {\thesection}
+  {1em}
+  {}
+\addto{\captionsenglish}{%
+  \renewcommand{\refname}{Notes and references}
+}
+\endinput
