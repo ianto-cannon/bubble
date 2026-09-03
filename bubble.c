@@ -645,7 +645,7 @@ int main(int argc, char *argv[])
     radBinsMaxWid[i][IDX_VOLUME] = SENTINEL_VOLUME;
   }
 
-  int N = 1000;
+  int N = 10000;
   double log_start = -2.0, log_stop = 2.0;
   for (int b = 0; b < N; ++b) {
     double t = (N == 1) ? 0.0 : (double)b / (double)(N - 1);
