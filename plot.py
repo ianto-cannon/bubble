@@ -15,20 +15,6 @@ inFol = 'simData/'
 outFol = 'plots/'
 cav = 0.3
 
-def colRB(cont, r):
-  if r < 1:
-    colVal = r ** 0.5
-    if 'rad' in cont:
-      return (colVal, 0, 0)
-    else:
-      return (0, 0, colVal)
-  else:
-    colVal = 1 - 1 / r
-    if 'rad' in cont:
-      return (1, colVal, colVal)
-    else:
-      return (colVal, colVal, 1)
-
 # ------------------------------------------------------------
 # Function 1: profiles and height vs volume
 # ------------------------------------------------------------
@@ -40,10 +26,8 @@ def plot_profiles_and_height_vs_vol(nam='rad ang bub'):
     axInd = 0
     if 'ang' in cont:
       axInd = 1
-      col = 'b'
     elif 'rad' in cont:
       axInd = 0
-      col = 'r'
     else:
       continue
 
@@ -68,7 +52,7 @@ def plot_profiles_and_height_vs_vol(nam='rad ang bub'):
       angl = 1 - df[indVol, 2] / np.pi
 
       # ----- Height vs volume (light grey + black curves) -----
-      axHei[axInd].plot(df[:indVol + 1, 6], -df[:indVol + 1, 1], c=col, lw=0.5, alpha=0.5)
+      axHei[axInd].plot(df[:indVol + 1, 6], -df[:indVol + 1, 1], c='grey', lw=0.5, alpha=0.5)
       if 'ang' in cont and round(angl * 100) % 20 == 0 and angl > 50 / 180:
         axHei[axInd].text(df[indVol, 6], -df[indVol, 1] + 0.05,
                   rf"${angl:.1f}$", va='bottom', ha='center')
@@ -85,20 +69,7 @@ def plot_profiles_and_height_vs_vol(nam='rad ang bub'):
       if 'ang' in cont and round(angl * 100) % 20 != 0:
         continue
       
-      axHei[axInd].plot(df[:indVol + 1, 6], -df[:indVol + 1, 1], c=col, zorder=3)
-
-      # Colour bar inset
-      axRt = axProf[axInd].inset_axes(
-        (18 / 21.5, 2.6 / 3, (21.1 - 18) / 21.5, 0.2 / 3)
-      )
-      axRt.set_xscale('log')
-      axRt.set_xlabel('$R_h/\\lambda$')
-      axRt.set_xlim([0.1, 10])
-      axRt.set_yticks([])
-      axRt.tick_params(which='both', direction='in', top=True, right=True)
-      for ri in range(21):
-        Rt = 10 ** ((ri - 10) / 10)
-        axRt.plot((Rt, Rt), (0, 1), lw=6, c=colRB(cont, Rt), zorder=-1)
+      axHei[axInd].plot(df[:indVol + 1, 6], -df[:indVol + 1, 1], c='grey', zorder=3)
 
       # Horizontal spacing
       if 'ang' in cont:
@@ -117,7 +88,10 @@ def plot_profiles_and_height_vs_vol(nam='rad ang bub'):
       drawCoord = (6 < spac < 11)
 
       # Load and draw profiles for each height level
-      for hei in reversed(range(5)):
+      for hei in range(5):
+        if hei<4: col = 'grey'
+        elif 'rad' in fname: col = 'r'
+        elif 'ang' in fname: col = 'b'
         heiInd = np.argmin(abs((hei + 1) * df[indVol, 1] / 5 - df[:indVol + 1, 1]))
         fPath = os.path.join(inFol, f'prof{hei:05}' + fname)
         if not os.path.exists(fPath):
@@ -128,7 +102,7 @@ def plot_profiles_and_height_vs_vol(nam='rad ang bub'):
         footInd = np.argmin(abs(df[heiInd, 6] - prof[:, 6]))
 
         axHei[axInd].plot(prof[footInd, 6], -prof[footInd, 1],
-                  'o', ms=5, c=colRB(cont, df[heiInd, 5]),
+                  'o', ms=5, c=col,
                   clip_on=False, zorder=4)
 
         xProf = np.concatenate((-prof[:footInd, 0][::-1], prof[:footInd, 0]))
@@ -136,7 +110,7 @@ def plot_profiles_and_height_vs_vol(nam='rad ang bub'):
         yProf = np.concatenate((prof[:footInd, 1][::-1] - prof[footInd, 1],
                     prof[:footInd, 1] - prof[footInd, 1]))
         axProf[axInd].plot(xProf, yProf,
-                   c=colRB(cont, df[heiInd, 5]),
+                   c=col,
                    clip_on=False, zorder=4)
 
         if not drawCoord or hei < 4:
@@ -301,7 +275,7 @@ def plot_volume_and_angle():
   axV[0,0].set_ylabel('$\\frac{V_\\mathrm{max}}{\\lambda^3}$', size=22, rotation=0, labelpad=15)
   axA[0].axvspan(3.219, 3.832, color='whitesmoke')
   axA[0].set_ylabel('$\\frac{\\phi_0^2}{\\pi^2}$', size=22, rotation=0, labelpad=10)
-  axA[0].text(0.02, 0.99, '$\\mathrm{(a)~pinned}$', transform=axA[0].transAxes, va='top', ha='left')
+  axA[0].text(0.98, 0.01, '$\\mathrm{(a)~pinned}$', transform=axA[0].transAxes, va='bottom', ha='right')
   axV[1,0].set_xlim([0, 4])
 
   with open(inFol + 'BinRadMaxWid.txt', encoding='utf-8') as f: df = np.loadtxt(f)
@@ -309,7 +283,6 @@ def plot_volume_and_angle():
   axV[1,0].plot(df[:,1], df[:,1], ls='dotted', c='grey', label='$r_0/\\lambda$')
 
   with open(inFol + 'BinRadMaxAng.txt', encoding='utf-8') as f: df = np.loadtxt(f)
-  #axA[0].plot(df[:,1], (1 - df[:,3]/np.pi)**2, c='r', ls='dashed', clip_on=False, zorder=3)
   
   for fname in reversed(sorted(os.listdir(inFol))):
     if 'prof' in fname or 'txt' not in fname: continue
@@ -325,18 +298,21 @@ def plot_volume_and_angle():
       extremInd = np.argmax(df[:, 0])
       df[0, 0]=0
     else: continue
-    axA[axInd].plot( [df[0, 0], df[extremInd, 0]], [ (1 - df[0, 2] / np.pi)**2, (1 - df[extremInd, 2] / np.pi)**2], c='k', lw=0.1)
+    axA[axInd].plot( [df[0, 0], df[extremInd, 0]], [ (1 - df[0, 2] / np.pi)**2, (1 - df[extremInd, 2] / np.pi)**2], c='grey', lw=0.1)
     if 'rad' in fname and round(df[0, 0] * 10) % 10 != 5: continue
     if 'ang' in fname and round(angl * 100) % 20 != 0: continue
-    axA[axInd].plot( [df[0, 0], df[extremInd, 0]], [ (1 - df[0, 2] / np.pi)**2, (1 - df[extremInd, 2] / np.pi)**2], c='k')
+    axA[axInd].plot( [df[0, 0], df[extremInd, 0]], [ (1 - df[0, 2] / np.pi)**2, (1 - df[extremInd, 2] / np.pi)**2], c='grey')
     for hei in range(5):
+      if hei<4: col = 'grey'
+      elif 'rad' in fname: col = 'r'
+      elif 'ang' in fname: col = 'b'
       fPath = os.path.join(inFol, f'prof{hei:05}' + fname)
       if not os.path.exists(fPath): continue
       with open(fPath, encoding='utf-8') as f: prof = np.loadtxt(f)
       heiInd = np.argmin(abs((hei + 1) * df[indVol, 1] / 5 - df[:indVol + 1, 1]))
       footInd = np.argmin(abs(df[heiInd, 6] - prof[:, 6]))
       axA[axInd].plot(prof[footInd, 0], (1 - prof[footInd, 2] / np.pi)**2, 'o', ms=5, 
-        c=colRB(fname[5:8], prof[footInd, 5]), clip_on=False, zorder=4)
+        c=col, clip_on=False, zorder=4)
   
   # ----- Experimental data for pinned -----
   fname = 'exptData/LesageVolVsContRadSq.txt'
@@ -398,7 +374,7 @@ def plot_volume_and_angle():
   #axI.set_ylim([0.01, 100])
   #axI.plot( (1 - df[:,3]/np.pi)**3, df[:, 7], c='b')
   axV[0,1].text(0.03, 0.95, '$\\mathrm{(b)~spreading}$', transform=axV[0,1].transAxes, va='top', ha='left')
-  axA[1].text(0.02, 0.99, '$\\mathrm{(b)~spreading}$', transform=axA[1].transAxes, va='top', ha='left')
+  axA[1].text(0.98, 0.01, '$\\mathrm{(b)~spreading}$', transform=axA[1].transAxes, va='bottom', ha='right')
   
   with open(inFol + 'BinAngMaxWid.txt', encoding='utf-8') as f: df = np.loadtxt(f)
   axV[1,1].plot( (1 - df[:,3]/np.pi)**3, df[:,10], ls='dashed', c='b', clip_on=False, zorder=3, label='$r_\\mathrm{max}/\\lambda$')
@@ -534,6 +510,9 @@ def plot_graphical_abstract(nam='rad ang'):
       if 'ang' in cont:
         spac = s
       for hei in range(5):
+        if hei<4: col = 'grey'
+        elif 'rad' in fname: col = 'r'
+        elif 'ang' in fname: col = 'b'
         heiInd = np.argmin(abs((hei + 1) * df[indVol, 1] / 5 - df[:indVol + 1, 1]))
         fPath = inFol + f'prof{hei:05}' + fname
         if not os.path.exists(fPath):
@@ -545,7 +524,7 @@ def plot_graphical_abstract(nam='rad ang'):
         xProf = xProf + spac
         yProf = np.concatenate((prof[:footInd, 1][::-1] - prof[footInd, 1],
                     prof[:footInd, 1] - prof[footInd, 1]))
-        axProf.plot(xProf, yProf, c=colRB(cont, df[heiInd, 5]),
+        axProf.plot(xProf, yProf, c=col,
               clip_on=False, zorder=4)
   axProf.set_axis_off()
   axProf.set_ylim([-0.5, 2.5])
