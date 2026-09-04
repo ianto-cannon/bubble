@@ -274,7 +274,7 @@ def plot_volume_and_angle():
   minAng = np.array([ np.min(1 - df[i:i+minLen, 3] / np.pi) for i in range(0, len(df[:,3])-minLen, minLen )])
   rad = [ df[i + minLen//2, 1] for i in range( 0, len(df[:,3])-minLen, minLen )]
   axA[0].plot(rad, minAng**2, c='r', clip_on=False, zorder=3)
-  axI = inset_axes(axV[0,0], width="40%", height="50%", loc='upper left')
+  axI = inset_axes(axV[0,0], width="35%", height="45%", loc='upper left')
   axI.yaxis.set_label_position("right")
   axI.yaxis.tick_right()
   axI.tick_params(which='both', direction='in', top=True, left=True, right=True)
@@ -296,8 +296,8 @@ def plot_volume_and_angle():
   axA[0].set_yticks([0, 0.25, 0.5, 0.75, 1])
   axV[1,0].axvspan(3.219, 3.832, color='whitesmoke')
   axV[0,0].axvspan(3.219, 3.832, color='whitesmoke')
-  axI.text(0.03, 0.97, '$\\mathrm{(a)~pinned}$', transform=axI.transAxes, va='top', ha='left')
-  axV[1,0].text(0.02, 0.97, '$\\mathrm{(c)~pinned}$', transform=axV[1,0].transAxes, va='top', ha='left')
+  axV[0,0].text(0.03, 0.95, '$\\mathrm{(a)~pinned}$', transform=axV[0,0].transAxes, va='top', ha='left')
+  axV[1,0].text(0.03, 0.97, '$\\mathrm{(c)~pinned}$', transform=axV[1,0].transAxes, va='top', ha='left')
   axV[0,0].set_ylabel('$\\frac{V_\\mathrm{max}}{\\lambda^3}$', size=22, rotation=0, labelpad=15)
   axA[0].axvspan(3.219, 3.832, color='whitesmoke')
   axA[0].set_ylabel('$\\frac{\\phi_0^2}{\\pi^2}$', size=22, rotation=0, labelpad=10)
@@ -388,17 +388,16 @@ def plot_volume_and_angle():
   axV[0,1].plot( (1 - df[:,3]/np.pi)**3, df[:, 7], c='b', clip_on=False)
   axV[1,1].plot( (1 - df[:,3]/np.pi)**3, df[:, 6], c='b', label='$R_h/\\lambda$', clip_on=False)
   axA[1].plot(df[:,1], (1 - df[:,3]/np.pi)**2, c='b')
-  axI = inset_axes(axV[0,1], width="40%", height="50%", loc='upper left')
-  axI.yaxis.set_label_position("right")
-  axI.yaxis.tick_right()
-  axI.tick_params(which='both', direction='in', top=True, left=True, right=True, pad=6)
-  axI.set_xscale('log')
-  axI.set_yscale('log')
-  axI.set_xlim([0.07, 1])
-  axI.set_ylim([0.01, 100])
-  axI.plot( (1 - df[:,3]/np.pi)**3, df[:, 7], c='b')
-  axI.text(0.03, 0.97, '$\\mathrm{(b)~spreading}$',
-         transform=axI.transAxes, va='top', ha='left')
+  #axI = inset_axes(axV[0,1], width="40%", height="50%", loc='lower right')
+  #axI.xaxis.set_label_position("top")
+  #axI.xaxis.tick_top()
+  #axI.tick_params(which='both', direction='in', top=True, left=True, right=True, pad=6)
+  #axI.set_xscale('log')
+  #axI.set_yscale('log')
+  #axI.set_xlim([1e-4, 1])
+  #axI.set_ylim([0.01, 100])
+  #axI.plot( (1 - df[:,3]/np.pi)**3, df[:, 7], c='b')
+  axV[0,1].text(0.03, 0.95, '$\\mathrm{(b)~spreading}$', transform=axV[0,1].transAxes, va='top', ha='left')
   axA[1].text(0.02, 0.99, '$\\mathrm{(b)~spreading}$', transform=axA[1].transAxes, va='top', ha='left')
   
   with open(inFol + 'BinAngMaxWid.txt', encoding='utf-8') as f: df = np.loadtxt(f)
@@ -408,11 +407,11 @@ def plot_volume_and_angle():
   #axA[1].plot(df[:,1], (1 - df[:,3]/np.pi)**2, c='b', ls='dashed', clip_on=False, zorder=3)
   xx = np.linspace(0, 1)
   axV[0,1].plot(xx**3, 4 * np.pi * (0.0104 * xx * 180) ** 3 / 3, ls='dotted', c='grey')
-  axI.plot(xx**3, 4 * np.pi * (0.0104 * xx * 180) ** 3 / 3, ls='dotted', c='grey')
+  #axI.plot(xx**3, 4 * np.pi * (0.0104 * xx * 180) ** 3 / 3, ls='dotted', c='grey')
   axA[1].plot(3.219 * xx, xx, ls='dotted', c='grey', zorder=3)
   axA[1].axvspan(3.219, 3.832, color='whitesmoke')
   axV[1,1].set_xlabel('$\\phi_0^3/\\pi^3$')
-  axV[1,1].text(0.02, 0.97, '$\\mathrm{(d)~spreading}$', transform=axV[1,1].transAxes, va='top', ha='left')
+  axV[1,1].text(0.03, 0.97, '$\\mathrm{(d)~spreading}$', transform=axV[1,1].transAxes, va='top', ha='left')
 
   # ----- Experimental data for spreading -----
   fname = 'exptData/demirkir24life.txt'
@@ -423,15 +422,15 @@ def plot_volume_and_angle():
     density = df[i, 2] - 0.08988 * 1e-6
     surf = df[i, 3] * 1e-3
     capLen = (surf / density / 9.81) ** 0.5
-    mid = (df[i, 0] + df[i, 4]) / 2 / 180
-    if df[i, 0] - mid * 180 > 20:
+    mid =  .5*(df[i, 0]/180)**3 + .5*(df[i, 4]/180)**3
+    if df[i, 0] - df[i, 4] > 20:
       continue
-    axV[0,1].errorbar(mid**3, 4 * np.pi / 3 * rad ** 3 / capLen ** 3,
-                xerr=[[df[i, 0] / 180 - mid], [mid - df[i, 4] / 180]],
+    axV[0,1].errorbar(mid, 4 * np.pi / 3 * rad ** 3 / capLen ** 3,
+                xerr=[[ (df[i, 0] / 180)**3 - mid], [mid - (df[i, 4] / 180)**3 ]],
                 fmt='^', c='b', mfc='None', clip_on=False, zorder=3)
-    axI.errorbar(mid**3, 4 * np.pi / 3 * rad ** 3 / capLen ** 3,
-           xerr=[[df[i, 0] / 180 - mid], [mid - df[i, 4] / 180]],
-           fmt='^', c='b', mfc='None', clip_on=False, zorder=3)
+    #axI.errorbar(mid, 4 * np.pi / 3 * rad ** 3 / capLen ** 3,
+    #       xerr=[[ (df[i, 0] / 180)**3 - mid], [mid - (df[i, 4] / 180)**3]],
+    #       fmt='^', c='b', mfc='None', clip_on=False, zorder=3)
 
   fname = 'exptData/allred21role.txt'
   print('open', fname)
@@ -451,8 +450,8 @@ def plot_volume_and_angle():
       continue
     axV[0,1].plot(mid**3, vol, 'v', c='b', mfc='None', zorder=3)
     axV[0,1].plot([mn**3, mx**3], [vol, vol], c='b', zorder=3)
-    axI.plot(mid**3, vol, 'v', c='b', mfc='None', zorder=3)
-    axI.plot([mn**3, mx**3], [vol, vol], c='b', zorder=3)
+    #axI.plot(mid**3, vol, 'v', c='b', mfc='None', zorder=3)
+    #axI.plot([mn**3, mx**3], [vol, vol], c='b', zorder=3)
 
   fname = 'exptData/huang25effects.txt'
   print('open', fname)
@@ -460,17 +459,24 @@ def plot_volume_and_angle():
   density = 998
   capLen = (surf / density / 9.81) ** 0.5
   with open(fname) as f: df = np.loadtxt(f, skiprows=1)
+  for j in range(3): df[:,j] = (df[:,j]/180)**3
   for i in range(len(df[:, 0])):
-    if df[i, 0] < 50:
+    if df[i, 0] < (50/180)**3:
       continue
-    axV[0,1].errorbar(df[i, 0] / 180, df[i, 3] / capLen ** 3,
-                xerr=[[df[i, 1] / 180 - df[i, 0] / 180],
-                  [df[i, 0] / 180 - df[i, 2] / 180]],
+    axV[0,1].errorbar( df[i, 0], df[i, 3] / capLen ** 3,
+                xerr = [ [df[i, 1] - df[i, 0]] , [df[i, 0] - df[i, 2]] ],
                 fmt='d', c='b', mfc='None', clip_on=False, zorder=3)
-    axI.errorbar(df[i, 0] / 180, df[i, 3] / capLen ** 3,
-           xerr=[[df[i, 1] / 180 - df[i, 0] / 180],
-               [df[i, 0] / 180 - df[i, 2] / 180]],
-           fmt='d', c='b', mfc='None', clip_on=False, zorder=3)
+    #axI.errorbar(df[i, 0], df[i, 3] / capLen ** 3,
+    #       xerr=[[df[i, 1] - df[i, 0]], [df[i, 0] - df[i, 2]]],
+    #       fmt='d', c='b', mfc='None', clip_on=False, zorder=3)
+    #axV[0,1].errorbar( (df[i, 0] / 180)**3, df[i, 3] / capLen ** 3,
+    #            xerr=[[df[i, 1] / 180 - df[i, 0] / 180],
+    #              [df[i, 0] / 180 - df[i, 2] / 180]],
+    #            fmt='d', c='b', mfc='None', clip_on=False, zorder=3)
+    #axI.errorbar(df[i, 0] / 180, df[i, 3] / capLen ** 3,
+    #       xerr=[[df[i, 1] / 180 - df[i, 0] / 180],
+    #           [df[i, 0] / 180 - df[i, 2] / 180]],
+    #       fmt='d', c='b', mfc='None', clip_on=False, zorder=3)
 
 
   axV[1,0].legend(loc="upper left", bbox_to_anchor=(0.01, 0.9), frameon=False, borderaxespad=0)
@@ -478,7 +484,7 @@ def plot_volume_and_angle():
 
   axV[1,0].set_xlim([0, 4])
   axV[1,1].set_xlim([0, 1])
-  axV[0,0].set_ylim([0, 30])
+  axV[0,0].set_ylim([0, 25])
   axV[1,0].set_ylim([0, 4])
   figA.subplots_adjust(left=0.1, right=0.97, bottom=0.2, top=0.98)
   
