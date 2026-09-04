@@ -18,7 +18,7 @@ cav = 0.3
 # ------------------------------------------------------------
 # Function 1: profiles and height vs volume
 # ------------------------------------------------------------
-def plot_profiles_and_height_vs_vol(nam='rad ang bub'):
+def plot_profiles_and_height_vs_vol(nam='rad ang'):
   figProf, axProf = plt.subplots(2, sharex=True)
   figHei, axHei = plt.subplots(1, 2, sharey=True)
 
@@ -54,14 +54,13 @@ def plot_profiles_and_height_vs_vol(nam='rad ang bub'):
       # ----- Height vs volume (light grey + black curves) -----
       axHei[axInd].plot(df[:indVol + 1, 6], -df[:indVol + 1, 1], c='grey', lw=0.5, alpha=0.5)
       if 'ang' in cont and round(angl * 100) % 20 == 0 and angl > 50 / 180:
-        axHei[axInd].text(df[indVol, 6], -df[indVol, 1] + 0.05,
-                  rf"${angl:.1f}$", va='bottom', ha='center')
-      if 'rad' in cont and round(df[0, 0] * 10) % 10 == 5 and df[0, 0] < 3.2 and df[0, 0] > 0.05:
-        axHei[axInd].text(df[indVol, 6], -df[indVol, 1] + 0.05,
-                  rf"${df[0, 0]:.1f}$", va='bottom', ha='center')
-      if 'bub' in cont and df[0, 5] > 0.5 and df[0, 5] <= 1:
-        axHei[axInd].text(df[indVol, 6], -df[indVol, 1] + 0.05,
-                  rf"${df[0, 5]:.1f}$", va='center', ha='left')
+        if angl<1: axHei[axInd].text(df[indVol, 6], -df[indVol, 1],
+                  rf"$\frac{{\phi_0}}{{\pi}}\!=\!{angl:.1f}$", va='bottom', ha='center')
+        else: axHei[axInd].text(df[indVol, 6], -df[indVol, 1] + 0.03,
+                  rf"$\frac{{\phi_0}}{{\pi}}\!=\!{angl:.0f}$", va='bottom', ha='center')
+      if 'rad' in cont and round(df[0, 0] * 10) % 10 == 5 and df[0, 0] > 0.05:
+        axHei[axInd].text(df[indVol, 6], -df[indVol, 1],
+                  rf"$\frac{{r_0}}{{\lambda}}\!=\!{df[0, 0]:.1f}$", va='bottom', ha='center')
 
       # ----- Skip drawing profiles for some cases -----
       if 'rad' in cont and round(df[0, 0] * 10) % 10 != 5:

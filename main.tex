@@ -42,7 +42,7 @@ We consider a simplified system consisting of a circular cavity of radius $r_0$ 
 \subsection{Governing equation}
 \begin{figure}
 \includegraphics[width=\textwidth]{plots/pin}
-\caption{(a) Profiles of pinned bubbles with contact radius $r_0/\lambda\in\{0.5,1.5,2.5,3.5\}$, from left to right. The coordinate system used for solving Equation~\ref{eqShape} is shown in grey. (b) Profiles of spreading bubbles with contact angle $\phi_0/\pi\in\{0.2,0.4,0.6,0.8,1.0\}$, from left to right. Colour shading shows the radius of curvature at the bubble apex $R_h$.}
+\caption{(a) Profiles of pinned bubbles with contact radius $r_0/\lambda\in\{0.5,1.5,2.5,3.5\}$, from left to right. The largest pinned bubble for each contact radius is shown in red. (b) Profiles of spreading bubbles with contact angle $\phi_0/\pi\in\{0.2,0.4,0.6,0.8,1.0\}$, from left to right. The largest spreading bubble for each contact angle is shown in blue. The coordinate system used for solving Equation~\ref{eqShape} is shown in black.}
 \label{figProfile}
 \end{figure}
 To calculate the bubble shape, we use the method developed by~\citet{fritz35berechnung} to find the detachment volume of spreading bubbles with small $\phi_0$; consider a bubble attached to a solid horizontal surface, as depicted in Figure~\ref{figProfile}; $z$ denotes the height above the substrate. The interface of the bubble satisfies the Young--Laplace Equation\cite{degennes04capillarity}:
@@ -85,7 +85,7 @@ For pinned bubbles, the integration is terminated when $r=r_0$. For a given cavi
 \subsection{Pinned and spreading bubble evolution}
 \begin{figure}
 \includegraphics[width=\textwidth]{plots/heightVsVol_loop_ang}
-\caption{Bubble height $h$ and volume $V$. (a) Pinned bubbles with constant contact radius $r_0$; black lines are labelled with the value of $r_0/\lambda$. (b) Spreading bubbles with constant contact angle $\phi_0$; black lines are labelled with the value of $\phi_0/\pi$. Circle markers show the heights and volumes of the bubbles in Figure~\ref{figProfile} using the same colour scale for $R_h$.}
+\caption{Bubble height $h$ and volume $V$ during evolution. (a) Pinned bubbles with constant contact radius $r_0$. (b) Spreading bubbles with constant contact angle $\phi_0$. Circle markers show the heights and volumes of the bubbles in Figure~\ref{figProfile}, with coloured circles showing bubbles at maximal volume.}
 \label{figHeight}
 \end{figure}
 To characterize the evolution of a growing pinned bubble, we plot the bubble height $h$ as a function of volume $V$ in Figure~\ref{figHeight}a, where the bubble volume 
