@@ -612,7 +612,7 @@ int main(int argc, char *argv[])
 
   const double angleSave_fine = 0.001;
   const double radSave_fine   = 0.0001;
-  const double angleSave_coarse = 0.01;
+  const double angleSave_coarse = 0.02;
   const double radSave_coarse   = 0.1;
 
   int nAng = (angleSave_fine > 0) ? (int)ceil(1.0 / angleSave_fine) + 1 : 0;

@@ -85,7 +85,7 @@ def plot_profiles_and_height_vs_vol(nam='rad ang bub'):
         axProf[axInd].plot((spac + df[0, 0], spac + df[0, 0]), (-cav, 0),
                    c='k', clip_on=False, zorder=3, lw=1)
 
-      drawCoord = (6 < spac < 11)
+      drawCoord = 15 < spac
 
       # Load and draw profiles for each height level
       for hei in range(5):
@@ -120,9 +120,10 @@ def plot_profiles_and_height_vs_vol(nam='rad ang bub'):
         xAn = xProf[-1]
         yAn = yProf[-1]
         Xarr, Yarr = [], []
+        cir = 0.15
         for phi in range(51):
-          X = xAn + 0.17 * np.cos(phi * np.pi / 50)
-          Y = yAn + 0.17 * np.sin(phi * np.pi / 50)
+          X = xAn + cir * np.cos(phi * np.pi / 50)
+          Y = yAn + cir * np.sin(phi * np.pi / 50)
           for i in range(len(xProf)):
             if xProf[i] > X:
               break
@@ -133,14 +134,14 @@ def plot_profiles_and_height_vs_vol(nam='rad ang bub'):
         axProf[axInd].plot(Xarr, Yarr, c='k', zorder=5, lw=2)
 
         if 'rad' in cont:
-          axProf[axInd].text(xAn + 0.1, yAn + 0.1, "$\\phi_0$",
+          axProf[axInd].text(xAn + 0.05, yAn + 0.18, "$\\phi_0$",
                      ha='left', va='bottom', c='k')
           axProf[axInd].plot((spac, xProf[-1]), (-cav, -cav),
                      c='k', clip_on=False, zorder=4, lw=2)
           axProf[axInd].text((spac + xProf[-1]) / 2, 0.1 - cav,
                      "$r_0$", ha='center', va='bottom', c='k')
         if 'ang' in cont:
-          axProf[axInd].text(xAn + 0.1, yAn + 0.1, "$\\phi_0$",
+          axProf[axInd].text(xAn + 0.05, yAn + 0.18, "$\\phi_0$",
                      ha='left', va='bottom', c='k')
           axProf[axInd].plot((spac, xProf[-1]), (0, 0),
                      c='k', clip_on=False, zorder=5, lw=2)
@@ -148,25 +149,25 @@ def plot_profiles_and_height_vs_vol(nam='rad ang bub'):
                      "$r_0$", ha='center', va='top', c='k')
 
         h = int(0.5 * len(xProf))
-        t = int(0.8 * len(xProf))
+        t = int(0.67 * len(xProf))
         axProf[axInd].plot(xProf[h:t], yProf[h:t], c='k', zorder=5, lw=2)
         theta = np.arctan2(yProf[t + 1] - yProf[t], xProf[t + 1] - xProf[t]) - np.pi / 2
         tri = RegularPolygon((xProf[t], yProf[t]), 3,
                    radius=0.1, orientation=theta,
                    color='k', zorder=5)
         axProf[axInd].add_patch(tri)
-        axProf[axInd].text(xProf[t] + 0.1, yProf[t], '$s$',
+        axProf[axInd].text(xProf[t] + 0.05, yProf[t] + 0.18, '$s$',
                    va='center', ha='left', c='k', zorder=4)
 
-        t = int(0.63 * len(xProf))
+        t = int(0.6 * len(xProf))
         xAn = xProf[t]
         yAn = yProf[t]
         axProf[axInd].plot((xAn, xAn + 0.3), (yAn, yAn),
                    color='k', zorder=4, lw=2)
         Xarr, Yarr = [], []
         for phi in range(51):
-          X = xAn + 0.17 * np.cos(phi * np.pi / 50)
-          Y = yAn + 0.17 * np.sin(phi * np.pi / 50)
+          X = xAn + cir * np.cos(phi * np.pi / 50)
+          Y = yAn + cir * np.sin(phi * np.pi / 50)
           for i in range(len(xProf)):
             if xProf[i] > X:
               break
@@ -175,10 +176,10 @@ def plot_profiles_and_height_vs_vol(nam='rad ang bub'):
           Xarr.append(X)
           Yarr.append(Y)
         axProf[axInd].plot(Xarr, Yarr, c='k', zorder=4)
-        axProf[axInd].text(xAn + 0.1, yAn + 0.1, "$\\phi$",
+        axProf[axInd].text(xAn + 0.05, yAn + 0.18, "$\\phi$",
                    ha='left', va='bottom', c='k', zorder=4)
 
-        gravX, gravTailY, gravHeadY = 21, 1.6, 0.8
+        gravX, gravTailY, gravHeadY = 21, 2.8, 2
         axProf[axInd].plot([gravX, gravX], [gravTailY, gravHeadY], c='k')
         tri = RegularPolygon((gravX, gravHeadY), 3,
                    radius=0.1, orientation=np.pi,
@@ -241,12 +242,12 @@ def plot_volume_and_angle():
     ax.set_xlabel('$r_0/\\lambda$')
   
   with open(inFol + 'BinRadMaxVol.txt', encoding='utf-8') as f: df = np.loadtxt(f)
-  axV[0,0].plot(df[:,1], df[:, 7], c='r', clip_on=False)
-  axV[1,0].plot(df[:,1], df[:, 6], c='r', label='$R_h/\\lambda$')
+  axV[0,0].plot(df[:,0], df[:, 6], c='r', clip_on=False)
+  axV[1,0].plot(df[:,0], df[:, 5], c='r', label='$R_h/\\lambda$')
   #Make radius bins larger to counteract noise
   minLen=100
-  minAng = np.array([ np.min(1 - df[i:i+minLen, 3] / np.pi) for i in range(0, len(df[:,3])-minLen, minLen )])
-  rad = [ df[i + minLen//2, 1] for i in range( 0, len(df[:,3])-minLen, minLen )]
+  minAng = np.array([ np.min(1 - df[i:i+minLen, 2] / np.pi) for i in range(0, len(df[:,2])-minLen, minLen )])
+  rad = [ df[i + minLen//2, 0] for i in range( 0, len(df[:,2])-minLen, minLen )]
   axA[0].plot(rad, minAng**2, c='r', clip_on=False, zorder=3)
   axI = inset_axes(axV[0,0], width="35%", height="45%", loc='upper left')
   axI.yaxis.set_label_position("right")
@@ -258,7 +259,7 @@ def plot_volume_and_angle():
   axI.set_ylim([0.3, 8])
   axI.set_yticks([0.5, 1, 2, 5])
   axI.set_yticklabels(['$0.5$', '$1$', '$2$', '$5$'])
-  axI.plot(df[:,1], df[:, 7], c='r')
+  axI.plot(df[:,0], df[:, 6], c='r')
 
   xx = np.linspace(0, 4)
   axV[0,0].plot(xx, 2 * np.pi * xx, linestyle='dotted', c='grey')
@@ -278,8 +279,8 @@ def plot_volume_and_angle():
   axV[1,0].set_xlim([0, 4])
 
   with open(inFol + 'BinRadMaxWid.txt', encoding='utf-8') as f: df = np.loadtxt(f)
-  axV[1,0].plot(df[:,1], df[:,10], ls='dashed', c='r', clip_on=False, zorder=3, label='$r_\\mathrm{max}/\\lambda$')
-  axV[1,0].plot(df[:,1], df[:,1], ls='dotted', c='grey', label='$r_0/\\lambda$')
+  axV[1,0].plot(df[:,0], df[:,9], ls='dashed', c='r', clip_on=False, zorder=3, label='$r_\\mathrm{max}/\\lambda$')
+  axV[1,0].plot(df[:,0], df[:,0], ls='dotted', c='grey', label='$r_0/\\lambda$')
 
   with open(inFol + 'BinRadMaxAng.txt', encoding='utf-8') as f: df = np.loadtxt(f)
   
@@ -381,17 +382,17 @@ def plot_volume_and_angle():
   axV[0,0].set_xlim([0, 4])
   
   with open(inFol + 'BinAngMaxVol.txt', encoding='utf-8') as f: df = np.loadtxt(f)
-  axV[0,1].plot( (1 - df[:,3]/np.pi)**3, df[:, 7], c='b', clip_on=False)
-  axV[1,1].plot( (1 - df[:,3]/np.pi)**3, df[:, 6], c='b', label='$R_h/\\lambda$', clip_on=False)
-  axA[1].plot(df[:,1], (1 - df[:,3]/np.pi)**2, c='b')
+  axV[0,1].plot( (1 - df[:,2]/np.pi)**3, df[:, 6], c='b', clip_on=False)
+  axV[1,1].plot( (1 - df[:,2]/np.pi)**3, df[:, 5], c='b', label='$R_h/\\lambda$', clip_on=False)
+  axA[1].plot(df[:,0], (1 - df[:,2]/np.pi)**2, c='b')
   axV[0,1].text(0.03, 0.95, '$\\mathrm{(b)~spreading}$', transform=axV[0,1].transAxes, va='top', ha='left')
   axA[1].text(0.98, 0.01, '$\\mathrm{(b)~spreading}$', transform=axA[1].transAxes, va='bottom', ha='right')
   
   with open(inFol + 'BinAngMaxWid.txt', encoding='utf-8') as f: df = np.loadtxt(f)
-  axV[1,1].plot( (1 - df[:,3]/np.pi)**3, df[:,10], ls='dashed', c='b', clip_on=False, zorder=3, label='$r_\\mathrm{max}/\\lambda$')
+  axV[1,1].plot( (1 - df[:,2]/np.pi)**3, df[:,9], ls='dashed', c='b', clip_on=False, zorder=3, label='$r_\\mathrm{max}/\\lambda$')
   
   #with open(inFol + 'BinAngMaxRad.txt', encoding='utf-8') as f: df = np.loadtxt(f)
-  #axA[1].plot(df[:,1], (1 - df[:,3]/np.pi)**2, c='b', ls='dashed')
+  #axA[1].plot(df[:,0], (1 - df[:,2]/np.pi)**2, c='b', ls='dashed')
   xx = np.linspace(0, 1)
   axV[0,1].plot(xx**3, 4 * np.pi * (0.0104 * xx * 180) ** 3 / 3, ls='dotted', c='grey')
   axA[1].plot(3.219 * xx, xx, ls='dotted', c='grey', zorder=3)
