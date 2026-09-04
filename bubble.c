@@ -486,13 +486,11 @@ void write_bin_file(const char *filename, BinData *bins, int max_bin_used)
     fprintf(stderr, "Error opening %s for writing\n", filename);
     return;
   }
-  fprintf(fp, "# bin r -z psi dPsi capLen RadTop Volume area centroid maxRad\n");
+  fprintf(fp, "# r -z psi dPsi capLen RadTop Volume area centroid maxRad\n");
   for (int b = 0; b <= max_bin_used; b++) {
     if (bins[b][IDX_VOLUME] >= 0.0) {  // sentinel check
-      fprintf(fp, "%d", b);
       for (int j = 0; j < 10; ++j) {
         double val = bins[b][j];
-        if (j == IDX_Z) val = -val;
         fprintf(fp, " %.10g", val);
       }
       fprintf(fp, "\n");

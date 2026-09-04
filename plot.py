@@ -40,8 +40,10 @@ def plot_profiles_and_height_vs_vol(nam='rad ang bub'):
     axInd = 0
     if 'ang' in cont:
       axInd = 1
-    elif 'rad' in cont or 'bub' in cont:
+      col = 'b'
+    elif 'rad' in cont:
       axInd = 0
+      col = 'r'
     else:
       continue
 
@@ -66,7 +68,7 @@ def plot_profiles_and_height_vs_vol(nam='rad ang bub'):
       angl = 1 - df[indVol, 2] / np.pi
 
       # ----- Height vs volume (light grey + black curves) -----
-      axHei[axInd].plot(df[:indVol + 1, 6], -df[:indVol + 1, 1], c='lightgrey', lw=0.5)
+      axHei[axInd].plot(df[:indVol + 1, 6], -df[:indVol + 1, 1], c=col, lw=0.5, alpha=0.5)
       if 'ang' in cont and round(angl * 100) % 20 == 0 and angl > 50 / 180:
         axHei[axInd].text(df[indVol, 6], -df[indVol, 1] + 0.05,
                   rf"${angl:.1f}$", va='bottom', ha='center')
@@ -83,8 +85,7 @@ def plot_profiles_and_height_vs_vol(nam='rad ang bub'):
       if 'ang' in cont and round(angl * 100) % 20 != 0:
         continue
       
-      axHei[axInd].plot(df[:indVol + 1, 6], -df[:indVol + 1, 1],
-                c='k', zorder=3)
+      axHei[axInd].plot(df[:indVol + 1, 6], -df[:indVol + 1, 1], c=col, zorder=3)
 
       # Colour bar inset
       axRt = axProf[axInd].inset_axes(
@@ -268,11 +269,11 @@ def plot_volume_and_angle():
   with open(inFol + 'BinRadMaxVol.txt', encoding='utf-8') as f: df = np.loadtxt(f)
   axV[0,0].plot(df[:,1], df[:, 7], c='r', clip_on=False)
   axV[1,0].plot(df[:,1], df[:, 6], c='r', label='$R_h/\\lambda$')
-  #Remove noise
+  #Make radius bins larger to counteract noise
   minLen=100
-  minAng = [ np.min(1 - df[i:i+minLen, 3] / np.pi) for i in range(0, len(df[:,3])-minLen, minLen )]
+  minAng = np.array([ np.min(1 - df[i:i+minLen, 3] / np.pi) for i in range(0, len(df[:,3])-minLen, minLen )])
   rad = [ df[i + minLen//2, 1] for i in range( 0, len(df[:,3])-minLen, minLen )]
-  axA[0].plot(rad, minAng, c='r', clip_on=False, zorder=3)
+  axA[0].plot(rad, minAng**2, c='r', clip_on=False, zorder=3)
   axI = inset_axes(axV[0,0], width="40%", height="50%", loc='upper left')
   axI.yaxis.set_label_position("right")
   axI.yaxis.tick_right()
@@ -286,29 +287,56 @@ def plot_volume_and_angle():
   axI.plot(df[:,1], df[:, 7], c='r')
 
   xx = np.linspace(0, 4)
-  axV[0,0].plot(xx, 2 * np.pi * xx, linestyle='dotted', c='k')
-  axI.plot(xx, 2 * np.pi * xx, linestyle='dotted', c='k')
-  axA[0].plot(xx, (xx / 3.5) ** 0.5, linestyle='dotted', c='k', zorder=3)
+  axV[0,0].plot(xx, 2 * np.pi * xx, linestyle='dotted', c='grey')
+  axI.plot(xx, 2 * np.pi * xx, linestyle='dotted', c='grey')
+  #axA[0].plot(xx, (xx / 3.5) ** 1, linestyle='dotted', c='grey', zorder=3)
 
   axV[1,0].set_xlabel('$r_0/\\lambda$')
   axA[0].set_ylim([0, 1.05])
   axA[0].set_yticks([0, 0.25, 0.5, 0.75, 1])
-  axV[1,0].axvspan(3.219, 3.832, color='lightgrey')
-  axV[0,0].axvspan(3.219, 3.832, color='lightgrey')
+  axV[1,0].axvspan(3.219, 3.832, color='whitesmoke')
+  axV[0,0].axvspan(3.219, 3.832, color='whitesmoke')
   axI.text(0.03, 0.97, '$\\mathrm{(a)~pinned}$', transform=axI.transAxes, va='top', ha='left')
   axV[1,0].text(0.02, 0.97, '$\\mathrm{(c)~pinned}$', transform=axV[1,0].transAxes, va='top', ha='left')
   axV[0,0].set_ylabel('$\\frac{V_\\mathrm{max}}{\\lambda^3}$', size=22, rotation=0, labelpad=15)
-  axA[0].axvspan(3.219, 3.832, color='lightgrey')
-  axA[0].set_ylabel('$\\frac{\\phi_0}{\\pi}$', size=22, rotation=0, labelpad=10)
+  axA[0].axvspan(3.219, 3.832, color='whitesmoke')
+  axA[0].set_ylabel('$\\frac{\\phi_0^2}{\\pi^2}$', size=22, rotation=0, labelpad=10)
   axA[0].text(0.02, 0.99, '$\\mathrm{(a)~pinned}$', transform=axA[0].transAxes, va='top', ha='left')
   axV[1,0].set_xlim([0, 4])
 
   with open(inFol + 'BinRadMaxWid.txt', encoding='utf-8') as f: df = np.loadtxt(f)
   axV[1,0].plot(df[:,1], df[:,10], ls='dashed', c='r', clip_on=False, zorder=3, label='$r_\\mathrm{max}/\\lambda$')
-  axV[1,0].plot(df[:,1], df[:,1], ls='dotted', c='k', label='$r_0/\\lambda$')
+  axV[1,0].plot(df[:,1], df[:,1], ls='dotted', c='grey', label='$r_0/\\lambda$')
 
   with open(inFol + 'BinRadMaxAng.txt', encoding='utf-8') as f: df = np.loadtxt(f)
-  axA[0].plot(df[:,1], 1 - df[:,3]/np.pi, c='r', ls='dashed', clip_on=False, zorder=3)
+  #axA[0].plot(df[:,1], (1 - df[:,3]/np.pi)**2, c='r', ls='dashed', clip_on=False, zorder=3)
+  
+  for fname in reversed(sorted(os.listdir(inFol))):
+    if 'prof' in fname or 'txt' not in fname: continue
+    with open(inFol + fname, encoding='utf-8') as f: df = np.loadtxt(f)
+    if df.ndim < 2: continue
+    indVol = np.argmax(df[:, 6])
+    angl = 1 - df[indVol, 2] / np.pi
+    if 'rad' in fname: 
+      axInd = 0
+      extremInd = np.argmax(df[:, 2])
+    elif 'ang' in fname: 
+      axInd = 1
+      extremInd = np.argmax(df[:, 0])
+      df[0, 0]=0
+    else: continue
+    axA[axInd].plot( [df[0, 0], df[extremInd, 0]], [ (1 - df[0, 2] / np.pi)**2, (1 - df[extremInd, 2] / np.pi)**2], c='k', lw=0.1)
+    if 'rad' in fname and round(df[0, 0] * 10) % 10 != 5: continue
+    if 'ang' in fname and round(angl * 100) % 20 != 0: continue
+    axA[axInd].plot( [df[0, 0], df[extremInd, 0]], [ (1 - df[0, 2] / np.pi)**2, (1 - df[extremInd, 2] / np.pi)**2], c='k')
+    for hei in range(5):
+      fPath = os.path.join(inFol, f'prof{hei:05}' + fname)
+      if not os.path.exists(fPath): continue
+      with open(fPath, encoding='utf-8') as f: prof = np.loadtxt(f)
+      heiInd = np.argmin(abs((hei + 1) * df[indVol, 1] / 5 - df[:indVol + 1, 1]))
+      footInd = np.argmin(abs(df[heiInd, 6] - prof[:, 6]))
+      axA[axInd].plot(prof[footInd, 0], (1 - prof[footInd, 2] / np.pi)**2, 'o', ms=5, 
+        c=colRB(fname[5:8], prof[footInd, 5]), clip_on=False, zorder=4)
   
   # ----- Experimental data for pinned -----
   fname = 'exptData/LesageVolVsContRadSq.txt'
@@ -357,9 +385,9 @@ def plot_volume_and_angle():
   axV[0,0].set_xlim([0, 4])
   
   with open(inFol + 'BinAngMaxVol.txt', encoding='utf-8') as f: df = np.loadtxt(f)
-  axV[0,1].plot(1 - df[:,3]/np.pi, df[:, 7], c='b', clip_on=False)
-  axV[1,1].plot(1 - df[:,3]/np.pi, df[:, 6], c='b', label='$R_h/\\lambda$', clip_on=False)
-  axA[1].plot(df[:,1], 1 - df[:,3]/np.pi, c='b')
+  axV[0,1].plot( (1 - df[:,3]/np.pi)**3, df[:, 7], c='b', clip_on=False)
+  axV[1,1].plot( (1 - df[:,3]/np.pi)**3, df[:, 6], c='b', label='$R_h/\\lambda$', clip_on=False)
+  axA[1].plot(df[:,1], (1 - df[:,3]/np.pi)**2, c='b')
   axI = inset_axes(axV[0,1], width="40%", height="50%", loc='upper left')
   axI.yaxis.set_label_position("right")
   axI.yaxis.tick_right()
@@ -368,22 +396,22 @@ def plot_volume_and_angle():
   axI.set_yscale('log')
   axI.set_xlim([0.07, 1])
   axI.set_ylim([0.01, 100])
-  axI.plot(1 - df[:,3]/np.pi, df[:, 7], c='b')
+  axI.plot( (1 - df[:,3]/np.pi)**3, df[:, 7], c='b')
   axI.text(0.03, 0.97, '$\\mathrm{(b)~spreading}$',
          transform=axI.transAxes, va='top', ha='left')
   axA[1].text(0.02, 0.99, '$\\mathrm{(b)~spreading}$', transform=axA[1].transAxes, va='top', ha='left')
   
   with open(inFol + 'BinAngMaxWid.txt', encoding='utf-8') as f: df = np.loadtxt(f)
-  axV[1,1].plot(1 - df[:,3]/np.pi, df[:,10], ls='dashed', c='b', clip_on=False, zorder=3, label='$r_\\mathrm{max}/\\lambda$')
+  axV[1,1].plot( (1 - df[:,3]/np.pi)**3, df[:,10], ls='dashed', c='b', clip_on=False, zorder=3, label='$r_\\mathrm{max}/\\lambda$')
   
   with open(inFol + 'BinAngMaxRad.txt', encoding='utf-8') as f: df = np.loadtxt(f)
-  axA[1].plot(df[:,1], 1 - df[:,3]/np.pi, c='b', ls='dashed', clip_on=False, zorder=3)
+  #axA[1].plot(df[:,1], (1 - df[:,3]/np.pi)**2, c='b', ls='dashed', clip_on=False, zorder=3)
   xx = np.linspace(0, 1)
-  axV[0,1].plot(xx, 4 * np.pi * (0.0104 * xx * 180) ** 3 / 3, ls='dotted', c='k')
-  axI.plot(xx, 4 * np.pi * (0.0104 * xx * 180) ** 3 / 3, ls='dotted', c='k')
-  axA[1].plot(3.219 * xx ** 2, xx, ls='dotted', c='k', zorder=3)
-  axA[1].axvspan(3.219, 3.832, color='lightgrey')
-  axV[1,1].set_xlabel('$\\phi_0/\\pi$')
+  axV[0,1].plot(xx**3, 4 * np.pi * (0.0104 * xx * 180) ** 3 / 3, ls='dotted', c='grey')
+  axI.plot(xx**3, 4 * np.pi * (0.0104 * xx * 180) ** 3 / 3, ls='dotted', c='grey')
+  axA[1].plot(3.219 * xx, xx, ls='dotted', c='grey', zorder=3)
+  axA[1].axvspan(3.219, 3.832, color='whitesmoke')
+  axV[1,1].set_xlabel('$\\phi_0^3/\\pi^3$')
   axV[1,1].text(0.02, 0.97, '$\\mathrm{(d)~spreading}$', transform=axV[1,1].transAxes, va='top', ha='left')
 
   # ----- Experimental data for spreading -----
@@ -398,10 +426,10 @@ def plot_volume_and_angle():
     mid = (df[i, 0] + df[i, 4]) / 2 / 180
     if df[i, 0] - mid * 180 > 20:
       continue
-    axV[0,1].errorbar(mid, 4 * np.pi / 3 * rad ** 3 / capLen ** 3,
+    axV[0,1].errorbar(mid**3, 4 * np.pi / 3 * rad ** 3 / capLen ** 3,
                 xerr=[[df[i, 0] / 180 - mid], [mid - df[i, 4] / 180]],
                 fmt='^', c='b', mfc='None', clip_on=False, zorder=3)
-    axI.errorbar(mid, 4 * np.pi / 3 * rad ** 3 / capLen ** 3,
+    axI.errorbar(mid**3, 4 * np.pi / 3 * rad ** 3 / capLen ** 3,
            xerr=[[df[i, 0] / 180 - mid], [mid - df[i, 4] / 180]],
            fmt='^', c='b', mfc='None', clip_on=False, zorder=3)
 
@@ -421,10 +449,10 @@ def plot_volume_and_angle():
     mx = df[i, 3] / 180
     if mid < mn or mid > mx:
       continue
-    axV[0,1].plot(mid, vol, 'v', c='b', mfc='None', zorder=3)
-    axV[0,1].plot([mn, mx], [vol, vol], c='b', zorder=3)
-    axI.plot(mid, vol, 'v', c='b', mfc='None', zorder=3)
-    axI.plot([mn, mx], [vol, vol], c='b', zorder=3)
+    axV[0,1].plot(mid**3, vol, 'v', c='b', mfc='None', zorder=3)
+    axV[0,1].plot([mn**3, mx**3], [vol, vol], c='b', zorder=3)
+    axI.plot(mid**3, vol, 'v', c='b', mfc='None', zorder=3)
+    axI.plot([mn**3, mx**3], [vol, vol], c='b', zorder=3)
 
   fname = 'exptData/huang25effects.txt'
   print('open', fname)
