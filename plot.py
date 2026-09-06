@@ -20,7 +20,6 @@ cav = 0.3
 # ------------------------------------------------------------
 def plot_profiles_and_height_vs_vol(nam='rad ang'):
   figProf, axProf = plt.subplots(2, sharex=True)
-  figHei, axHei = plt.subplots(1, 2, sharey=True)
 
   for cont in nam.split():
     axInd = 0
@@ -51,25 +50,12 @@ def plot_profiles_and_height_vs_vol(nam='rad ang'):
       indVol = np.argmax(df[:, 6])
       angl = 1 - df[indVol, 2] / np.pi
 
-      # ----- Height vs volume (light grey + black curves) -----
-      axHei[axInd].plot(df[:indVol + 1, 6], -df[:indVol + 1, 1], c='grey', lw=0.5, alpha=0.5)
-      if 'ang' in cont and round(angl * 100) % 20 == 0 and angl > 50 / 180:
-        if angl<1: axHei[axInd].text(df[indVol, 6], -df[indVol, 1],
-                  rf"$\frac{{\phi_0}}{{\pi}}\!=\!{angl:.1f}$", va='bottom', ha='center')
-        else: axHei[axInd].text(df[indVol, 6], -df[indVol, 1] + 0.03,
-                  rf"$\frac{{\phi_0}}{{\pi}}\!=\!{angl:.0f}$", va='bottom', ha='center')
-      if 'rad' in cont and round(df[0, 0] * 10) % 10 == 5 and df[0, 0] > 0.05:
-        axHei[axInd].text(df[indVol, 6], -df[indVol, 1],
-                  rf"$\frac{{r_0}}{{\lambda}}\!=\!{df[0, 0]:.1f}$", va='bottom', ha='center')
-
       # ----- Skip drawing profiles for some cases -----
       if 'rad' in cont and round(df[0, 0] * 10) % 10 != 5:
         continue
       if 'ang' in cont and round(angl * 100) % 20 != 0:
         continue
       
-      axHei[axInd].plot(df[:indVol + 1, 6], -df[:indVol + 1, 1], c='grey', zorder=3)
-
       # Horizontal spacing
       if 'ang' in cont:
         spac = (0.5, 2.3, 5.1, 9.5, 17)[round(4 - df[indVol, 2] * 5 / np.pi)]
@@ -99,10 +85,6 @@ def plot_profiles_and_height_vs_vol(nam='rad ang'):
         with open(fPath, encoding='utf-8') as f:
           prof = np.loadtxt(f)
         footInd = np.argmin(abs(df[heiInd, 6] - prof[:, 6]))
-
-        axHei[axInd].plot(prof[footInd, 6], -prof[footInd, 1],
-                  'o', ms=5, c=col,
-                  clip_on=False, zorder=4)
 
         xProf = np.concatenate((-prof[:footInd, 0][::-1], prof[:footInd, 0]))
         xProf = xProf + spac
@@ -187,30 +169,19 @@ def plot_profiles_and_height_vs_vol(nam='rad ang'):
         axProf[axInd].text(gravX + 0.1, (gravHeadY + gravTailY) / 2,
                    '$g$', va='center', ha='left', c='k')
 
-    # ----- Axis formatting for this cont -----
-    axHei[axInd].tick_params(which='both', direction='in', top=True, right=True)
-    axHei[axInd].set_xlabel('$V/\\lambda^3$')
-    axHei[0].set_ylabel('$\\frac{h}{\\lambda}$', rotation=0, size=22, labelpad=10)
-
     axProf[axInd].tick_params(axis='y', which='both', direction='in', right=True)
     axProf[axInd].tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
     axProf[axInd].set_ylabel('$\\frac{ z }{\\lambda}$', rotation=0, size=22, labelpad=15)
     axProf[axInd].set_ylim([0, 3])
     axProf[axInd].set_xlim([0, 21.5])
     axProf[axInd].set_aspect('equal', adjustable='box')
-    axHei[axInd].set_ylim([0, 3])
-    axHei[axInd].set_xlim([0, 20])
 
     if 'ang' in cont:
       axProf[axInd].text(5e-3, 0.99, '$\\mathrm{(b)~spreading}$',
                  transform=axProf[axInd].transAxes, va='top', ha='left')
-      axHei[axInd].text(5e-3, 0.99, '$\\mathrm{(b)~spreading}$',
-                transform=axHei[axInd].transAxes, va='top', ha='left')
     if 'rad' in cont:
       axProf[axInd].text(5e-3, 0.99, '$\\mathrm{(a)~pinned}$',
                  transform=axProf[axInd].transAxes, va='top', ha='left')
-      axHei[axInd].text(5e-3, 0.99, '$\\mathrm{(a)~pinned}$',
-                transform=axHei[axInd].transAxes, va='top', ha='left')
 
   # ----- Save figures -----
   figProf.set_figwidth(12)
@@ -219,36 +190,33 @@ def plot_profiles_and_height_vs_vol(nam='rad ang'):
   print('saving ', outName)
   figProf.savefig(outName, transparent=True, bbox_inches='tight', pad_inches=0)
 
-  figHei.set_figwidth(10)
-  figHei.set_figheight(3)
-  figHei.tight_layout(pad=0.7)
-  outName = outFol + 'heightVsVol_' + cont + '.pdf'   # uses last cont
-  print('saving ', outName)
-  figHei.savefig(outName, transparent=True, bbox_inches='tight', pad_inches=0)
-
-
 # ------------------------------------------------------------
 # Function 2: volume vs radius and angle vs radius
 # ------------------------------------------------------------
 def plot_volume_and_angle():
   figV, axV = plt.subplots(2, 2, sharex='col', sharey='row')
   figA, axA = plt.subplots(1, 2, sharey=True)
+  figHei, axHei = plt.subplots(1, 2, sharey=True)
   for ax in axV.flat:
     ax.tick_params(which='both', direction='in', top=True, right=True)
   for ax in axA:
     ax.tick_params(which='both', direction='in', top=True, right=True)
     ax.set_xlim([0, 4])
     ax.set_xlabel('$r_0/\\lambda$')
+  for ax in axHei:
+    ax.set_ylim([0, 3])
+    ax.set_xlim([0, 20])
   
   with open(inFol + 'BinRadMaxVol.txt', encoding='utf-8') as f: df = np.loadtxt(f)
   axV[0,0].plot(df[:,0], df[:, 6], c='r', clip_on=False)
   axV[1,0].plot(df[:,0], df[:, 5], c='r', label='$R_h/\\lambda$')
+  axHei[0].plot(df[:,6], df[:, 1], c='r', zorder=4, clip_on=False)
   #Make radius bins larger to counteract noise
   minLen=100
   minAng = np.array([ np.min(1 - df[i:i+minLen, 2] / np.pi) for i in range(0, len(df[:,2])-minLen, minLen )])
   rad = [ df[i + minLen//2, 0] for i in range( 0, len(df[:,2])-minLen, minLen )]
   axA[0].plot(rad, minAng**2, c='r', clip_on=False, zorder=3)
-  axI = inset_axes(axV[0,0], width="35%", height="45%", loc='upper left')
+  axI = inset_axes(axV[0,0], width="38%", height="48%", loc='upper left')
   axI.yaxis.set_label_position("right")
   axI.yaxis.tick_right()
   axI.tick_params(which='both', direction='in', top=True, left=True, right=True)
@@ -269,19 +237,22 @@ def plot_volume_and_angle():
   axA[0].set_yticks([0, 0.25, 0.5, 0.75, 1])
   axV[1,0].axvspan(3.219, 3.832, color='whitesmoke')
   axV[0,0].axvspan(3.219, 3.832, color='whitesmoke')
-  axV[0,0].text(0.03, 0.95, '$\\mathrm{(a)~pinned}$', transform=axV[0,0].transAxes, va='top', ha='left')
-  axV[1,0].text(0.03, 0.97, '$\\mathrm{(c)~pinned}$', transform=axV[1,0].transAxes, va='top', ha='left')
-  axV[0,0].set_ylabel('$\\frac{V_\\mathrm{max}}{\\lambda^3}$', size=22, rotation=0, labelpad=15)
+  axV[0,0].text(0.97, 0.95, '$\\mathrm{(a)~pinned}$', transform=axV[0,0].transAxes, va='top', ha='right')
+  axV[1,0].text(0.97, 0.03, '$\\mathrm{(c)~pinned}$', transform=axV[1,0].transAxes, va='bottom', ha='right')
+  axV[0,0].set_ylabel('$\\frac{V}{\\lambda^3}$', size=22, rotation=0, labelpad=15)
+  axV[1,0].set_ylabel('$\\frac{R_h}{\\lambda}$', size=22, rotation=0, labelpad=15)
   axA[0].axvspan(3.219, 3.832, color='whitesmoke')
   axA[0].set_ylabel('$\\frac{\\phi_0^2}{\\pi^2}$', size=22, rotation=0, labelpad=10)
   axA[0].text(0.98, 0.01, '$\\mathrm{(a)~pinned}$', transform=axA[0].transAxes, va='bottom', ha='right')
   axV[1,0].set_xlim([0, 4])
 
   with open(inFol + 'BinRadMaxWid.txt', encoding='utf-8') as f: df = np.loadtxt(f)
-  axV[1,0].plot(df[:,0], df[:,9], ls='dashed', c='r', clip_on=False, zorder=3, label='$r_\\mathrm{max}/\\lambda$')
-  axV[1,0].plot(df[:,0], df[:,0], ls='dotted', c='grey', label='$r_0/\\lambda$')
+  axV[1,0].plot(df[:,0], df[:,9], ls='dashed', c='r', clip_on=False, zorder=3, 
+    label='$r_\\mathrm{max}/\\lambda$')
+  #axV[1,0].plot(df[:,0], df[:,0], ls='dotted', c='grey', label='$r_0/\\lambda$')
 
-  with open(inFol + 'BinRadMaxAng.txt', encoding='utf-8') as f: df = np.loadtxt(f)
+  #with open(inFol + 'BinRadMaxAng.txt', encoding='utf-8') as f: df = np.loadtxt(f)
+  #axA[0].plot(df[:,0], (1 - df[:,2]/np.pi)**2, c='r', ls='dashed')
   
   kwargs = {'marker': 'o', 'ms': 5, 'clip_on': False, 'zorder': 4}
   for fname in reversed(sorted(os.listdir(inFol))):
@@ -296,6 +267,7 @@ def plot_volume_and_angle():
       axInd = 0
       extremInd = np.argmax(df[:, 2])
       axV[0,0].plot( df[:indVol, 0], df[:indVol, 6], c='grey', lw=0.1)
+      axV[1,0].plot( df[:indVol, 0], df[:indVol, 5], c='grey', lw=0.1)
       axI.plot( df[:indVol, 0], df[:indVol, 6], c='grey', lw=0.1)
     elif 'ang' in fname: 
       axInd = 1
@@ -305,16 +277,29 @@ def plot_volume_and_angle():
         extremInd=1
         df[extremInd, 0]=3.831698723 #from BinAngMaxRad
       axV[0,1].plot( [angl**3, angl**3], [0, df[indVol, 6]], c='grey', lw=0.1)
+      axV[1,1].plot( (1 - df[:indVol, 2] / np.pi)**3, df[:indVol, 5], c='grey', lw=0.1)
     else: continue
+    axHei[axInd].plot(df[:indVol + 1, 6], -df[:indVol + 1, 1], c='grey', lw=0.5, alpha=0.5)
+    if 'ang' in fname and round(angl * 100) % 20 == 0 and angl > 50 / 180:
+      if angl<1: axHei[axInd].text(df[indVol, 6], -df[indVol, 1],
+                rf"$\frac{{\phi_0}}{{\pi}}\!=\!{angl:.1f}$", va='bottom', ha='center', zorder=5)
+      else: axHei[axInd].text(df[indVol, 6], -df[indVol, 1] + 0.03,
+                rf"$\frac{{\phi_0}}{{\pi}}\!=\!{angl:.0f}$", va='bottom', ha='center', zorder=5)
+    if 'rad' in fname and round(df[0, 0] * 10) % 10 == 5 and df[0, 0] > 0.05:
+      axHei[axInd].text(df[indVol, 6], -df[indVol, 1],
+                rf"$\frac{{r_0}}{{\lambda}}\!=\!{df[0, 0]:.1f}$", va='bottom', ha='center', zorder=5)
     axA[axInd].plot( [df[0, 0], df[extremInd, 0]], [ (1 - df[0, 2] / np.pi)**2, (1 - df[extremInd, 2] / np.pi)**2], c='grey', lw=0.1)
     if 'rad' in fname:
       if round(df[0, 0] * 10) % 10 != 5: continue
       axV[0,0].plot( df[:indVol, 0], df[:indVol, 6], c='grey')
+      axV[1,0].plot( df[:indVol, 0], df[:indVol, 5], c='grey')
       axI.plot( df[:indVol, 0], df[:indVol, 6], c='grey')
     if 'ang' in fname:
       if round(angl * 100) % 20 != 0: continue
       axV[0,1].plot( [angl**3, angl**3], [0, df[indVol, 6]], c='grey')
+      axV[1,1].plot( (1 - df[:indVol, 2] / np.pi)**3, df[:indVol, 5], c='grey')
     axA[axInd].plot( [df[0, 0], df[extremInd, 0]], [ (1 - df[0, 2] / np.pi)**2, (1 - df[extremInd, 2] / np.pi)**2], c='grey')
+    axHei[axInd].plot(df[:indVol + 1, 6], -df[:indVol + 1, 1], c='grey', zorder=3)
     for hei in range(5):
       if hei<4: col = 'grey'
       elif 'rad' in fname: col = 'r'
@@ -324,14 +309,17 @@ def plot_volume_and_angle():
       with open(fPath, encoding='utf-8') as f: prof = np.loadtxt(f)
       heiInd = np.argmin(abs((hei + 1) * df[indVol, 1] / 5 - df[:indVol + 1, 1]))
       footInd = np.argmin(abs(df[heiInd, 6] - prof[:, 6]))
+      axHei[axInd].plot(prof[footInd, 6], -prof[footInd, 1], c=col, **kwargs)
       if 'rad' in fname: 
         radius = np.round(prof[footInd, 0],1)
         axV[0,0].plot( radius, prof[footInd, 6], c=col, **kwargs)
+        axV[1,0].plot( radius, prof[footInd, 5], 'o', ms=5, c=col, zorder=4) 
         axI.plot( radius, prof[footInd, 6], 'o', ms=5, c=col, zorder=4) 
         axA[0].plot(radius, (1 - prof[footInd, 2] / np.pi)**2, c=col, **kwargs)
-        #axA[1].plot(prof[footInd, 0], angl**2, c=col, **kwargs)
       if 'ang' in fname: 
         axV[0,1].plot( angl**3, prof[footInd, 6], c=col, **kwargs)
+        if prof[footInd, 5] <=4: 
+          axV[1,1].plot( angl**3, prof[footInd, 5], c=col, **kwargs)
         axA[1].plot(prof[footInd, 0], angl**2, c=col, **kwargs)
   
   # ----- Experimental data for pinned -----
@@ -381,8 +369,9 @@ def plot_volume_and_angle():
   axV[0,0].set_xlim([0, 4])
   
   with open(inFol + 'BinAngMaxVol.txt', encoding='utf-8') as f: df = np.loadtxt(f)
+  axHei[1].plot(df[:,6], df[:, 1], c='b', zorder=4, clip_on=False)
   axV[0,1].plot( (1 - df[:,2]/np.pi)**3, df[:, 6], c='b', clip_on=False)
-  axV[1,1].plot( (1 - df[:,2]/np.pi)**3, df[:, 5], c='b', label='$R_h/\\lambda$', clip_on=False)
+  axV[1,1].plot( (1 - df[:,2]/np.pi)**3, df[:, 5], c='b', clip_on=False)
   axA[1].plot(df[:,0], (1 - df[:,2]/np.pi)**2, c='b')
   axV[0,1].text(0.03, 0.95, '$\\mathrm{(b)~spreading}$', transform=axV[0,1].transAxes, va='top', ha='left')
   axA[1].text(0.98, 0.01, '$\\mathrm{(b)~spreading}$', transform=axA[1].transAxes, va='bottom', ha='right')
@@ -447,15 +436,15 @@ def plot_volume_and_angle():
     axV[0,1].errorbar( df[i, 0], df[i, 3] / capLen ** 3,
                 xerr = [ [df[i, 1] - df[i, 0]] , [df[i, 0] - df[i, 2]] ],
                 fmt='d', c='b', mfc='None', clip_on=False, zorder=3)
-
-
-  axV[1,0].legend(loc="upper left", bbox_to_anchor=(0.01, 0.9), frameon=False, borderaxespad=0)
-  axV[1,1].legend(loc="upper left", bbox_to_anchor=(0.01, 0.9), frameon=False, borderaxespad=0)
-
   axV[1,0].set_xlim([0, 4])
   axV[1,1].set_xlim([0, 1])
   axV[0,0].set_ylim([0, 25])
   axV[1,0].set_ylim([0, 4])
+  axHei[0].text(5e-3, 0.99, '$\\mathrm{(b)~spreading}$',
+              transform=axHei[0].transAxes, va='top', ha='left')
+  axHei[1].text(5e-3, 0.99, '$\\mathrm{(a)~pinned}$',
+              transform=axHei[1].transAxes, va='top', ha='left')
+  
   figA.subplots_adjust(left=0.1, right=0.97, bottom=0.2, top=0.98)
   
   # ----- Save figures -----
@@ -465,14 +454,22 @@ def plot_volume_and_angle():
   figA.set_figwidth(10)
   figV.set_figheight(6)
   figA.set_figheight(3)
+  
+  figHei.set_figwidth(10)
+  figHei.set_figheight(3)
+  figHei.tight_layout(pad=0.7)
 
   fname = outFol + 'MaxVol.pdf'
   print('saving ', fname)
-  figV.savefig(fname, transparent=True, format='pdf', bbox_inches='tight', pad_inches=0)
+  figV.savefig(fname, transparent=True, format='pdf', bbox_inches='tight', pad_inches=0.03)
 
   fname = outFol + 'Ang.pdf'
   print('saving ', fname)
   figA.savefig(fname, transparent=True, format='pdf', bbox_inches='tight', pad_inches=0)
+  
+  outName = outFol + 'heightVsVol.pdf'   # uses last cont
+  print('saving ', outName)
+  figHei.savefig(outName, transparent=True, bbox_inches='tight', pad_inches=0)
 
 def plot_graphical_abstract(nam='rad ang'):
   figProf, axProf = plt.subplots(1)
