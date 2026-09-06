@@ -206,10 +206,13 @@ def plot_volume_and_angle():
   for ax in axHei:
     ax.set_ylim([0, 3])
     ax.set_xlim([0, 20])
+    ax.tick_params(which='both', direction='in', top=True, right=True)
+    ax.set_xlabel('$V/\\lambda^3$')
+  axHei[0].set_ylabel('$\\frac{h}{\\lambda}$', rotation=0, size=22, labelpad=10)
   
   with open(inFol + 'BinRadMaxVol.txt', encoding='utf-8') as f: df = np.loadtxt(f)
   axV[0,0].plot(df[:,0], df[:, 6], c='r', clip_on=False)
-  axV[1,0].plot(df[:,0], df[:, 5], c='r', label='$R_h/\\lambda$')
+  axV[1,0].plot(df[:,0], df[:, 5], c='r')
   axHei[0].plot(df[:,6], df[:, 1], c='r', zorder=4, clip_on=False)
   #Make radius bins larger to counteract noise
   minLen=100
@@ -254,7 +257,7 @@ def plot_volume_and_angle():
   #with open(inFol + 'BinRadMaxAng.txt', encoding='utf-8') as f: df = np.loadtxt(f)
   #axA[0].plot(df[:,0], (1 - df[:,2]/np.pi)**2, c='r', ls='dashed')
   
-  kwargs = {'marker': 'o', 'ms': 5, 'clip_on': False, 'zorder': 4}
+  kwargs = {'marker': 'o', 'ms': 5, 'clip_on': False, 'zorder': 4, 'alpha':.7, 'mew':0}
   for fname in reversed(sorted(os.listdir(inFol))):
     if 'txt' not in fname: continue
     if 'loop' not in fname: continue
@@ -313,8 +316,8 @@ def plot_volume_and_angle():
       if 'rad' in fname: 
         radius = np.round(prof[footInd, 0],1)
         axV[0,0].plot( radius, prof[footInd, 6], c=col, **kwargs)
-        axV[1,0].plot( radius, prof[footInd, 5], 'o', ms=5, c=col, zorder=4) 
-        axI.plot( radius, prof[footInd, 6], 'o', ms=5, c=col, zorder=4) 
+        axV[1,0].plot( radius, prof[footInd, 5], 'o', ms=5, c=col, zorder=4, alpha=.7, mew=0) 
+        axI.plot( radius, prof[footInd, 6], 'o', ms=5, c=col, zorder=4, alpha=.7, mew=0)
         axA[0].plot(radius, (1 - prof[footInd, 2] / np.pi)**2, c=col, **kwargs)
       if 'ang' in fname: 
         axV[0,1].plot( angl**3, prof[footInd, 6], c=col, **kwargs)
@@ -440,10 +443,10 @@ def plot_volume_and_angle():
   axV[1,1].set_xlim([0, 1])
   axV[0,0].set_ylim([0, 25])
   axV[1,0].set_ylim([0, 4])
-  axHei[0].text(5e-3, 0.99, '$\\mathrm{(b)~spreading}$',
-              transform=axHei[0].transAxes, va='top', ha='left')
-  axHei[1].text(5e-3, 0.99, '$\\mathrm{(a)~pinned}$',
+  axHei[1].text(5e-3, 0.99, '$\\mathrm{(b)~spreading}$',
               transform=axHei[1].transAxes, va='top', ha='left')
+  axHei[0].text(5e-3, 0.99, '$\\mathrm{(a)~pinned}$',
+              transform=axHei[0].transAxes, va='top', ha='left')
   
   figA.subplots_adjust(left=0.1, right=0.97, bottom=0.2, top=0.98)
   
