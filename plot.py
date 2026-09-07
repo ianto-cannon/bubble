@@ -73,7 +73,6 @@ def plot_profiles(nam='rad ang'):
       # Load and draw profiles for each height level
       for hei in range(5):
         if 'rad' in fname and spac < 4 and hei < 4: continue
-        
         if hei<4: col = 'grey'
         elif 'rad' in fname: col = 'r'
         elif 'ang' in fname: col = 'b'
@@ -263,6 +262,7 @@ def plot_volume_and_angle():
 
   #with open(inFol + 'BinRadMaxAng.txt', encoding='utf-8') as f: df = np.loadtxt(f)
   #axA[0].plot(df[:,0], (1 - df[:,2]/np.pi)**2, c='r', ls='dashed')
+  axA[0].plot(df[:,0], df[:,0]/3.5, c='grey', ls='dotted')
   
   kwargs = {'marker': 'o', 'ms': 5, 'clip_on': False, 'zorder': 4, 'alpha':.7, 'mew':0}
   for fname in reversed(sorted(os.listdir(inFol))):

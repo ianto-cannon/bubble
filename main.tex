@@ -48,7 +48,7 @@ We consider a simplified system consisting of a circular cavity of radius $r_0$ 
 \subsection{Governing equation}
 \begin{figure}
 \includegraphics[width=\textwidth]{plots/pin}
-\caption{(a) Profiles of pinned bubbles with contact radius $r_0/\lambda\in\{0.5,1.5,2.5,3.5\}$, from left to right. The largest pinned bubble for each contact radius is shown in red. (b) Profiles of spreading bubbles with contact angle $\phi_0/\pi\in\{0.2,0.4,0.6,0.8,1.0\}$, from left to right. The largest spreading bubble for each contact angle is shown in blue. The coordinate system $(\phi, \phi_0, r_0, s, g)$ used for solving Equation~\ref{eqShape} is shown in black.}
+\caption{(a) Profiles of pinned bubbles with contact radius $r_0/\lambda\in\{0.5,1.5,2.5,3.5\}$, from left to right. The largest pinned bubble for each contact radius is shown in red. (b) Profiles of spreading bubbles with contact angle $\phi_0/\pi\in\{0.2,0.4,0.6,0.8,1.0\}$, from left to right. The largest spreading bubble for each contact angle is shown in blue. The coordinate system $(\phi, s)$ used for solving Equation~\ref{eqShape} and bubble properties $\phi_0, r_0, r_\mathrm{max}$ are shown in black.}
 \label{figProfile}
 \end{figure}
 
@@ -95,7 +95,7 @@ For pinned bubbles, the integration is terminated when $r=r_0$. For a given cavi
 \subsection{Bubble growth}
 \begin{figure}
 \includegraphics[width=\textwidth]{plots/heightVsVol}
-\caption{Bubble height $h$ and volume $V$ during evolution. (a) Grey lines: pinned bubbles with constant contact radius $r_0$; red line: locus of the maximum-volume pinned bubbles. (b) Grey lines: spreading bubbles with constant contact angle $\phi_0$; red line: locus of the maximum-volume spreading bubbles. Thick grey lines and arrows correspond to the bubbles shown in Figure~\ref{figProfile}.}
+\caption{Bubble height $h$ and volume $V$ during evolution. (a) Grey lines: pinned bubbles with constant contact radius $r_0$; red line: locus of the maximum-volume pinned bubbles. (b) Grey lines: spreading bubbles with constant contact angle $\phi_0$; red line: locus of the maximum-volume spreading bubbles. In (a) and (b), thick grey lines and arrows correspond to the bubbles shown in Figure~\ref{figProfile}.}
 \label{figHeight}
 \end{figure}
 
@@ -114,7 +114,7 @@ Figure~\ref{figHeight}b extends the analysis to spreading bubbles. It shows the 
 \subsection{Bubble detachment volume}
 \begin{figure}\centering
 \includegraphics[width=\columnwidth]{plots/MaxVol}
-\caption{(a) Volume $V$ of pinned bubbles. The solid red line shows the detachment volume as a function of contact radius $r_0$, while the dotted grey line, $V=2\pi\lambda^2 r_0$, shows the Tate prediction~\cite{tate64magnitude}. Empty symbols denote detachment volumes measured in experiments: squares~\cite{lesage13experimental}, diamonds~\cite{mori01bubble}, down-triangles~\cite{sasetty23stability}, and up-triangles~\cite{gunde01measurement}. Inset: same data on a logarithmic scale, showing the small-radius range in greater detail. (b) Volume $V$ of spreading bubbles. The solid blue line shows the detachment volume as a function of contact angle $\phi_0$, which is cubed to allow comparison with the Fritz~\cite{fritz35berechnung} prediction $V=0.887\lambda^3\phi_0^3$ (dotted grey line). Empty symbols denote detachment volumes measured in experiments: up-triangles~\cite{demirkir24life}, down-triangles~\cite{allred21role}, and diamonds~\cite{huang26effects}; error bars indicate advancing and receding contact angles. In (a) and (b), thick grey lines and arrows correspond to the bubbles shown in Figure~\ref{figProfile}.}
+\caption{(a) Volume $V$ of pinned bubbles. The solid red line shows the detachment volume as a function of contact radius $r_0$, while the dotted grey line, $V=2\pi\lambda^2 r_0$, shows the Tate prediction~\cite{tate64magnitude}. Empty symbols denote detachment volumes measured in experiments: squares~\cite{lesage13experimental}, diamonds~\cite{mori01bubble}, down-triangles~\cite{sasetty23stability}, and up-triangles~\cite{gunde01measurement}. The shaded region $3.219\lambda < r_0 < 3.832\lambda$ indicates where $\phi_0$ reaches $\pi$ and the bubble becomes unstable to asymmetric perturbations. Inset: same data on a logarithmic scale, showing the small-radius range in greater detail. (b) Volume $V$ of spreading bubbles. The solid blue line shows the detachment volume as a function of contact angle $\phi_0$, which is cubed to allow comparison with the Fritz~\cite{fritz35berechnung} prediction $V=0.887\lambda^3\phi_0^3$ (dotted grey line). Empty symbols denote detachment volumes measured in experiments: up-triangles~\cite{demirkir24life}, down-triangles~\cite{allred21role}, and diamonds~\cite{huang26effects}; error bars indicate advancing and receding contact angles. In (a) and (b), thick grey lines and arrows correspond to the bubbles shown in Figure~\ref{figProfile}.}
 \label{figVol}
 \end{figure}
 
@@ -125,15 +125,14 @@ Figure~\ref{figVol}b shows the detachment volume $V_s$ of spreading bubbles. For
 \subsection{Bubble coalescence}
 \begin{figure}\centering
 \includegraphics[width=\columnwidth]{plots/Rad}
-\caption{(a) Solid red line: apex radius of curvature $R_h$ of pinned bubbles at detachment; dashed red line: the maximum horizontal radius $r_\mathrm{max}$ reached by pinned bubbles. (d) Solid blue line: apex radius of curvature $R_h$ of spreading bubbles at detachment; dashed red line: the maximum horizontal radius $r_\mathrm{max}$ reached by spreading bubbles. Grey solid lines and filled circles show the evolution of bubbles up to detachment.}
+\caption{(a) Apex radius of curvature $R_h$ of pinned bubbles with contact radius $r_0$. Solid red line: $R_h$ at detachment; dashed red line: the maximum horizontal radius $r_\mathrm{max}$ reached during evolution. The shaded region $3.219\lambda < r_0 < 3.832\lambda$ indicates where $\phi_0$ reaches $\pi$ and the bubble becomes unstable to asymmetric perturbations. (b) Apex radius of curvature $R_h$ of spreading bubbles with contact angle $\phi_0$. Solid blue line: $R_h$ at detachment; dashed red line: the maximum horizontal radius $r_\mathrm{max}$ reached during evolution. In (a) and (b), vertical grey solid lines show evolution of $R_h$ up to detachment, with arrowheads corresponding to the bubbles shown in Figure~\ref{figProfile}.}
 \label{figAng}
 \end{figure}
 
 \subsection{Bubble contact angle and radius}
 \begin{figure}\centering
 \includegraphics[width=\columnwidth]{plots/Ang}
-\caption{(a) Foot angle $\phi_0$ at detachment (red dots) and minimum foot angle during evolution (red line). The dashed black line shows the fit $\phi_0/\pi=\sqrt{r_0/3.5\lambda}$. The shaded region $r_0 > 3.219\,\lambda$ indicates where $\phi_0$ reaches $\pi$ and the bubble becomes unstable to asymmetric perturbations.
-(d) Maximum foot radius $r_0$ during bubble evolution (blue line) and foot radius at detachment (blue dots). The dashed black line shows the fit $r_0=3.219\lambda(\phi_0/\pi)^2$.}
+\caption{(a) Contact angle $\phi_0$ of pinned bubbles with contact radius $r_0$. The solid red line is the contact angle $\phi_0$ at detachment, the vertical grey lines and arrows show the evolution of the contact angle $\phi_0$ up to detachment, and the dashed grey line $r_0=3.5\lambda(\phi_0/\pi)^2$. (b) Contact radius $r_0$ of spreding bubbles with contact angle $\phi_0$. The solid blue line is the foot radius $r_0$ at detachment, and the dotted grey line is the fit $r_0=3.219\lambda(\phi_0/\pi)^2$. In (a) and (b), solid grey lines and arrows show evolution up to detachment, and the range $3.219\lambda < r_0 < 3.832\lambda$ is shaded.}
 \label{figAng}
 \end{figure}
 
