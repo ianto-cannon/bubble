@@ -53,14 +53,14 @@ def plot_profiles(nam='rad ang'):
       # ----- Skip drawing profiles for some cases -----
       if 'rad' in cont and round(df[0, 0] * 10) % 10 != 5:
         continue
-      if 'ang' in cont and round(angl * 100) % 20 != 0:
+      if 'ang' in cont and round(angl * 100) % 20 != 10:
         continue
       
       # Horizontal spacing
       if 'ang' in cont:
-        spac = (0.5, 2.3, 5.1, 10, 17.5)[round(4 - df[indVol, 2] * 5 / np.pi)]
+        spac = (.7, 2.3, 5.1, 9.5, 16)[round(4 - df[indVol, 2] * 5 / np.pi)]
       if 'rad' in cont:
-        spac = (1, 4.5, 10, 17.5)[round(df[0, 0] - 0.5)]
+        spac = (1, 4, 9, 16)[round(df[0, 0] - 0.5)]
         axProf[axInd].plot((spac - df[0, 0], spac + df[0, 0]), (0, 0),
                    c='w', clip_on=False, zorder=3)
         axProf[axInd].plot((spac - df[0, 0], spac + df[0, 0]), (-cav, -cav),
@@ -72,7 +72,7 @@ def plot_profiles(nam='rad ang'):
 
       # Load and draw profiles for each height level
       for hei in range(5):
-        if 'rad' in fname and spac < 4 and hei < 4: continue
+        if 'rad' in fname and spac < 2 and hei < 4: continue
         if hei<4: col = 'grey'
         elif 'rad' in fname: col = 'r'
         elif 'ang' in fname: col = 'b'
@@ -84,16 +84,15 @@ def plot_profiles(nam='rad ang'):
         with open(fPath, encoding='utf-8') as f:
           prof = np.loadtxt(f)
         footInd = np.argmin(abs(df[heiInd, 6] - prof[:, 6]))
-
+        if prof[footInd,2] <= np.pi*1e-3: listy='dashed'
+        else: listy='solid'
         xProf = np.concatenate((-prof[:footInd, 0][::-1], prof[:footInd, 0]))
         xProf = xProf + spac
         yProf = np.concatenate((prof[:footInd, 1][::-1] - prof[footInd, 1],
                     prof[:footInd, 1] - prof[footInd, 1]))
-        axProf[axInd].plot(xProf, yProf,
-                   c=col,
-                   clip_on=False, zorder=4)
+        axProf[axInd].plot(xProf, yProf, c=col, ls=listy, clip_on=False, zorder=4)
 
-        if spac > 4: continue
+        if spac > 2: continue
         if 'ang' in fname: continue
 
         # Annotations: phi0, r0, s, phi, g
@@ -162,7 +161,7 @@ def plot_profiles(nam='rad ang'):
                    ha='left', va='bottom', c='k', zorder=4)
 
 
-    gravX, gravTailY, gravHeadY = 21, 2.8, 2
+    gravX, gravTailY, gravHeadY = 19.5, 2.8, 2
     axProf[axInd].plot([gravX, gravX], [gravTailY, gravHeadY], c='k')
     tri = RegularPolygon((gravX, gravHeadY), 3,
                radius=0.1, orientation=np.pi,
@@ -175,7 +174,7 @@ def plot_profiles(nam='rad ang'):
     axProf[axInd].tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
     axProf[axInd].set_ylabel('$\\frac{ z }{\\lambda}$', rotation=0, size=22, labelpad=15)
     axProf[axInd].set_ylim([0, 3])
-    axProf[axInd].set_xlim([0, 21.5])
+    axProf[axInd].set_xlim([0, 20])
     axProf[axInd].set_aspect('equal', adjustable='box')
 
     if 'ang' in cont:
@@ -216,14 +215,20 @@ def plot_volume_and_angle():
   axHei[0].set_ylabel('$\\frac{h}{\\lambda}$', rotation=0, size=22, labelpad=10)
   
   with open(inFol + 'BinRadMaxVol.txt', encoding='utf-8') as f: df = np.loadtxt(f)
-  axV[0].plot(df[:,0], df[:, 6], c='r', clip_on=False)
-  axR[0].plot(df[:,0], df[:, 5], c='r')
-  axHei[0].plot(df[:,6], df[:, 1], c='r', zorder=4, clip_on=False)
+  sideInds = df[:,2]<=np.pi*1e-3
+  axV[0].plot(df[~sideInds,0], df[~sideInds, 6], c='r', clip_on=False)
+  axV[0].plot(df[sideInds,0], df[sideInds, 6], c='r', clip_on=False, ls='dashed')
+  axR[0].plot(df[~sideInds,0], df[~sideInds, 5], c='r')
+  axR[0].plot(df[sideInds,0], df[sideInds, 5], c='r', ls='dashed')
+  axHei[0].plot(df[~sideInds,6], df[~sideInds, 1], c='r', zorder=4, clip_on=False)
+  axHei[0].plot(df[sideInds,6], df[sideInds, 1], c='r', zorder=4, clip_on=False, ls='dashed')
   #Make radius bins larger to counteract noise
   minLen=100
   minAng = np.array([ np.min(1 - df[i:i+minLen, 2] / np.pi) for i in range(0, len(df[:,2])-minLen, minLen )])
-  rad = [ df[i + minLen//2, 0] for i in range( 0, len(df[:,2])-minLen, minLen )]
-  axA[0].plot(rad, minAng**2, c='r', clip_on=False, zorder=3)
+  rad = np.array([ df[i + minLen//2, 0] for i in range( 0, len(df[:,2])-minLen, minLen )])
+  sideInds = minAng>=1-1e-3
+  axA[0].plot(rad[~sideInds], minAng[~sideInds]**2, c='r', clip_on=False, zorder=3)
+  axA[0].plot(rad[sideInds], minAng[sideInds]**2, c='r', clip_on=False, zorder=3, ls='dashed')
   axI = inset_axes(axV[0], width="38%", height="48%", loc='upper left')
   axI.yaxis.set_label_position("right")
   axI.yaxis.tick_right()
@@ -238,17 +243,6 @@ def plot_volume_and_angle():
 
   xx = np.linspace(0, 4,10000)
   axV[0].plot(xx, 2 * np.pi * xx, linestyle='dotted', c='grey')
-  gap=.832-.219
-  def quartic_bell(x: float, a: float, b: float, c: float) -> float:
-    term = (2 * x - (a + b)) / (b - a)
-    return c * (1 - term**4)
-
-  def log_curve(x: float, a: float, b: float, c: float) -> float:
-    log_term = np.log((x - b) / (a - b))
-    return c + log_term
-
-  #axV[0].plot(xx, 18.96+np.log((3.832-xx)/gap), linestyle='dotted', c='grey')
-  axV[0].plot(xx, log_curve(xx,3.219,3.832,18.96), linestyle='dotted', c='grey')
   axI.plot(xx, 2 * np.pi * xx, linestyle='dotted', c='grey')
 
   axV[0].set_xlabel('$r_0/\\lambda$')
@@ -267,7 +261,7 @@ def plot_volume_and_angle():
   axR[0].set_xlim([0, 4])
 
   with open(inFol + 'BinRadMaxWid.txt', encoding='utf-8') as f: df = np.loadtxt(f)
-  axR[0].plot(df[:,0], df[:,9], ls='dashed', c='r', clip_on=False, zorder=3, 
+  axR[0].plot(df[:,0], df[:,9], ls='dotted', c='r', clip_on=False, zorder=3, 
     label='$r_\\mathrm{max}/\\lambda$')
   #axR[0].plot(df[:,0], df[:,0], ls='dotted', c='grey', label='$r_0/\\lambda$')
 
@@ -301,13 +295,11 @@ def plot_volume_and_angle():
       axR[1].plot( (1 - df[:indVol, 2] / np.pi), df[:indVol, 5], c='grey', lw=0.1)
     else: continue
     axHei[axInd].plot(df[:indVol + 1, 6], -df[:indVol + 1, 1], c='grey', lw=0.5, alpha=0.5)
-    if 'ang' in fname and round(angl * 100) % 20 == 0 and angl > 50 / 180:
-      if angl<1: axHei[axInd].text(df[indVol, 6], -df[indVol, 1],
+    if 'ang' in fname and round(angl * 100) % 20 == 10 and angl > .4:
+      axHei[axInd].text(df[indVol, 6], -df[indVol, 1] +.05,
                 rf"$\frac{{\phi_0}}{{\pi}}\!=\!{angl:.1f}$", va='bottom', ha='center', zorder=5)
-      else: axHei[axInd].text(df[indVol, 6], -df[indVol, 1] + 0.03,
-                rf"$\frac{{\phi_0}}{{\pi}}\!=\!{angl:.0f}$", va='bottom', ha='center', zorder=5)
     if 'rad' in fname and round(df[0, 0] * 10) % 10 == 5 and df[0, 0] > 0.05:
-      axHei[axInd].text(df[indVol, 6], -df[indVol, 1],
+      axHei[axInd].text(df[indVol, 6], -df[indVol, 1] +.05,
                 rf"$\frac{{r_0}}{{\lambda}}\!=\!{df[0, 0]:.1f}$", va='bottom', ha='center', zorder=5)
     axA[axInd].plot( [df[0, 0], df[extremInd, 0]], 
       [ (1 - df[0, 2] / np.pi)**2, (1 - df[extremInd, 2] / np.pi)**2], 
@@ -318,7 +310,7 @@ def plot_volume_and_angle():
       axR[0].plot( df[:indVol, 0], df[:indVol, 5], c='grey')
       axI.plot( df[:indVol, 0], df[:indVol, 6], c='grey')
     if 'ang' in fname:
-      if round(angl * 100) % 20 != 0: continue
+      if round(angl * 100) % 20 != 10: continue
       axV[1].plot( [angl**3, angl**3], [0, df[indVol, 6]], c='grey')
       axR[1].plot( (1 - df[:indVol, 2] / np.pi), df[:indVol, 5], c='grey')
     axA[axInd].plot( [df[0, 0], df[extremInd, 0]], [ (1 - df[0, 2] / np.pi)**2, (1 - df[extremInd, 2] / np.pi)**2], c='grey')
@@ -407,7 +399,7 @@ def plot_volume_and_angle():
   axA[1].text(0.98, 0.01, '$\\mathrm{(b)~spreading}$', transform=axA[1].transAxes, va='bottom', ha='right')
   
   with open(inFol + 'BinAngMaxWid.txt', encoding='utf-8') as f: df = np.loadtxt(f)
-  axR[1].plot( (1 - df[:,2]/np.pi), df[:,9], ls='dashed', c='b', clip_on=False, zorder=3, label='$r_\\mathrm{max}/\\lambda$')
+  axR[1].plot( (1 - df[:,2]/np.pi), df[:,9], ls='dotted', c='b', clip_on=False, zorder=3, label='$r_\\mathrm{max}/\\lambda$')
   
   #with open(inFol + 'BinAngMaxRad.txt', encoding='utf-8') as f: df = np.loadtxt(f)
   #axA[1].plot(df[:,0], (1 - df[:,2]/np.pi)**2, c='b', ls='dashed')
