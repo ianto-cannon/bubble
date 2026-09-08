@@ -236,8 +236,19 @@ def plot_volume_and_angle():
   axI.set_yticklabels(['$0.5$', '$1$', '$2$', '$5$'])
   axI.plot(df[:,0], df[:, 6], c='r')
 
-  xx = np.linspace(0, 4)
+  xx = np.linspace(0, 4,10000)
   axV[0].plot(xx, 2 * np.pi * xx, linestyle='dotted', c='grey')
+  gap=.832-.219
+  def quartic_bell(x: float, a: float, b: float, c: float) -> float:
+    term = (2 * x - (a + b)) / (b - a)
+    return c * (1 - term**4)
+
+  def log_curve(x: float, a: float, b: float, c: float) -> float:
+    log_term = np.log((x - b) / (a - b))
+    return c + log_term
+
+  #axV[0].plot(xx, 18.96+np.log((3.832-xx)/gap), linestyle='dotted', c='grey')
+  axV[0].plot(xx, log_curve(xx,3.219,3.832,18.96), linestyle='dotted', c='grey')
   axI.plot(xx, 2 * np.pi * xx, linestyle='dotted', c='grey')
 
   axV[0].set_xlabel('$r_0/\\lambda$')
