@@ -21,6 +21,7 @@ We determine the maximum stable volume of bubbles attached to flat surfaces as a
 \section{Introduction}
 
 \subsection{Motivation}
+
 Annually, around $10^{11}$,kg of hydrogen gas is used in industry, mostly to produce fertilisers via the Haber process and to reduce metal ores in steelmaking and aluminium production~\cite{kullmann23role}. Currently, more than 95\% of hydrogen is produced from fossil fuels, largely from natural gas via steam methane reforming~\cite{franchi20hydrogen}, which releases significant quantities of CO$_2$. Diversifying away from fossil fuels is essential to maintain a stable Earth climate system and ensure the long-term survival of human society~\cite{steffen18trajectories}. Water electrolysis driven by renewable electricity is a promising alternative~\cite{kullmann23role}, splitting water into hydrogen and oxygen without direct CO$_2$ emissions. However, gas bubbles that form and remain attached to the electrode surface limit the efficiency of water electrolysis. These bubbles block the active area, impede ion transport, and increase ohmic resistance~\cite{vogt89problem,angulo20influence,ross25impact,ross26transient}. Electrolysis will also be important for life-support systems on future manned lunar and Martian bases, where water extracted from local ice deposits could provide a source of hydrogen and oxygen~\cite{matsushima06water}. Understanding and controlling bubble detachment is therefore relevant both to improving electrolysis efficiency on Earth and to enabling efficient resource utilisation in low-gravity environments~\cite{brinkert22fundamentals}.
 
 Bubble detachment also plays a role in the transport of naturally occurring gases. Methane seepage from the seafloor releases an estimated $6$--$12$,Mt of methane per year from anoxic sediments, geological reservoirs, and degrading methane-hydrate deposits~\cite{weber19global}. Bubbles with radii below approximately 3mm can dissolve and biodegrade in the water column before reaching the ocean surface~\cite{mcginnis06fate}, whereas larger bubbles can escape into the atmosphere. Since methane is a potent greenhouse gas, understanding the conditions governing bubble detachment and subsequent transport is relevant to quantifying its environmental impact.
@@ -46,6 +47,7 @@ Bubble detachment can also be triggered by coalescence with a neighbouring bubbl
 \end{figure}
 
 \subsection{Aims}
+
 Here we treat pinned and spreading bubbles together, rather than as separate problems. We address three fundamental questions: 
 
 \textbf{Q1} What is the volume of the bubble when it detaches?
@@ -54,7 +56,7 @@ Here we treat pinned and spreading bubbles together, rather than as separate pro
 
 \textbf{Q3} How does it detach?
 
-We consider a simplified system consisting of a circular cavity of radius $r_0$ containing an already-nucleated bubble, surrounded by a smooth horizontal surface with a single-valued, non-hysteretic contact angle $\phi_0$. That is, the contact angle is independent of whether the three-phase contact line advances or recedes. The fluid is quiescent, so forces are purely hydrostatic, and the system is physically equivalent to a pendant drop. Throughout this paper we refer to it as a bubble, but our results apply equally to pendant drops. We determine the detachment size for pinned and spreading bubbles across the full range of cavity sizes, capillary lengths ($0\le r_0/\lambda<\infty$), and contact angles ($0\le\phi_0\le\pi$).
+We consider a simplified system consisting of a circular cavity of radius $r_0$ containing an already-nucleated bubble, surrounded by a smooth horizontal surface with a single-valued, non-hysteretic contact angle $\phi_0$. That is, the contact angle is independent of whether the three-phase contact line advances or recedes. The fluid is quiescent, so forces are purely hydrostatic, and the system is physically equivalent to a pendant drop. Throughout this paper we refer to it as a bubble, but our results apply equally to pendant drops. We determine the detachment size for pinned and spreading bubbles across the full range of cavity sizes, capillary lengths ($0< r_0/\lambda<\infty$), and contact angles ($0<\phi_0<\pi$).
 
 \section{Methods}
 
@@ -92,56 +94,74 @@ Substituting into Equation~\ref{eqPressCurv} and multiplying by the capillary le
 This equation describes the curvature of an axisymmetric interface under gravity. Here, all lengths are scaled by the capillary length $\lambda$, so that Equation~\ref{eqShape} is dimensionless, implying self-similar bubble shapes and a universal scaling with $\lambda$.
 
 \subsection{Numerical solution}
+
 We solve Equation~\ref{eqShape} using a shooting method, initiating the integration at the apex ($r=0$, $z=h$, $\phi=\pi$) and sampling $10^4$ logarithmically spaced initial guesses for $R_h$ over $10^{-3}\lambda<R_h<10^3\lambda$. The equations are integrated along the arc length $s$ with a step size of $10^{-5}\lambda$ using the Adams--Bashforth method~\cite{bashforth83attempt}. The complete set of calculations requires approximately 250~s on a single core of an M4 MacBook Pro. The C code and accompanying data are freely available~\cite{cannon26bubble}.
 
 For pinned bubbles, the boundary condition $r=r_0$ is imposed at the substrate ($z=0$). For a given cavity radius $r_0$, this yields a family of equilibrium profiles with different apex radii $R_h$, shown in Figure~\ref{figProfile}a. For spreading bubbles, the boundary condition $\phi=\phi_0$ is imposed at the substrate ($z=0$). The resulting profiles are shown in Figure~\ref{figProfile}b for a sequence of contact angles and apex radii $R_h$.
 
 \section{Results and Discussion}
 
-\subsection{Bubble growth}
+\subsection{Bubble detachment criteria}\label{secGrowth}
+
 \begin{figure}
 \includegraphics[width=\textwidth]{plots/heightVsVol}
 \caption{Bubble height $h$ and volume $V$ during evolution. (a)~Grey lines: pinned bubbles with constant contact radius $r_0$. Solid red line: locus where $\partial V/\partial h=0$, and the bubbles detach axisymmetrically. Dashed red line: locus where $\phi_0=\pi$ and the bubbles detach from the side of the cavity. (b)~Grey lines: spreading bubbles with constant contact angle $\phi_0$. Solid blue line: locus where $\partial V/\partial h=0$, and the bubbles detach axisymmetrically. In (a)~and (b), thick grey lines and arrows correspond to the bubbles shown in Figure~\ref{figProfile}.}
 \label{figHeight}
 \end{figure}
 
-To characterize the evolution of a growing pinned bubble, we plot the bubble height $h$ as a function of volume $V$ in Figure~\ref{figHeight}a, where the bubble volume 
+To characterize the evolution of a growing pinned bubble, we plot the bubble height $h$ as a function of volume $V$ in Figure~\ref{figHeight}a, where the bubble volume
 \begin{equation}
-V=\int_0^h\pi r^2\,dz,
+V=\int_0^h\pi r^2,dz,
 \end{equation}
-is integrated using the midpoint rule. Each family of solutions in Figure~\ref{figProfile}a gives rise to a curve $h(V)$ in Figure~\ref{figHeight}a. Upon nucleation inside the cavity, the bubble has zero volume and zero height, corresponding to the bottom-left point in Figure~\ref{figHeight}a. As the bubble grows, its height $h$ increases and it remains pinned on the $h(V)$ curve until one of two conditions is met:
+is integrated using the midpoint rule. Each family of solutions in Figure~\ref{figProfile}a gives rise to a curve $h(V)$ in Figure~\ref{figHeight}a. Upon nucleation inside the cavity, the bubble has zero volume and zero height, corresponding to the bottom-left point in Figure~\ref{figHeight}a. As the bubble grows, its volume $V$ and height $h$ increase, and it remains attached to the substrate until one of two conditions is met:
 \begin{enumerate}
-\item If the bubble volume reaches a point where the $h(V)$ curve becomes vertical, the height can increase without a further increase in volume. The solution is no longer unique, and the interface becomes unstable. This leads to axisymmetric detachment. Each $h(V)$ curve in Figure~\ref{figHeight}a is therefore truncated at this point.
-\item If the contact angle $\phi_0$ reaches $\pi$, the interface becomes unstable to non-axisymmetric perturbations~\cite{michael76equilibrium}, the interface peak shifts to one side of the cavity, and the bubble detaches laterally. This occurs for $r_0>3.219\,\lambda$, at the right of Figure~\ref{figHeight}a.
+\item The bubble volume reaches a point where the $h(V)$ curve becomes vertical, i.e.,~$\partial V/\partial h=0$, so that the height can increase without a further increase in volume. The solution is no longer unique, and the interface becomes unstable, leading to axisymmetric detachment.
+\item The contact angle $\phi_0$ reaches $\pi$, at which point the interface is horizontal at the contact line and becomes unstable to non-axisymmetric perturbations~\cite{michael76equilibrium}. The bubble shifts to one side of the cavity and detaches laterally. This occurs for all $h(V)$ curves with $r_0>3.219,\lambda$, at the lower right of Figure~\ref{figHeight}a.
 \end{enumerate}
-Figure~\ref{figHeight}b extends the analysis to spreading bubbles. It shows the possible volumes and heights for contact angles across the full range $0 \le \phi_0 \le \pi$. As with pinned bubbles, each curve reaches a point where $h(V)$ becomes vertical. This point defines the detachment volume of the spreading bubble, and the curves are truncated there. The detachment volume is seen in Figure~\ref{figHeight}b to increase with contact angle $\phi_0$. The tallest possible bubble has $h = 2.642\,\lambda$, which is considerably less than the analytical limit of $h = 3.42\,\lambda$ established for two-dimensional columnar pendant drops~\cite{sumesh10possible}.
+We truncate each of the $h(V)$ curves in Figure~\ref{figHeight}a when either of these conditions is met. We note that the tallest possible bubble occurs in a cavity of radius $r_0=1.720\lambda$ and has height $h=2.642,\lambda$, which is considerably less than the analytical limit of $h=3.42,\lambda$ established for two-dimensional columnar pendant drops~\cite{sumesh10possible}.
 
-\subsection{Bubble detachment volume}
+In Figure~\ref{figHeight}b, we perform the same $h(V)$ analysis for spreading bubbles. The figure shows the possible volumes and heights for contact angles spanning the full range $0<\phi_0<\pi$. As for pinned bubbles, each curve reaches a point where $h(V)$ becomes vertical ($\partial V/\partial h=0$). This point defines the detachment volume, and the curve is truncated there. In the spreading bubble case, detachment is always axisymmetric, and the tallest spreading bubble is shorter, with $h=2.213\lambda$ and contact angle $\phi_0=0.8330\pi$.
+
+\subsection{Bubble volume}
+
 \begin{figure}\centering
 \includegraphics[width=\columnwidth]{plots/MaxVol}
 \caption{(a)~Volume $V$ of pinned bubbles. The red line shows the detachment volume as a function of contact radius $r_0$, while the dotted grey line, $V=2\pi\lambda^2 r_0$, shows the Tate prediction~\cite{tate64magnitude}. The shaded region $3.219\lambda < r_0 < 3.832\lambda$ and dashed red line indicate where $\phi_0$ reaches $\pi$ and the bubble becomes unstable to asymmetric perturbations. Empty symbols denote detachment volumes measured in experiments: squares~\cite{lesage13experimental}, diamonds~\cite{mori01bubble}, down-triangles~\cite{sasetty23stability}, and up-triangles~\cite{gunde01measurement}. Inset: same data on a logarithmic scale, showing the small-radius range in greater detail. (b)~Volume $V$ of spreading bubbles. The solid blue line shows the detachment volume as a function of contact angle $\phi_0$, which is cubed to allow comparison with the Fritz~\cite{fritz35berechnung} prediction $V=0.887\lambda^3\phi_0^3$ (dotted grey line). Empty symbols denote detachment volumes measured in experiments: up-triangles~\cite{demirkir24life}, down-triangles~\cite{allred21role}, and diamonds~\cite{huang26effects}; error bars indicate advancing and receding contact angles. In (a)~and (b), thick grey lines and arrows correspond to the bubbles shown in Figure~\ref{figProfile}.}
 \label{figVol}
 \end{figure}
 
-Figure~\ref{figVol}(a)~shows the detachment volume $V_p$ of pinned bubbles. The detachment volume increases with cavity radius, following a trend close to the Tate prediction~\cite{tate64magnitude}; deviations arise due to the non-spherical interface shape under buoyancy. These deviations are confirmed by experimental measurements of bubbles emitted from tubes in water~\cite{lesage13experimental}, bubbles in carbonated water from millimetric cavities~\cite{mori01bubble}, and pendant drops~\cite{gunde01measurement}. The solid line in Figure~\ref{figVol}c shows the contact angle $\phi_0$ at departure. Contrary to Chesters' assumption~\cite{chesters77analytical}, the contact angle at detachment exceeds $\pi/2$ for all cavity radii. For cavities with $r_0>3.219\,\lambda$, $\phi_0$ reaches $\pi$ and the interface becomes unstable to non-axisymmetric perturbations~\cite{michael76equilibrium}, causing the bubble to slide to one side and detach laterally. No stable solution exists for $r_0>3.832\,\lambda$~\cite{plateau73statique}; above this radius, Equation~\ref{eqShape} has no solution with $\phi_0<\pi$ and lateral detachment is immediate, consistent with the dripping behaviour reported in sessile drop experiments~\cite{sasetty23stability}. Figure~\ref{figVol}c also shows the minimum contact angle reached during bubble evolution. If the surface contact angle $\phi_0$ exceeds this minimum, the bubble will become unpinned and spread across the surface. The minimum angle closely follows the fit $\phi_0/\pi=\sqrt{r_0/3.5\lambda}$.
+Figure~\ref{figVol}(a)~shows the possible volumes $V(r_0)$ of pinned bubbles. The detachment volume initially increases with contact radius, following a trend close to the Tate prediction~\cite{tate64magnitude}; however, deviations arise due to the non-spherical interface shape induced by buoyancy. These deviations are consistent with experimental measurements of bubbles emitted from tubes in water~\cite{lesage13experimental}, bubbles in carbonated water from millimetric cavities~\cite{mori01bubble}, and pendant drops~\cite{gunde01measurement}. At $r_0=3.219\lambda$, we obtain the largest pinned bubble relative to the capillary length $\lambda$, with a volume of $V=18.96\lambda^3$. For larger contact radii, detachment occurs via a non-axisymmetric instability, and the detachment volume decreases. For $r_0>3.832\lambda$, no stable bubble exists.
 
-Figure~\ref{figVol}b shows the detachment volume $V_s$ of spreading bubbles. For small contact angles, the Fritz prediction is accurate. As $\phi_0\to\pi$, however, the detachment volume saturates below Fritz's extrapolation at a maximum of $V=18.96\,\lambda^3$. Our results are confirmed by measurements of water electrolysis~\cite{demirkir24life}, boiling~\cite{allred21role}, and air bubbles over superhydrophobic surfaces~\cite{huang26effects}. Figure~\ref{figVol}d shows the radius of the bubble contact area at departure, which closely follows the fit $r_0=3.219\lambda(\phi_0/\pi)^2$. Figure~\ref{figVol}d also shows the maximum radius of the contact area during bubble evolution. In all cases, the maximum contact radius exceeds the departure radius, indicating that the contact line initially spreads and then partially recedes prior to detachment. In some instances~\cite{gerlach05quasistatic}, the contact radius may again equal the cavity radius $r_0$, re-pinning the bubble at the cavity, in which case the departure volume corresponds to $V_p$.
+Figure~\ref{figVol}b shows the possible volumes $V(\phi_0)$ of spreading bubbles. For small contact angles, the Fritz prediction is accurate. As $\phi_0\to\pi$, however, the detachment volume saturates below Fritz's prediction. Our results are confirmed by measurements of water electrolysis~\cite{demirkir24life}, boiling~\cite{allred21role}, and air bubbles over superhydrophobic surfaces~\cite{huang26effects}. The largest spreading bubble has $V=18.96\lambda^3$, and is identical in shape to the largest pinned bubble. 
 
 \subsection{Bubble coalescence}
+
 \begin{figure}\centering
 \includegraphics[width=\columnwidth]{plots/Rad}
-\caption{(a)~Apex radius of curvature $R_h$ of pinned bubbles with contact radius $r_0$. The red line shows $R_h$ at detachment. The shaded region $3.219\lambda < r_0 < 3.832\lambda$ and dashed red line indicates where $\phi_0$ reaches $\pi$ and the bubble becomes unstable to asymmetric perturbations. The dotted red line shows the maximum horizontal radius $r_\mathrm{max}$ reached during evolution. (b)~Apex radius of curvature $R_h$ of spreading bubbles with contact angle $\phi_0$. Solid blue line: $R_h$ at detachment; dotted blue line: the maximum horizontal radius $r_\mathrm{max}$ reached during evolution. In (a)~and (b), vertical grey solid lines show evolution of $R_h$ up to detachment, with arrowheads corresponding to the bubbles shown in Figure~\ref{figProfile}.}
-\label{figAng}
+\caption{(a)~Apex radius of curvature $R_h$ of pinned bubbles as a function of contact radius $r_0$. The red line shows $R_h$ at detachment. The shaded region $3.219\lambda<r_0<3.832\lambda$ and dashed red line indicate where $\phi_0$ reaches $\pi$ and the bubble becomes unstable to asymmetric perturbations. The dotted red line shows the maximum horizontal radius $r_\mathrm{max}$ reached during evolution, and the dotted grey line shows the piecewise fit $r_\mathrm{max}/\lambda=(r_0/\lambda)^{1/3}$ for $r_0<\lambda$ and $r_\mathrm{max}=r_0$ for $r_0>\lambda$. (b)~Apex radius of curvature $R_h$ of spreading bubbles as a function of contact angle $\phi_0$. The solid blue line shows $R_h$ at detachment; the dotted blue line shows the maximum horizontal radius $r_\mathrm{max}$ reached during evolution; and the dotted grey line shows the piecewise fit $r_\mathrm{max}/\lambda=3.832\phi_0/(2\pi)$ for $\phi_0<\pi/2$ and $r_\mathrm{max}/\lambda=3.832(\phi_0/\pi)^2$ for $\phi_0>\pi/2$. In (a)~and (b), vertical grey solid lines show the evolution of $R_h$ up to detachment, with arrowheads corresponding to the bubbles shown in Figure~\ref{figProfile}.}
+\label{figRad}
 \end{figure}
 
-\subsection{Bubble contact angle and radius}
-\begin{figure}\centering
-\includegraphics[width=\columnwidth]{plots/Ang}
-\caption{(a)~Contact angle $\phi_0$ of pinned bubbles with contact radius $r_0$. The red line is the contact angle $\phi_0$ at detachment, the vertical grey lines and arrows show the evolution of the contact angle $\phi_0$ up to detachment, and the dotted grey line $r_0=3.5\lambda(\phi_0/\pi)^2$. (b)~Contact radius $r_0$ of spreding bubbles with contact angle $\phi_0$. The solid blue line is the contact radius $r_0$ at detachment, and the dotted grey line is the fit $r_0=3.219\lambda(\phi_0/\pi)^2$. In (a)~and (b), solid grey lines and arrows show evolution up to detachment, the shaded range $3.219\lambda < r_0 < 3.832\lambda$ and corresponding dashed red line shows where $\phi_0=\pi$ and detachment occus non-axisymmetrically.}
-\label{figAng}
-\end{figure}
+When two bubbles nucleate near each other on a surface, they may coalesce, and the energy released during coalescence can lead to detachment~\cite{demirkir25jump}. Assuming that coalescence occurs when neighbouring bubbles touch, and that the bubbles have the same shape, coalescence occurs when their separation is less than or equal to $2r_\mathrm{max}$, where $r_\mathrm{max}$ is the maximum horizontal radius of the bubble, as labelled in Figure~\ref{figProfile}. Figure~\ref{figRad}a shows the maximum value of $r_\mathrm{max}$ reached by pinned bubbles during their evolution up to detachment. For small contact radii, $r_\mathrm{max}/\lambda\approx(r_0/\lambda)^{1/3}$, so we expect bubbles to coalesce when the distance between their nucleation centres is less than $2r_0^{1/3}\lambda^{2/3}$. For large contact radii, $(r_0>\lambda)$, we find $r_\mathrm{max}=r_0$, indicating that the bubble does not protrude beyond the cavity; hence, coalescence cannot occur between bubbles nucleated on neighbouring cavities. 
+
+The peicewise fit in Figure~\ref{figRad}b shows that at small contact angles ($\phi_0<\pi/2$), coalescence occurs for nucleation sites separated by less than $3.832\lambda\phi_0/\pi$, and for large contact angles the criterion is stricter; $2\times3.832\lambda(\phi_0/\pi)^2$.
+
+Figure~\ref{figRad} also shows the evolution of the bubble apex radius of curvature $R_h$. We note that the pinned bubbles nucleate as a flat interface across the cavity, with infinite radius of curvature and zero pressure difference, whereas the spreading bubbles nucleate as an infinitesimal spherical cap, with zero radius of curvature, and a diverging pressure difference. It is this large required pressure which explains why it is energetically unfavourable for nucleation to occur on smooth flat surfaces. Nucleation generally occurs in microscopic cavities or on impurities.
 
 \subsection{Pinning and unpinning of the contact line}
+
+\begin{figure}\centering
+\includegraphics[width=\columnwidth]{plots/Ang}
+\caption{(a)~Contact angle $\phi_0$ of pinned bubbles with fixed contact radius $r_0$. The red line shows $\phi_0$ at detachment and is dashed where $\phi_0=\pi$ and detachment occurs non-axisymmetrically. Vertical grey lines and arrows show the evolution of $\phi_0$ up to detachment. The dotted grey line shows the fit $r_0=3.5\lambda(\phi_0/\pi)^2$. (b)~Contact radius $r_0$ of spreading bubbles with fixed contact angle $\phi_0$. The solid blue line shows $r_0$ at detachment, and the dotted grey line shows the fit $r_0=3.219\lambda(\phi_0/\pi)^2$. In (a)~and (b), grey lines and arrows show the evolution up to detachment, and the shaded region indicates $3.219\lambda<r_0<3.832\lambda$.}
+\label{figAng}
+\end{figure} 
+
+Figure~\ref{figAng}a shows the contact angle $\phi_0$ at detachment. For small contact radii ($r_0<0.1\lambda$), the assumption of Tate and Chesters~\cite{tate64magnitude,chesters77analytical} that the contact angle at detachment is $\pi/2$ holds. However, $\phi_0$ at detachment is larger than $\pi/2$ for all other contact radii. This explains why the predictions of Tate and Chesters agree well with our results for small contact radii, but deviate as buoyancy effects become stronger.
+
+Figure~\ref{figVol}d shows the radius of the bubble contact area at departure, which closely follows the fit $r_0=3.219\lambda(\phi_0/\pi)^2$. Figure~\ref{figVol}d also shows the maximum radius of the contact area during bubble evolution. In all cases, the maximum contact radius exceeds the departure radius, indicating that the contact line initially spreads and then partially recedes prior to detachment. In some instances~\cite{gerlach05quasistatic}, the contact radius may again equal the cavity radius $r_0$, re-pinning the bubble at the cavity, in which case the departure volume corresponds to $V$.
+
+Indeed, for cavities with $r_0>3.219\lambda$, $\phi_0$ reaches $\pi$ and the interface becomes unstable to non-axisymmetric perturbations~\cite{michael76equilibrium}, causing the bubble to slide to one side and detach laterally. No stable solution exists for $r_0>3.832\lambda$~\cite{plateau73statique}; above this radius, Equation~\ref{eqShape} has no solution with $\phi_0<\pi$, and lateral detachment is immediate, consistent with the dripping behaviour reported in sessile drop experiments~\cite{sasetty23stability}.
+
 \begin{figure}
 \centering
 \begin{tikzpicture}[
@@ -176,6 +196,9 @@ Figure~\ref{figVol}b shows the detachment volume $V_s$ of spreading bubbles. For
 \caption{Decision tree for bubble detachment. Red branches correspond to pinned bubbles and blue branches to spreading bubbles. The cavity radius is $r_c$ and the wetting angle on the surrounding substrate is $\phi_w$.}
 \label{figTree}
 \end{figure}
+
+Figure~\ref{figAng}c also shows the minimum contact angle reached during bubble evolution. If the surface contact angle exceeds this minimum, the bubble becomes unpinned and spreads across the surface. The minimum angle closely follows the fit $\phi_0/\pi=\sqrt{r_0/(3.5\lambda)}$.
+
 Figure~\ref{figTree} gives the decision tree for bubble evolution up to detachment. Given $\phi_0$, $r_0$, and the capillary length $\lambda$ of a specific system, the detachment size is determined by following this tree, using the functions plotted in Figure~\ref{figVol}. Table~\ref{tabSig} gives the properties of the limiting bubble configurations, where we see that the largest pinned and spreading bubbles in fact correspond to the same solution of Equation~\ref{eqShape}. Note that we measure the bubble volume above the contact line; some gas may remain attached to the surface after detachment, so the true released volume may be slightly less.
 
 \begin{table}\small

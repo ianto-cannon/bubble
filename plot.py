@@ -214,6 +214,15 @@ def plot_volume_and_angle():
     ax.set_xlabel('$V/\\lambda^3$')
   axHei[0].set_ylabel('$\\frac{h}{\\lambda}$', rotation=0, size=22, labelpad=10)
   
+  xx=np.linspace(0,1)
+  axR[0].plot(xx, xx**(1/3), c='grey', ls='dotted')
+  xx=np.linspace(1,4)
+  axR[0].plot(xx, xx, c='grey', ls='dotted')
+  xx=np.linspace(0,.5)
+  axR[1].plot(xx, 3.832/2*xx, c='grey', ls='dotted')
+  xx=np.linspace(.5,1)
+  axR[1].plot(xx, 3.832*xx**2, c='grey', ls='dotted')
+  
   with open(inFol + 'BinRadMaxVol.txt', encoding='utf-8') as f: df = np.loadtxt(f)
   sideInds = df[:,2]<=np.pi*1e-3
   axV[0].plot(df[~sideInds,0], df[~sideInds, 6], c='r', clip_on=False)
@@ -258,11 +267,9 @@ def plot_volume_and_angle():
   axA[0].axvspan(3.219, 3.832, color='whitesmoke')
   axA[0].set_ylabel('$\\frac{\\phi_0^2}{\\pi^2}$', size=22, rotation=0, labelpad=10)
   axA[0].text(0.98, 0.01, '$\\mathrm{(a)~pinned}$', transform=axA[0].transAxes, va='bottom', ha='right')
-  axR[0].set_xlim([0, 4])
 
   with open(inFol + 'BinRadMaxWid.txt', encoding='utf-8') as f: df = np.loadtxt(f)
-  axR[0].plot(df[:,0], df[:,9], ls='dotted', c='r', clip_on=False, zorder=3, 
-    label='$r_\\mathrm{max}/\\lambda$')
+  axR[0].plot(df[:,0], df[:,9], ls='dotted', c='r', clip_on=False, zorder=3, label='$r_\\mathrm{max}/\\lambda$')
   #axR[0].plot(df[:,0], df[:,0], ls='dotted', c='grey', label='$r_0/\\lambda$')
 
   #with open(inFol + 'BinRadMaxAng.txt', encoding='utf-8') as f: df = np.loadtxt(f)
@@ -464,6 +471,11 @@ def plot_volume_and_angle():
   axR[1].set_xlim([0, 1])
   axV[0].set_ylim([0, 25])
   axR[0].set_ylim([0, 4])
+  #axR[0].set_ylim([.05,1])
+  #axR[0].set_xlim([1e-4,10])
+  #axR[0].set_yscale('log')
+  #axR[0].set_xscale('log')
+  #axR[1].set_xscale('log')
   axHei[1].text(5e-3, 0.99, '$\\mathrm{(b)~spreading}$',
               transform=axHei[1].transAxes, va='top', ha='left')
   axHei[0].text(5e-3, 0.99, '$\\mathrm{(a)~pinned}$',
