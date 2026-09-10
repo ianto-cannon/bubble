@@ -215,13 +215,13 @@ def plot_volume_and_angle():
   axHei[0].set_ylabel('$\\frac{h}{\\lambda}$', rotation=0, size=22, labelpad=10)
   
   xx=np.linspace(0,1)
-  axR[0].plot(xx, xx**(1/3), c='grey', ls='dotted')
+  axR[0].plot(xx, xx**(1/3), c='k', lw=.1)
   xx=np.linspace(1,4)
-  axR[0].plot(xx, xx, c='grey', ls='dotted')
+  axR[0].plot(xx, xx, c='k', lw=.1)
   xx=np.linspace(0,.5)
-  axR[1].plot(xx, 3.832/2*xx, c='grey', ls='dotted')
+  axR[1].plot(xx, 3.832/2*xx, c='k', lw=.1)
   xx=np.linspace(.5,1)
-  axR[1].plot(xx, 3.832*xx**2, c='grey', ls='dotted')
+  axR[1].plot(xx, 3.832*xx**2, c='k', lw=.1)
   
   with open(inFol + 'BinRadMaxVol.txt', encoding='utf-8') as f: df = np.loadtxt(f)
   sideInds = df[:,2]<=np.pi*1e-3
@@ -251,8 +251,8 @@ def plot_volume_and_angle():
   axI.plot(df[:,0], df[:, 6], c='r')
 
   xx = np.linspace(0, 4,10000)
-  axV[0].plot(xx, 2 * np.pi * xx, linestyle='dotted', c='grey')
-  axI.plot(xx, 2 * np.pi * xx, linestyle='dotted', c='grey')
+  axV[0].plot(xx, 2 * np.pi * xx, lw=.1, c='k')
+  axI.plot(xx, 2 * np.pi * xx, lw=.1, c='k')
 
   axV[0].set_xlabel('$r_0/\\lambda$')
   axR[0].set_xlabel('$r_0/\\lambda$')
@@ -274,7 +274,16 @@ def plot_volume_and_angle():
 
   #with open(inFol + 'BinRadMaxAng.txt', encoding='utf-8') as f: df = np.loadtxt(f)
   #axA[0].plot(df[:,0], (1 - df[:,2]/np.pi)**2, c='r', ls='dashed')
-  axA[0].plot(df[:,0], df[:,0]/3.5, c='grey', ls='dotted')
+  axA[0].plot(df[:,0], df[:,0]/3.5, c='k', lw=.1)
+  axA[1].plot(df[:,0], df[:,0]/3.5, c='k', lw=.1)
+  def line(x, a, b, c, d):
+    m = (d - b) / (c - a)
+    q = b - m * a
+    print(f"y = {m:.4g}x + {q:.4g}")
+    return m * x + q
+  line, = axA[0].plot(df[:,0], line(df[:,0],.4,.25,3.219,1), c='k', lw=.1, zorder=3)
+  line.set_dashes([50, 30])  # 5 pt dash, 3 pt gap
+  #axA[0].plot(df[:,0], (df[:,0]-3.219)/3.6+1, c='k', lw=.5)
   
   kwargs = {'marker': 'o', 'ms': 5, 'clip_on': False, 'zorder': 4, 'alpha':.7, 'mew':0}
   for fname in reversed(sorted(os.listdir(inFol))):
@@ -411,8 +420,10 @@ def plot_volume_and_angle():
   #with open(inFol + 'BinAngMaxRad.txt', encoding='utf-8') as f: df = np.loadtxt(f)
   #axA[1].plot(df[:,0], (1 - df[:,2]/np.pi)**2, c='b', ls='dashed')
   xx = np.linspace(0, 1)
-  axV[1].plot(xx**3, 4 * np.pi * (0.0104 * xx * 180) ** 3 / 3, ls='dotted', c='grey')
-  axA[1].plot(3.219 * xx, xx, ls='dotted', c='grey', zorder=3)
+  axV[1].plot(xx**3, 4 * np.pi * (0.0104 * xx * 180) ** 3 / 3, lw=.1, c='k')
+  xx = np.linspace(0, 4)
+  line, = axA[1].plot(xx, xx/3.219, lw=.1, c='k', zorder=3)
+  line.set_dashes([50, 30])  # 5 pt dash, 3 pt gap
   axA[1].axvspan(3.219, 3.832, color='whitesmoke')
   axV[1].set_xlabel('$\\phi_0^3/\\pi^3$')
   axR[1].set_xlabel('$\\phi_0/\\pi$')
