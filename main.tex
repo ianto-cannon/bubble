@@ -152,7 +152,7 @@ Figure~\ref{figVol}b shows the detachment volumes of spreading bubbles. For smal
 \label{figRad}
 \end{figure}
 
-When two bubbles nucleate near each other on a surface, they may coalesce, and the energy released during coalescence can lead to detachment~\cite{demirkir25jump}. Assuming that coalescence takes place when neighbouring bubbles touch, and that the bubbles have the same shape, coalescence occurs when the distance between their nucleation centres is less than or equal to $2r_\mathrm{max}$~\cite{raman25electrolytic}, where $r_\mathrm{max}$ is the maximum horizontal radius of the bubble, as labelled in Figure~\ref{figProfile}. Figure~\ref{figRad}a shows the maximum value of $r_\mathrm{max}$ reached by pinned bubbles during their evolution up to detachment. The maximum horizontal radius follows the piecewise fit:
+When two bubbles nucleate near each other on a surface, they may coalesce, and the energy released during coalescence can lead to detachment\cite{demirkir25jump}. Assuming that coalescence takes place when neighbouring bubbles touch, and that the bubbles have the same shape, coalescence occurs when the distance between their nucleation centres is less than or equal to $2r_\mathrm{max}$\cite{raman25electrolytic}, where $r_\mathrm{max}$ is the maximum horizontal radius of the bubble, as labelled in Figure~\ref{figProfile}. Figure~\ref{figRad}a shows the maximum value of $r_\mathrm{max}$ reached by pinned bubbles during their evolution up to detachment. The maximum horizontal radius follows the piecewise fit:
 \begin{alignat}{2}
 r_\mathrm{max} &\approx r_0^{1/3}\lambda^{2/3} \quad &&\text{for } r_0 \le \lambda, \\
 r_\mathrm{max} &= r_0 \quad &&\text{for } r_0 > \lambda.
@@ -272,22 +272,32 @@ Cavity radius & Bubble mode & Detachment mode \\
 
 \subsection{Outlook}
 
-In summary, we have computed the maximum stable volume of axisymmetric bubbles on flat surfaces as a function of contact radius and contact angle, using a numerical solution of the Young--Laplace equation. The results unify the pinned and spreading detachment modes within a single framework, recover the classical Tate and Fritz limits, and identify the thresholds at which non-axisymmetric instabilities govern departure. All results scale universally with the capillary length $\lambda$ and apply equally to pendant drops. The numerical code used in this study is freely available\cite{cannon26bubble}. It can provide an exact detachment criterion for full electrolyser simulations, such as that of\citet{ross26transient}, as well as quantitative guidance for designing electrodes with optimised wettability and cavity geometry to promote early bubble detachment and improve electrolysis efficiency\cite{raman25electrolytic,penas19decoupling}. 
+In summary, we have computed the maximum stable volume of axisymmetric bubbles on flat surfaces as a function of contact radius and contact angle by numerically solving the Young--Laplace equation. The results unify the pinned and spreading detachment modes within a single framework, recover the classical Tate and Fritz limits, and identify the thresholds at which non-axisymmetric instabilities govern departure. All results scale universally with the capillary length $\lambda$ and also apply to pendant drops. The numerical code is freely available\cite{cannon26bubble} and provides an exact detachment criterion for full electrolyser simulations such as that of\citet{ross26transient}, as well as quantitative guidance for designing electrodes with optimised wettability and cavity geometry to promote early bubble detachment and improve electrolysis efficiency\cite{raman25electrolytic,penas19decoupling}. The results also inform the design of gas-evolving electrodes for space applications. In reduced-gravity environments such as Martian and lunar bases, $\lambda$ increases to $\approx4.6\,\mathrm{mm}$ and $\approx6.9\,\mathrm{mm}$, respectively, compared with $\sim2.8\,\mathrm{mm}$ on Earth, allowing substantially larger stable bubbles.
 
-Beyond electrochemistry, our detachment criteria provide a physical limit for models of environmental gas transport, such as methane seepage. As shown in Table~\ref{tabSig}, our model predicts a maximum detachment diameter of $2r_\mathrm{det}=9.240\,\mathrm{mm}$ in water. This is smaller than the $12.4\,\mathrm{mm}$ diameter required for methane bubbles to reach the atmosphere from deep-water seeps ($\sim 230\,\mathrm{m}$ depth)\cite{mcginnis06fate}. Thus, individual bubbles detaching  from sediment cannot grow sufficiently large to reach the atmosphere from deep water.
+In other applications, our detachment criteria provide a physical limit for models of environmental gas transport, such as methane seepage. As shown in Table~\ref{tabSig}, the maximum detachment diameter in water is $2r_\mathrm{det}=9.24\,\mathrm{mm}$. This is smaller than the $12.4\,\mathrm{mm}$ diameter required for methane bubbles to reach the atmosphere from deep-water seeps at $\sim230\,\mathrm{m}$ depth\cite{mcginnis06fate}. Thus, individual bubbles detaching from sediment cannot grow sufficiently large to reach the atmosphere from deep water.
 
-In future work, our model can be extended to account for heterogeneous surfaces, which give rise to contact angle hysteresis and repinning of the contact line.
+Future work could extend the model to heterogeneous surfaces, where contact angle hysteresis and repinning of the contact line can occur.
+
 \section{Data availability}
+
 The data and code that support the findings of this article are openly available on Zenodo at \url{https://doi.org/10.5281/zenodo.20720640} (ref.\citenum{cannon26bubble}).
 \renewcommand{\thefootnote}{\alph{footnote}}
 \footnotetext{\textit{\textsuperscript{a}~Center of Applied Space Technology and Microgravity (ZARM), University of Bremen, 28359 Bremen, Germany.}}
 \footnotetext{\textit{\textsuperscript{b}~Leibniz Institute of Materials Engineering (IWT), University of Bremen, 28359 Bremen, Germany.}}
 \footnotetext{\textit{$^{\dag}$~E-mail: \href{mailto:ianto.cannon@zarm.uni-bremen.de}{ianto.cannon@zarm.uni-bremen.de}}}
+
 \section{Author Contributions}
+
 I.~Cannon: conceptualisation, software, formal analysis, visualisation, writing -- original draft. S.~Endres: software, writing -- review \& editing. M.~Avila: conceptualisation, methodology, writing -- review \& editing. L.~M\"adler: conceptualisation, methodology, writing -- review \& editing.
+
 \section{Conflicts of interest}
+
 There are no conflicts to declare.
+
 \section{Acknowledgements}
+
 This research was supported by the University of Bremen and the State of Bremen within the Humans on Mars Initiative and partially supported by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) under Germany's Excellence Strategy – EXC-3036 The Martian Mindset, project number: 533607631. I.~Cannon gratefully acknowledges financial support from the Alexander von Humboldt Foundation through a Humboldt Research Fellowship for Postdoctoral Researchers.
+
 \bibliography{electrolysis,rsc}
+
 \end{document}
