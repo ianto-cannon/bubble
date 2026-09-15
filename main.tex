@@ -11,7 +11,7 @@
 \begin{flushleft}
 {\fontsize{18pt}{20pt}\selectfont\textbf{Bubble detachment from circular cavities and flat surfaces}}
 \end{flushleft}
-{\fontsize{12pt}{14pt}\selectfont Ianto Cannon\textsuperscript{a\dag}, Stefan Endres\textsuperscript{b}, Lutz M\"adler\textsuperscript{b} and Marc Avila\textsuperscript{a}}\par\medskip
+{\fontsize{12pt}{14pt}\selectfont Ianto Cannon\textsuperscript{a\dag}, Stefan Endres\textsuperscript{b,c}, Lutz M\"adler\textsuperscript{b,c} and Marc Avila\textsuperscript{a,c}}\par\medskip
 Received 00th January 20xx, Accepted 00th January 20xx
 DOI: 10.1039/x0xx00000x\vspace{0.5cm}
 
@@ -22,7 +22,7 @@ We determine the maximum stable volume of bubbles attached to flat surfaces as a
 
 \subsection{Motivation}
 
-Annually, around $10^{11}$\,kg of hydrogen gas is used in industry, mostly to produce fertilisers via the Haber process and to reduce metal ores in steelmaking and aluminium production\cite{kullmann23role}. Currently, more than 95\% of hydrogen is produced from fossil fuels, largely from natural gas via steam methane reforming\cite{franchi20hydrogen}, which releases significant quantities of CO$_2$. Diversifying away from fossil fuels is essential to maintain a stable Earth climate system and ensure the long-term survival of human society\cite{steffen18trajectories}. Water electrolysis driven by renewable electricity is a promising alternative\cite{kullmann23role}, splitting water into hydrogen and oxygen without direct CO$_2$ emissions. However, gas bubbles that form and remain attached to the electrode surface limit the efficiency of water electrolysis. These bubbles block the active area, impede ion transport, and increase ohmic resistance\cite{vogt89problem,penas19decoupling,angulo20influence,ross25impact,ross26transient}. Electrolysis will also be important for life-support systems on future manned lunar and Martian bases, where water extracted from local ice deposits could provide a source of hydrogen and oxygen\cite{matsushima06water}. Understanding and controlling bubble detachment is therefore relevant both to improving electrolysis efficiency on Earth and to enabling efficient resource utilisation in low-gravity environments\cite{brinkert22fundamentals}.
+Annually, around $10^{11}$\,kg of hydrogen gas is used in industry, mostly to produce fertilisers via the Haber-Bosch process\cite{bosch32development} and to reduce metal ores in steelmaking and aluminium production\cite{kullmann23role}. Currently, more than 95\% of hydrogen is produced from fossil fuels, largely from natural gas via steam methane reforming\cite{franchi20hydrogen}, which releases significant quantities of CO$_2$. Diversifying away from fossil fuels is essential to maintain a stable Earth climate system and ensure the long-term survival of human society\cite{steffen18trajectories}. Water electrolysis driven by renewable electricity is a promising alternative\cite{kullmann23role}, splitting water into hydrogen and oxygen without direct CO$_2$ emissions. However, gas bubbles that form and remain attached to the electrode surface limit the efficiency of water electrolysis. These bubbles block the active area, impede ion transport, and increase ohmic resistance\cite{vogt89problem,penas19decoupling,angulo20influence,ross25impact,ross26transient}. Electrolysis will also be important for life-support systems on future manned lunar and Martian bases, where water extracted from local ice deposits could provide a source of hydrogen and oxygen\cite{matsushima06water}. Understanding and controlling bubble detachment is therefore relevant both to improving electrolysis efficiency on Earth and to enabling efficient resource utilisation in low-gravity environments\cite{brinkert22fundamentals}.
 
 Bubble detachment also plays a role in the transport of naturally occurring gases. Methane seepage from the seafloor releases an estimated $6$--$12$\,Mt of methane per year from anoxic sediments, geological reservoirs, and degrading methane-hydrate deposits\cite{weber19global}. Bubbles with radii below approximately 3\,mm can dissolve and biodegrade in the water column before reaching the ocean surface\cite{mcginnis06fate}, whereas larger bubbles can escape into the atmosphere. Since methane is a potent greenhouse gas, understanding the conditions governing bubble detachment and subsequent transport is relevant to quantifying its environmental impact.
 
@@ -66,7 +66,8 @@ Here, we treat pinned and spreading bubbles together, rather than as separate pr
 
 We consider a simplified system consisting of a circular cavity of radius $r_0$ containing an already-nucleated bubble, surrounded by a smooth horizontal surface with a single-valued, non-hysteretic contact angle $\phi_0$. That is, the contact angle is independent of whether the three-phase contact line advances or recedes. The fluid is quiescent, so forces are purely hydrostatic, and the system is physically equivalent to a pendant drop. Throughout this paper, we refer to it as a bubble, but our results apply equally to pendant drops. We determine the detachment size for pinned and spreading bubbles across the full range of cavity sizes, capillary lengths ($0< r_0/\lambda<\infty$), and contact angles ($0<\phi_0<\pi$).
 
-\section{Methods}
+The remainder of this paper is organised as follows. In Section~\ref{secMethods}, we outline the numerical methods used to solve the governing Young--Laplace equation. In Section~\ref{secResults}, we present the results for pinned and spreading bubbles separately, examining their detachment criteria (Section~\ref{secGrowth}), maximum stable volumes (Section~\ref{secVol}), coalescence dynamics (Section~\ref{secCoal}), and nucleation characteristics (Section~\ref{secNuc}). Finally, in Section~\ref{secUnpin} we connect these two modes to establish a unified framework for bubble evolution, before drawing our conclusions in Section~\ref{secConclusions}.
+\section{Methods}\label{secMethods}
 
 \subsection{Governing equation}
 
@@ -107,7 +108,7 @@ We solve Equation~\ref{eqShape} using a shooting method, initiating the integrat
 
 For pinned bubbles, the boundary condition $r=r_0$ is imposed at the substrate ($z=0$). For a given cavity radius $r_0$, this yields a family of equilibrium profiles with different apex radii $R_h$, shown in Figure~\ref{figProfile}a. For spreading bubbles, the boundary condition $\phi=\phi_0$ is imposed at the substrate ($z=0$). The resulting profiles are shown in Figure~\ref{figProfile}b for a sequence of contact angles and apex radii $R_h$.
 
-\section{Results and Discussion}
+\section{Results and Discussion}\label{secResults}
 
 \subsection{Bubble detachment criteria}\label{secGrowth}
 
@@ -130,7 +131,7 @@ We truncate each of the $h(V)$ curves in Figure~\ref{figHeight}a when either of 
 
 In Figure~\ref{figHeight}b, we perform the same $h(V)$ analysis for spreading bubbles. The figure shows the possible volumes and heights for contact angles spanning the full range $0<\phi_0<\pi$. As for pinned bubbles, each curve reaches a point where $h(V)$ becomes vertical ($\partial V/\partial h=0$). This point defines the detachment volume, and the curve is truncated there. In the spreading bubble case, detachment is always axisymmetric, and the tallest spreading bubble is shorter, with $h=2.213\,\lambda$ and contact angle $\phi_0=0.8330\pi$.
 
-\subsection{Bubble volume}
+\subsection{Bubble volume}\label{secVol}
 
 \begin{figure}\centering
 \includegraphics[width=\columnwidth]{plots/MaxVol}
@@ -144,7 +145,7 @@ Figure~\ref{figVol}a shows the detachment volume of pinned bubbles. It initially
 
 Figure~\ref{figVol}b shows the detachment volumes of spreading bubbles. For small contact angles, the Fritz prediction is accurate. As $\phi_0\to\pi$, however, the detachment volume saturates below Fritz's prediction. Our results are confirmed by measurements of water electrolysis\cite{demirkir24life}, boiling\cite{allred21role}, and air bubbles over superhydrophobic surfaces\cite{huang26effects}. The largest spreading bubble has $V=18.96\,\lambda^3$, and is identical in shape to the largest pinned bubble. 
 
-\subsection{Bubble coalescence}
+\subsection{Bubble coalescence}\label{secCoal}
 
 \begin{figure}\centering
 \includegraphics[width=\columnwidth]{plots/Rad}
@@ -166,11 +167,11 @@ r_\mathrm{max} &\approx 3.832\,\lambda\left(\phi_0/\pi\right)^2 \quad &&\text{fo
 \end{alignat}
 Thus, the critical separation scales linearly with $\phi_0$ for small contact angles, but with $\phi_0^2$ for larger ones. This means nucleation sites must be packed closely on hydrophilic surfaces to induce coalescence, whereas bubbles spread wider on hydrophobic surfaces (large $\phi_0$), and hence coalescence-induced detachment can be triggered with a significantly larger pitch between cavities.
 
-\subsection{Bubble nucleation}
+\subsection{Bubble nucleation}\label{secNuc}
 
 Figure~\ref{figRad} also shows the evolution of the bubble apex radius of curvature $R_h$. Pinned bubbles nucleate with an infinite radius of curvature, corresponding to a flat interface spanning the cavity and, as follows from the Young--Laplace equation~(\ref{eqLaplace}), zero pressure difference across the interface. In contrast, spreading bubbles nucleate with $R_h=0$, corresponding to an infinitesimal spherical cap and a diverging pressure difference. This large pressure difference helps explain why nucleation of spreading bubbles is energetically unfavourable. Instead, nucleation generally occurs as a pinned bubble within a microscopic cavity.
 
-\subsection{Unpinning of the contact line}
+\subsection{Unpinning of the contact line}\label{secUnpin}
 
 \begin{figure}\centering
 \includegraphics[width=\columnwidth]{plots/Ang}
@@ -242,7 +243,7 @@ largest stable contact radius& 1.000  &\textbf{3.832}& 0.000     & $\infty$    &
 \end{center}
 \end{table}
 
-\section{Conclusions}
+\section{Conclusions}\label{secConclusions}
 
 \subsection{Answers to the three key questions}
 
@@ -282,8 +283,9 @@ Future work could extend the model to heterogeneous surfaces, where contact angl
 
 The data and code that support the findings of this article are openly available on Zenodo at \url{https://doi.org/10.5281/zenodo.20720640} (ref.\citenum{cannon26bubble}).
 \renewcommand{\thefootnote}{\alph{footnote}}
-\footnotetext{\textit{\textsuperscript{a}~Center of Applied Space Technology and Microgravity (ZARM), University of Bremen, 28359 Bremen, Germany.}}
-\footnotetext{\textit{\textsuperscript{b}~Leibniz Institute of Materials Engineering (IWT), University of Bremen, 28359 Bremen, Germany.}}
+\footnotetext{\textsuperscript{a}Center of Applied Space Technology and Microgravity -- ZARM, University of Bremen, 28359 Bremen, Germany.}
+\footnotetext{\textsuperscript{b}Faculty of Production Engineering, Mechanical and Process Engineering, and MAPEX Center for Materials and Processes, University of Bremen, 28359 Bremen, Germany.}
+\footnotetext{\textsuperscript{c}Leibniz Institute for Materials Engineering -- IWT, University of Bremen, 28359 Bremen, Germany.}
 \footnotetext{\textit{$^{\dag}$~E-mail: \href{mailto:ianto.cannon@zarm.uni-bremen.de}{ianto.cannon@zarm.uni-bremen.de}}}
 
 \section{Author Contributions}
