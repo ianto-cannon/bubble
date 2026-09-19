@@ -661,7 +661,7 @@ int main(int argc, char *argv[])
                 radBinsMaxWid, nRad,
                 &i);
     if (b % 100 == 0)
-      printf("b %d of %d RadTop %.10g i %d\n", b, N, RadTop, i);
+      printf("b %d of %d RadTop %.10g iterations %d\n", b, N, RadTop, i);
     
     t = (N == 1) ? 0.0 : (double)b / (double)(N - 1);
     log_start = -3.0, log_stop = 3.0;
@@ -678,7 +678,7 @@ int main(int argc, char *argv[])
                 radBinsMaxWid, nRad,
                 &i);
     if (b % 100 == 0)
-      printf("b %d of %d RadTop %.10g i %d\n", b, N, RadTop, i);
+      printf("b %d of %d RadTop %.10g iterations %d\n", b, N, RadTop, i);
   }
 
   char outpath[1024];

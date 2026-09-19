@@ -17,6 +17,7 @@ The method and results are described in:
 * Python 3
 * NumPy
 * Matplotlib
+* LaTeX
 
 ## How to Run
 
