@@ -587,17 +587,17 @@ def plot_graphical_abstract(nam='rad ang'):
   axProf.text(-2.6, 1, "$\\lambda$", ha='right', va='center', c='k')
   axProf.text(p, -0.35, "$\\textrm{pinned}$", ha='center', va='center', c='k')
   axProf.text(s, -0.35, "$\\textrm{spreading}$", ha='center', va='center', c='k')
-  outName = 'plots/abstract.pdf'
+  outName = 'plots/abstract.svg'
   print('saving ', outName)
-  figProf.savefig(outName, transparent=True, bbox_inches='tight', pad_inches=0)
+  figProf.savefig(outName, bbox_inches='tight', pad_inches=0)
 
 def print_radius_in_water(vol):
   print(f"Vol={vol} lambda, radius={2.793*(3*vol/np.pi/4)**(1/3):.4g} mm")
   return 
 
 if __name__ == "__main__":
-  plot_profiles(nam='loop_rad loop_ang')
-  plot_volume_and_angle()
+  #plot_profiles(nam='loop_rad loop_ang')
+  #plot_volume_and_angle()
   plot_graphical_abstract()
   print_radius_in_water(18.96)
   print_radius_in_water(10.62)
