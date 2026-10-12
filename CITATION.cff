@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the associated paper and the archived release."
+title: "Bubble & Pendant Drop Interface Calculator"
+type: software
+authors:
+  - family-names: Cannon
+    given-names: Ianto
+    orcid: "https://orcid.org/0000-0002-1676-9338"
+    affiliation: "Center of Applied Space Technology and Microgravity (ZARM), University of Bremen"
+version: v1.3
+date-released: 2026-09-19
+license: MIT
+repository-code: "https://github.com/ianto-cannon/bubble"
+# Use the version DOI of the release above, or the concept DOI to cover all versions.
+doi: 10.5281/zenodo.20720640
+keywords:
+  - bubble detachment
+  - Young-Laplace equation
+  - pendant drop
+  - interface shape
+preferred-citation:
+  type: article
+  title: "Bubble detachment from circular cavities and flat surfaces"
+  authors:
+    - family-names: Cannon
+      given-names: Ianto
+    - family-names: Endres
+      given-names: "S. C."
+    - family-names: Mädler
+      given-names: "L."
+    - family-names: Avila
+      given-names: Marc
+  journal: "Faraday Discussions"
+  year: 2026
+  doi: 10.1039/D6FD00113K
