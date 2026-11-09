@@ -309,7 +309,7 @@ common_aspect = right_y_range / right_x_range
 
 # Cavity and substrate: three straight segments, with axes linewidth.
 # Lines are clipped by the plotting axes.
-cavity_lw = plt.rcParams["axes.linewidth"]
+cavity_lw = 1
 ax_b.plot([-xlim_b, -RC], [0, 0], color="k", lw=cavity_lw,
           zorder=4, clip_on=True)
 ax_b.plot([RC, xlim_b], [0, 0], color="k", lw=cavity_lw,
@@ -324,8 +324,21 @@ ax_b.set_xlabel(r"$r/\lambda$")
 ax_b.set_ylabel(r"$\frac{ z }{\lambda}$", rotation=0, labelpad=5, size=22)
 ax_b.tick_params(which="both", direction="in", top=True, right=True)
 
-bub_line, = ax_b.plot([], [], lw=2.5, zorder=5, clip_on=False)
+bub_line, = ax_b.plot([], [], lw=1.5, zorder=5, clip_on=False)
 bub_line.set_gid("bubble")
+
+# Match plot.py's phi_0 marker: black lw=2 arc of radius 0.15 at the bubble
+# foot, truncated by the profile, and a black label at (+0.12, +0.05).
+ARC_RADIUS = 0.15
+N_ARC = 21
+LABEL_DX, LABEL_DY = 0.12, 0.05
+
+arc_line, = ax_b.plot([], [], c="k", lw=2, zorder=5, clip_on=False)
+arc_line.set_gid("phi0arc")
+
+phi0_label = ax_b.text(0, 0, r"$\phi_0$", ha="left", va="bottom",
+                       c="k", zorder=4)
+phi0_label.set_gid("phi0label")
 
 
 # ---- LEFT: φ₀²/π² vs r₀/λ ----
@@ -339,7 +352,7 @@ ax_phi.tick_params(which="both", direction="in", top=True, right=True)
 ax_phi.axvspan(R_GUIDE, R_BAND_END, color="whitesmoke", zorder=0)
 
 xx = np.linspace(0, 4, 500)
-ax_phi.plot(xx, xx / 3.5, c="k", lw=0.15, zorder=1)
+ax_phi.plot(xx, xx / 3.5, c="k", lw=0.1, zorder=1)
 
 # Plot decile reference trajectories.
 n_decile = 0
@@ -374,7 +387,7 @@ for fpath in sorted(glob.glob(SIM + "loop_ang*.txt")):
         continue
 
     n_decile += 1
-    ax_phi.plot([x0, xe], [y0, ye], c="grey", lw=0.7, zorder=2)
+    ax_phi.plot([x0, xe], [y0, ye], c="grey", lw=0.1, zorder=2)
 
     if round(angl * 100) == 90:
         ax_phi.plot([1.5, xe], [y0, ye], c="blue", zorder=2)
@@ -388,9 +401,7 @@ for fpath in sorted(glob.glob(SIM + "loop_ang*.txt")):
             "",
             xy=(dl[heiInd, 0], (1 - dl[heiInd, 2] / np.pi) ** 2),
             xytext=(dl[heiPrev, 0], (1 - dl[heiPrev, 2] / np.pi) ** 2),
-            arrowprops=dict(
-                arrowstyle="->", color=col, lw=0.7, mutation_scale=8
-            ),
+            arrowprops=dict(arrowstyle="->", color=col),
             zorder=3
         )
 
@@ -400,14 +411,14 @@ try:
     with open(SIM + BLUE_REF, encoding="utf-8") as f:
         df_bin = np.loadtxt(f)
     ax_phi.plot(df_bin[:, 0], (1 - df_bin[:, 2] / np.pi) ** 2,
-                c="b", lw=0.9, zorder=3)
+                c="b", zorder=3)
 except FileNotFoundError:
     print(f"WARNING: {BLUE_REF} not found")
 
 
-ax_phi.plot(r0_p_all, ph_p_all, color="grey", lw=0.9, zorder=3)
+ax_phi.plot(r0_p_all, ph_p_all, color="grey", zorder=3)
 if HAS_SPREADING:
-    ax_phi.plot(r0_s_all, ph_s_all, color="grey", lw=0.9, zorder=3)
+    ax_phi.plot(r0_s_all, ph_s_all, color="grey", zorder=3)
 
 
 # Red detachment boundary from BinRadMaxVol.txt.
@@ -426,9 +437,9 @@ if os.path.isfile(detachment_file):
         ])
         side = min_ang >= 1 - 1e-3
 
-        ax_phi.plot(rad[~side], min_ang[~side] ** 2, c="r", lw=1.2,
+        ax_phi.plot(rad[~side], min_ang[~side] ** 2, c="r",
                     zorder=5, clip_on=False)
-        ax_phi.plot(rad[side], min_ang[side] ** 2, c="r", lw=1.2,
+        ax_phi.plot(rad[side], min_ang[side] ** 2, c="r",
                     ls="dashed", zorder=5, clip_on=False)
 else:
     print(f"WARNING: {detachment_file} not found; red detachment line omitted")
@@ -457,6 +468,31 @@ dot = ax_phi.annotate(
 dot.arrow_patch.set_gid("magdot")
 
 
+# phi_0 arc truncation, mirroring plot.py: draw a semicircle of radius
+# ARC_RADIUS centred on the right contact line and stop where it would go
+# inside the bubble outline.
+def phi0_arc(fr):
+    x, y = fr["x"], fr["y"]
+    xFull = np.concatenate([-x[::-1], x])
+    yFull = np.concatenate([y[::-1], y])
+    xAn, yAn = x[-1], y[-1]
+    phi_max = np.pi
+    for phi_i in range(51):
+        phi = phi_i * np.pi / 50
+        X = xAn + ARC_RADIUS * np.cos(phi)
+        Y = yAn + ARC_RADIUS * np.sin(phi)
+        i = 0
+        for ii in reversed(range(len(xFull))):
+            if yFull[ii] > Y:
+                i = ii
+                break
+        if xFull[i] > X:
+            phi_max = phi
+            break
+    phis = np.linspace(0.0, phi_max, N_ARC)
+    return xAn + ARC_RADIUS * np.cos(phis), yAn + ARC_RADIUS * np.sin(phis)
+
+
 # Axes positions are adjusted explicitly to retain the tight paper-style gap.
 def update(k):
     fr = frames[k]
@@ -464,6 +500,12 @@ def update(k):
     Y = np.concatenate([fr["y"][::-1], fr["y"]])
     bub_line.set_color("r" if fr["ph"] == "p" else "b")
     bub_line.set_data(X, Y)
+
+    Xarc, Yarc = phi0_arc(fr)
+    arc_line.set_data(Xarc, Yarc)
+    phi0_label.set_position((fr["x"][-1] + LABEL_DX,
+                             fr["y"][-1] + LABEL_DY))
+
     dot.xy = (fr["r0"], fr["phi2"])
     dot.arrow_patch.set_color("r" if fr["ph"] == "p" else "b")
 
@@ -573,8 +615,8 @@ print("extracting frame paths …")
 ex = []
 for p in svg_files:
     root_k = ET.parse(p).getroot()
-    ex.append({g: group_path(root_k, g, merge=(g == "magdot"))
-               for g in ("bubble", "magdot")})
+    ex.append({g: group_path(root_k, g, merge=(g in ("magdot", "phi0label")))
+               for g in ("bubble", "magdot", "phi0arc", "phi0label")})
 
 dot_centers = [
     path_bbox_center(ex[k]["magdot"]["d"])
@@ -583,6 +625,15 @@ dot_centers = [
 ]
 bubble_ds = [
     ex[k]["bubble"]["d"] if ex[k]["bubble"] else None
+    for k in range(K)
+]
+arc_ds = [
+    ex[k]["phi0arc"]["d"] if ex[k]["phi0arc"] else None
+    for k in range(K)
+]
+label_centers = [
+    path_bbox_center(ex[k]["phi0label"]["d"])
+    if ex[k]["phi0label"] else (0.0, 0.0)
     for k in range(K)
 ]
 
@@ -627,7 +678,7 @@ for ch in list(root):
         root.remove(ch)
 
 groups = {}
-for gid in ("bubble", "magdot"):
+for gid in ("bubble", "magdot", "phi0arc", "phi0label"):
     g = find_group(root, gid)
     if g is None:
         sys.exit(f"ERROR: group '{gid}' not found in the SVG")
@@ -702,6 +753,87 @@ else:
         )
         el.set("visibility", "visible" if k == K - 1 else "hidden")
         add_visibility(el, k)
+
+
+# --- phi0 arc: morph with the bubble when vertex counts match ---
+if all(arc_ds):
+    if args.morph and len(set(d.count("L") for d in arc_ds)) == 1:
+        attrs_arc = dict(ex[-1]["phi0arc"])
+        attrs_arc["d"] = arc_ds[-1]
+        arc_el = ET.SubElement(
+            groups["phi0arc"], f"{{{SVG_NS}}}path", attrib=attrs_arc
+        )
+
+        d_vals_arc = ";".join(
+            [arc_ds[0]] + arc_ds[1:] + [arc_ds[-1], arc_ds[-1]]
+        )
+        an = ET.SubElement(arc_el, f"{{{SVG_NS}}}animate")
+        an.set("attributeName", "d")
+        an.set("values", d_vals_arc)
+        an.set("keyTimes", ";".join(f"{t:.9f}" for t in kts))
+        an.set("calcMode", "linear")
+        an.set("dur", DUR)
+        an.set("begin", "0s")
+        an.set("repeatCount", REPEAT)
+
+        if FREEZE:
+            an.set("fill", "freeze")
+    else:
+        for k in range(K):
+            if ex[k]["phi0arc"] is None:
+                continue
+            el = ET.SubElement(
+                groups["phi0arc"], f"{{{SVG_NS}}}path",
+                attrib=dict(ex[k]["phi0arc"])
+            )
+            el.set("visibility", "visible" if k == K - 1 else "hidden")
+            add_visibility(el, k)
+
+
+# --- phi0 label: translation, matching the magdot's pattern ---
+if all(ex[k]["phi0label"] for k in range(K)):
+    if args.morph:
+        attrs_lbl = dict(ex[-1]["phi0label"])
+        # matplotlib stores stroke/fill in `style`; strip to avoid
+        # overriding presentation attributes when translated.
+        lbl_move = ET.SubElement(groups["phi0label"], f"{{{SVG_NS}}}g")
+        ET.SubElement(lbl_move, f"{{{SVG_NS}}}path", attrib=attrs_lbl)
+
+        lx_last, ly_last = label_centers[-1]
+        lbl_vals = [
+            f"{(label_centers[k][0] - lx_last):.{PREC}f},"
+            f"{(label_centers[k][1] - ly_last):.{PREC}f}"
+            for k in range(K)
+        ]
+        lbl_vals = lbl_vals[:1] + lbl_vals[1:] + ["0,0", "0,0"]
+        lbl_kts = (
+            [0.0]
+            + [t / DURATION for t in frame_times[1:]]
+            + [ANIM_END, 1.0]
+        )
+
+        at = ET.SubElement(lbl_move, f"{{{SVG_NS}}}animateTransform")
+        at.set("attributeName", "transform")
+        at.set("type", "translate")
+        at.set("values", ";".join(lbl_vals))
+        at.set("keyTimes", ";".join(f"{t:.6f}" for t in lbl_kts))
+        at.set("calcMode", "linear")
+        at.set("dur", DUR)
+        at.set("begin", "0s")
+        at.set("repeatCount", REPEAT)
+
+        if FREEZE:
+            at.set("fill", "freeze")
+    else:
+        for k in range(K):
+            if ex[k]["phi0label"] is None:
+                continue
+            el = ET.SubElement(
+                groups["phi0label"], f"{{{SVG_NS}}}path",
+                attrib=dict(ex[k]["phi0label"])
+            )
+            el.set("visibility", "visible" if k == K - 1 else "hidden")
+            add_visibility(el, k)
 
 
 # --- Dot: animateTransform on a single path ---
