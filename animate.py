@@ -7,11 +7,16 @@ Right panel  interface profile — plot_profiles style
 
 Run with no arguments from the repo directory:
 
-    python animateU.py              ->  ./port7.svg
+    python animateU_typical.py      ->  ./port7.svg
+
+For the y-axis value phi^2/pi^2 corresponding to an inside angle of 175 degrees
+(and an outside angle of 15 degrees), with cavity radius 0.5 lambda:
+
+    python animateU_typical.py --phi2 0.0007716 --radius 0.5
 
 Optional:  python animateU.py [repo_dir] [work_dir] [out.svg]
-                              [--fill-rate 1] [--single-shot] [--transparent]
-                              [--morph]
+                              [--phi2 0.0007716] [--radius 0.5] [--fill-rate 1]
+                              [--single-shot] [--transparent] [--morph]
 
 How the animation works (and why it is portable)
 ------------------------------------------------
@@ -64,6 +69,10 @@ ap.add_argument("work", nargs="?", default=None)
 ap.add_argument("out",  nargs="?", default="port7.svg")
 ap.add_argument("--fill-rate", type=float, default=1.0,
                 help="dimensionless fill rate d(V/lambda^3)/dt [lambda^3/s]")
+ap.add_argument("--phi2", type=float, default=(1.0 - 175.0 / 180.0) ** 2,
+                help="target dimensionless y-axis value phi^2/pi^2")
+ap.add_argument("--radius", type=float, default=0.5,
+                help="target cavity radius r_c/lambda")
 ap.add_argument("--single-shot", action="store_true")
 ap.add_argument("--transparent", action="store_true")
 ap.add_argument("--morph", action="store_true",
@@ -82,24 +91,122 @@ os.makedirs(WORK, exist_ok=True)
 SIM = os.path.join(REPO, "simData") + "/"
 RUN = os.path.join(REPO, "run")
 
-RC, PHI_W, CAV = 0.5, 0.5, 0.3
-KP, KS, M     = 22, 118, 48
-PRIN, SPRD    = "loop_rad00005.txt", "loop_ang00025.txt"
+# Geometry and dataset selection. Match the dimensionless y-axis quantity
+# phi^2/pi^2 directly, rather than selecting by contact angle.
+RC_TARGET = args.radius
+PHI2_TARGET = args.phi2
+if not 0.0 < RC_TARGET:
+    ap.error("--radius must be positive")
+if not 0.0 <= PHI2_TARGET <= 1.0:
+    ap.error("--phi2 must be between 0 and 1")
+if not os.path.isdir(SIM):
+    ap.error(f"simulation data directory not found: {SIM}")
+CAV = 0.3
+KP, KS, M = 22, 118, 48
 R_GUIDE, R_BAND_END = 3.219, 3.832
 BLUE_REF = "BinAngMaxVol.txt"
 PREC = 2                       # decimals kept in path data
 
-# --------------- Load main files ---------------
-pr = np.loadtxt(SIM + PRIN)
-assert abs(pr[0, 0] - RC) < 1e-3, "pinned file is not r0 = rc"
-phi_p = 1 - pr[:, 2] / np.pi
-jp = int(np.argmax(phi_p <= PHI_W + 1e-12))
 
-sp = np.loadtxt(SIM + SPRD)
-iM = int(np.argmax(sp[:, 6]))
-sp = sp[: iM + 1]
-assert abs((1 - sp[-1, 2] / np.pi) - PHI_W) < 1e-3, "spreading file is not phi_w"
-js = int(np.argmax(sp[:, 0] >= RC))
+def find_nearest_dataset(pattern, column, target, scale=1.0, label="parameter"):
+    """Find the matching dataset by its first-row parameter value."""
+    paths = sorted(glob.glob(os.path.join(SIM, pattern)))
+    if not paths:
+        raise FileNotFoundError(f"No files matching {pattern!r} in {SIM!r}")
+    candidates = []
+    for path in paths:
+        try:
+            first = np.loadtxt(path, max_rows=1)
+            value = float(first[column]) * scale
+            if np.isfinite(value):
+                candidates.append((abs(value - target), value, path))
+        except (OSError, ValueError, IndexError):
+            continue
+    if not candidates:
+        raise ValueError(f"Could not read {label} from files matching {pattern!r}")
+    error, value, path = min(candidates, key=lambda item: item[0])
+    print(f"{label}: requested {target:g}, selected {value:g} ({os.path.basename(path)}; "
+          f"difference {error:.4g})")
+    return path, value
+
+
+# Select the requested radius and phi^2/pi^2 independently. Do not silently
+# switch to a different y-axis value just to obtain a spreading trajectory.
+# If pinning cannot reach the selected transition, animate pinning only.
+rad_candidates = []
+for path in sorted(glob.glob(os.path.join(SIM, "loop_rad*.txt"))):
+    try:
+        data = np.loadtxt(path)
+        if data.ndim != 2 or data.shape[1] < 7 or len(data) < 2:
+            continue
+        radius = float(data[0, 0])
+        phi_pin = 1.0 - data[:, 2] / np.pi
+        rad_candidates.append((path, data, radius, phi_pin))
+    except (OSError, ValueError, IndexError):
+        continue
+
+ang_candidates = []
+for path in sorted(glob.glob(os.path.join(SIM, "loop_ang*.txt"))):
+    try:
+        data = np.loadtxt(path)
+        if data.ndim != 2 or data.shape[1] < 7 or len(data) < 2:
+            continue
+        i_max = int(np.argmax(data[:, 6]))
+        data = data[:i_max + 1]
+        inside_angle = float(data[0, 2]) * 180.0 / np.pi
+        phi2 = (1.0 - float(data[0, 2]) / np.pi) ** 2
+        phi_w = 1.0 - float(data[-1, 2]) / np.pi
+        if np.isfinite(phi2) and np.isfinite(phi_w) and 0 <= phi2 <= 1 and 0 <= phi_w <= 1:
+            ang_candidates.append((path, data, inside_angle, phi2, phi_w))
+    except (OSError, ValueError, IndexError):
+        continue
+
+if not rad_candidates:
+    raise FileNotFoundError(f"No readable loop_rad*.txt datasets in {SIM}")
+if not ang_candidates:
+    raise FileNotFoundError(f"No readable loop_ang*.txt datasets in {SIM}")
+
+rad_path, pr, RC, phi_pin = min(
+    rad_candidates, key=lambda item: abs(item[2] - RC_TARGET))
+ang_path, candidate_sp, CONTACT_ANGLE_DEG, PHI2_SELECTED, PHI_W = min(
+    ang_candidates, key=lambda item: abs(item[3] - PHI2_TARGET))
+
+pin_rows = np.flatnonzero(phi_pin <= PHI_W + 1e-12)
+spread_rows = np.flatnonzero(candidate_sp[:, 0] >= RC)
+if len(pin_rows) and len(spread_rows):
+    jp = int(pin_rows[0])
+    js = int(spread_rows[0])
+    sp = candidate_sp
+    HAS_SPREADING = True
+    SPRD = os.path.basename(ang_path)
+    print(f"spreading trajectory selected: {SPRD}; transition phi_w={PHI_W:g}")
+else:
+    # The chosen pinned trajectory does not reach the chosen angle, or the
+    # chosen spreading trajectory does not reach the selected cavity radius.
+    # Preserve the full pinned trajectory and omit spreading entirely.
+    jp = len(pr) - 1
+    sp = np.empty((0, pr.shape[1]), dtype=float)
+    js = 0
+    HAS_SPREADING = False
+    SPRD = None
+    if not len(pin_rows):
+        print("WARNING: pinned trajectory does not reach the chosen contact angle; "
+              "animating pinning only.")
+    else:
+        print("WARNING: chosen spreading trajectory does not reach the selected "
+              "cavity radius; animating pinning only.")
+
+PRIN = os.path.basename(rad_path)
+print(f"cavity radius r_c/lambda: requested {RC_TARGET:g}, selected {RC:g} "
+      f"({PRIN}; difference {abs(RC - RC_TARGET):.4g})")
+print(f"phi^2/pi^2 target: {PHI2_TARGET:.8g}; selected {PHI2_SELECTED:.8g} "
+      f"(inside angle {CONTACT_ANGLE_DEG:.4g} deg)")
+print(f"configuration: Rc={RC:g} lambda")
+print(f"pinned: {PRIN}; rows used: {jp + 1}")
+if HAS_SPREADING:
+    print(f"spreading: {SPRD}; transition phi_w={PHI_W:g}")
+else:
+    print("spreading: skipped")
 
 r0_p_all = pr[: jp + 1, 0] / pr[: jp + 1, 4]
 ph_p_all = (1 - pr[: jp + 1, 2] / np.pi) ** 2
@@ -108,11 +215,12 @@ ph_s_all = (1 - sp[js:, 2] / np.pi) ** 2
 
 # --------------- Frame schedule — volume rate ---------------
 print(f"pinning:   {jp + 1} rows available, requesting {KP}")
-print(f"spreading: {len(sp) - js} rows available, requesting {KS}")
 assert KP <= jp, \
     f"KP={KP} > jp={jp}: not enough distinct pinning rows — reduce KP or re-run sim with denser output"
-assert KS <= len(sp) - js, \
-    f"KS={KS} > len(sp)-js={len(sp) - js}: not enough distinct spreading rows"
+if HAS_SPREADING:
+    print(f"spreading: {len(sp) - js} rows available, requesting {KS}")
+    assert KS <= len(sp) - js, \
+        f"KS={KS} > len(sp)-js={len(sp) - js}: not enough distinct spreading rows"
 
 def volume_schedule(vol, n):
     """Choose rows at approximately uniform ΔV, with strictly increasing V."""
@@ -159,11 +267,11 @@ def volume_schedule(vol, n):
 rows_p = volume_schedule(pr[: jp + 1, 6], KP + 1)[1:]
 
 # Spreading: full range, starting at js.
-rows_s = volume_schedule(sp[js:, 6], KS) + js
+rows_s = volume_schedule(sp[js:, 6], KS) + js if HAS_SPREADING else np.array([], dtype=int)
 
 if len(set(rows_p)) < KP:
     print(f"WARNING: pinning schedule has {KP - len(set(rows_p))} duplicate rows")
-if len(set(rows_s)) < KS:
+if HAS_SPREADING and len(set(rows_s)) < KS:
     print(f"WARNING: spreading schedule has {KS - len(set(rows_s))} duplicate rows")
 
 # --------------- Frame profiles ---------------
@@ -206,17 +314,18 @@ K = len(frames)
 # Physical animation clock: both phases use the same d(V/lambda^3)/dt.
 # Use monotone volume histories to avoid small numerical reversals.
 vpin = np.maximum.accumulate(pr[:jp + 1, 6] / pr[:jp + 1, 4] ** 3)
-vspr = np.maximum.accumulate(sp[js:, 6] / sp[js:, 4] ** 3)
+vspr = (np.maximum.accumulate(sp[js:, 6] / sp[js:, 4] ** 3)
+        if HAS_SPREADING else np.array([], dtype=float))
 pin_duration = (vpin[-1] - vpin[0]) / FILL_RATE
-spr_duration = (vspr[-1] - vspr[0]) / FILL_RATE
-TRANSITION_EPS = 1e-6  # separates the two states at the instantaneous phase change
+spr_duration = (vspr[-1] - vspr[0]) / FILL_RATE if HAS_SPREADING else 0.0
+TRANSITION_EPS = 1e-6 if HAS_SPREADING else 0.0
 DURATION = pin_duration + spr_duration + TRANSITION_EPS
 
 frame_times = []
 for fr in frames:
     if fr["ph"] == "p":
         frame_times.append((vpin[fr["row"]] - vpin[0]) / FILL_RATE)
-    else:
+    elif HAS_SPREADING:
         frame_times.append(pin_duration + TRANSITION_EPS +
                            (vspr[fr["row"] - js] - vspr[0]) / FILL_RATE)
 frame_times = np.asarray(frame_times)
@@ -604,7 +713,7 @@ if pin_full is not None and pin_L > 0.01:
     if FREEZE:
         an.set("fill", "freeze")
 
-if spr_full is not None and spr_L > 0.01:
+if HAS_SPREADING and spr_full is not None and spr_L > 0.01:
     spr_ks   = [k for k in range(K) if frames[k]["ph"] == "s"]
     # keyTime 0 with value spr_L keeps the spreading trail hidden during the
     # entire pinning phase; the first real spreading frame is at k = KP.
