@@ -16,7 +16,7 @@ For the y-axis value phi^2/pi^2 corresponding to an inside angle of 175 degrees
 
 Optional:  python animateU.py [repo_dir] [work_dir] [out.svg]
                               [--phi2 0.0007716] [--radius 0.5] [--fill-rate 1]
-                              [--single-shot] [--transparent] [--morph]
+                              [--single-shot] [--opaque] [--no-morph]
 
 How the animation works (and why it is portable)
 ------------------------------------------------
@@ -25,16 +25,12 @@ volume rate.  Duplicate row indices (which would produce frame-to-frame
 stalls) are nudged, with the last index clamped so the schedule never
 overruns the source array; a warning is printed with the count.
 
-* Trails — one path per phase, progressive reveal via `stroke-dashoffset`.
-  The dash VALUE at each keyTime is the arc-length fraction up to that frame,
-  so the tip stays exactly on the dot even though keyTimes are uniform in
-  volume, not in arc.  Well-supported everywhere SMIL is.
+* The parameter-space trajectory is static, grey, and marked with direction
+  arrows, matching the paper; it is not animated.
 * Dot — one path (frame K-1) translated by `animateTransform`; discrete
   `fill` tween at the pinning→spreading transition.
-* Bubble outline — discrete flipbook by default (Safari-safe).  With --morph,
-  a linear `d` animation is used instead; auto-falls back to flipbook if the
-  frame vertex counts differ.  WebKit SMIL `d` support is the open question —
-  test on the target Safari before committing to --morph.
+* Bubble outline — morphing is the default; use --no-morph for a flipbook.
+  It falls back to a flipbook if the frame vertex counts differ.
 
 Timing: keyTimes follow the dimensionless volume increase at a constant
 fill rate shared by pinning and spreading.  Every animate element holds its
@@ -75,9 +71,11 @@ ap.add_argument("--phi2", type=float, default=(1.0 - 175.0 / 180.0) ** 2,
 ap.add_argument("--radius", type=float, default=0.5,
                 help="target cavity radius r_c/lambda")
 ap.add_argument("--single-shot", action="store_true")
-ap.add_argument("--transparent", action="store_true")
-ap.add_argument("--morph", action="store_true",
-                help="animate bubble outline `d` (test on target Safari)")
+ap.add_argument("--opaque", action="store_true",
+                help="use an opaque white background (transparent by default)")
+ap.add_argument("--transparent", action="store_true", help=argparse.SUPPRESS)
+ap.add_argument("--morph", action=argparse.BooleanOptionalAction, default=True,
+                help="animate bubble outline `d` (default; use --no-morph for flipbook)")
 args = ap.parse_args()
 
 REPO, OUT = args.repo, args.out
@@ -85,7 +83,7 @@ FILL_RATE = args.fill_rate
 if FILL_RATE <= 0:
     ap.error("--fill-rate must be positive")
 REPEAT = "1" if args.single_shot else "indefinite"
-TRANSPARENT = args.transparent
+TRANSPARENT = not args.opaque
 WORK = args.work or tempfile.mkdtemp(prefix="animwork_")
 os.makedirs(WORK, exist_ok=True)
 
@@ -337,17 +335,6 @@ print(f"frames: {K}   duration: {DURATION:.2f}s")
 print(f"fill rate: {FILL_RATE:g} lambda^3/s "
       f"(pinning {pin_duration:.2f}s, spreading {spr_duration:.2f}s)")
 
-# --------------- Arc-length fractions along each trail ---------------
-# keyTimes are uniform in VOLUME, so the dash VALUE must be an arc fraction
-# (not a time fraction) to keep the dash tip on the dot.
-def arc_frac(x, y):
-    seg = np.hypot(np.diff(x), np.diff(y))
-    arc = np.concatenate([[0.0], np.cumsum(seg)])
-    return arc / arc[-1] if arc[-1] > 0 else arc
-
-pin_arc = arc_frac(r0_p_all, ph_p_all)
-spr_arc = arc_frac(r0_s_all, ph_s_all)
-
 # --------------- Figure ---------------
 fig = plt.figure(figsize=(14, 6))
 gs  = fig.add_gridspec(1, 2, width_ratios=[1, 1], wspace=0.22)
@@ -414,7 +401,9 @@ for fpath in sorted(glob.glob(SIM + "loop_ang*.txt")):
     ye = (1 - dl[extremInd, 2] / np.pi) ** 2
     x0 = dl[0, 0]
     xe = dl[extremInd, 0]
-    ax_phi.plot([x0, xe], [y0, ye], c='grey', lw=0.1, zorder=1)
+    # Omit near-horizontal grey reference segments; they obscure the trajectories.
+    if abs(ye - y0) < 0.015:
+        continue
     if round(angl * 100) % 20 != 10:
         continue
     n_decile += 1
@@ -442,10 +431,42 @@ try:
 except FileNotFoundError:
     print(f"WARNING: {BLUE_REF} not found")
 
-pin_trail, = ax_phi.plot([], [], 'r-', lw=2.0, zorder=4)
-pin_trail.set_gid("pintrail")
-spr_trail, = ax_phi.plot([], [], 'b-', lw=2.0, zorder=4)
-spr_trail.set_gid("sprtrail")
+# The selected trajectory is static, as in the paper: grey line with direction arrows.
+def plot_static_path(x, y, color='grey'):
+    ax_phi.plot(x, y, color=color, lw=0.9, zorder=3)
+    if len(x) < 3:
+        return
+    for idx in np.linspace(1, len(x) - 1, min(7, len(x) - 1), dtype=int):
+        prev = max(0, idx - max(1, len(x) // 35))
+        ax_phi.annotate('', xy=(x[idx], y[idx]), xytext=(x[prev], y[prev]),
+                        arrowprops=dict(arrowstyle='->', color=color,
+                                        lw=0.8, mutation_scale=9), zorder=4)
+
+plot_static_path(r0_p_all, ph_p_all)
+if HAS_SPREADING:
+    plot_static_path(r0_s_all, ph_s_all)
+
+# Red detachment boundary from the paper (BinRadMaxVol.txt).
+detachment_file = os.path.join(SIM, "BinRadMaxVol.txt")
+if os.path.isfile(detachment_file):
+    det = np.loadtxt(detachment_file)
+    if det.ndim == 2 and len(det) > 100:
+        min_len = 100
+        min_ang = np.array([
+            np.min(1 - det[i:i + min_len, 2] / np.pi)
+            for i in range(0, len(det[:, 2]) - min_len, min_len)
+        ])
+        rad = np.array([
+            det[i + min_len // 2, 0]
+            for i in range(0, len(det[:, 2]) - min_len, min_len)
+        ])
+        side = min_ang >= 1 - 1e-3
+        ax_phi.plot(rad[~side], min_ang[~side] ** 2, c='r', lw=1.2,
+                    zorder=5, clip_on=False)
+        ax_phi.plot(rad[side], min_ang[side] ** 2, c='r', lw=1.2,
+                    ls='dashed', zorder=5, clip_on=False)
+else:
+    print(f"WARNING: {detachment_file} not found; red detachment line omitted")
 
 left_x_range = 4.0
 left_y_range = 1.05
@@ -465,17 +486,6 @@ def update(k):
     Y = np.concatenate([ fr["y"][::-1], fr["y"]])
     bub_line.set_color('r' if fr["ph"] == "p" else 'b')
     bub_line.set_data(X, Y)
-    if fr["ph"] == "p":
-        i = min(fr["row"], jp)
-        a = min(frames[k - 1]["row"], jp) if k > 0 else 0
-        pin_trail.set_data(r0_p_all[a:i + 1], ph_p_all[a:i + 1])
-        spr_trail.set_data([], [])
-    else:
-        j = max(0, fr["row"] - js)
-        prev = frames[k - 1]
-        a = max(0, prev["row"] - js) if prev["ph"] == "s" else 0
-        pin_trail.set_data([], [])
-        spr_trail.set_data(r0_s_all[a:j + 1], ph_s_all[a:j + 1])
     dot.center = (fr["r0"], fr["phi2"])
     dot.set_facecolor('r' if fr["ph"] == "p" else 'b')
 
@@ -495,14 +505,6 @@ for k in range(K):
     svg_files.append(p)
     if (k + 1) % 20 == 0:
         print(f"  {k + 1}/{K}")
-
-print("rendering full trails for dash animation …")
-update(0)
-pin_trail.set_data(r0_p_all, ph_p_all)
-spr_trail.set_data(r0_s_all, ph_s_all)
-FULL_TRAILS = os.path.join(WORK_SVG, "full_trails.svg")
-fig.savefig(FULL_TRAILS, format='svg', bbox_inches=tight_bbox,
-            transparent=TRANSPARENT)
 
 # --------------- Extract ---------------
 _NUM_RE = re.compile(r"[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?")
@@ -541,29 +543,11 @@ def path_bbox_center(d_string):
     xs, ys = nums[0::2], nums[1::2]
     return ((min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2)
 
-def polyline_length(d_string):
-    """Sum of segment lengths for an M/L-only path (Line2D output)."""
-    nums = [float(x) for x in _NUM_RE.findall(d_string)]
-    if len(nums) < 4:
-        return 0.0
-    pts = [(nums[i], nums[i + 1]) for i in range(0, len(nums) - 1, 2)]
-    return sum(((pts[i][0] - pts[i - 1][0]) ** 2
-              + (pts[i][1] - pts[i - 1][1]) ** 2) ** 0.5
-               for i in range(1, len(pts)))
-
 print("extracting frame paths …")
 ex = []
 for p in svg_files:
     root_k = ET.parse(p).getroot()
     ex.append({g: group_path(root_k, g) for g in ("bubble", "magdot")})
-
-print("extracting full trail paths …")
-full_root = ET.parse(FULL_TRAILS).getroot()
-pin_full = group_path(full_root, "pintrail")
-spr_full = group_path(full_root, "sprtrail")
-pin_L = polyline_length(pin_full["d"]) if pin_full else 0.0
-spr_L = polyline_length(spr_full["d"]) if spr_full else 0.0
-print(f"  trail lengths: pin={pin_L:.2f}, spr={spr_L:.2f}")
 
 dot_centers = [path_bbox_center(ex[k]["magdot"]["d"]) if ex[k]["magdot"] else (0.0, 0.0)
                for k in range(K)]
@@ -599,7 +583,7 @@ for ch in list(root):
         root.remove(ch)
 
 groups = {}
-for gid in ("bubble", "magdot", "pintrail", "sprtrail"):
+for gid in ("bubble", "magdot"):
     g = find_group(root, gid)
     if g is None:
         sys.exit(f"ERROR: group '{gid}' not found in the SVG")
@@ -619,7 +603,7 @@ if args.morph:
 # --- Bubble outline ---
 if args.morph:
     attrs = dict(ex[-1]["bubble"])
-    attrs["d"] = bubble_ds[-1]                     # static fallback = last frame
+    attrs["d"] = bubble_ds[-1]                     # Static SVG fallback = final frame for viewers that ignore SMIL.
     bub_el = ET.SubElement(groups["bubble"], f"{{{SVG_NS}}}path", attrib=attrs)
     # SMIL keyTimes must start at 0 and end at 1.  The first sampled
     # pinning frame is after t=0 (row 0 is deliberately skipped), so hold
@@ -689,53 +673,6 @@ fill_el.set("begin", "0s")
 fill_el.set("repeatCount", REPEAT)
 if FREEZE:
     fill_el.set("fill", "freeze")
-
-# --- Trails (dash-reveal, tip synced to dot) ---
-if pin_full is not None and pin_L > 0.01:
-    pin_ks   = [k for k in range(K) if frames[k]["ph"] == "p"]
-    pin_vals = [f"{pin_L * (1 - pin_arc[frames[k]['row']]):.{PREC}f}"
-                for k in pin_ks]
-    # Pinning's first sampled frame is after t=0; hold its initial trail
-    # state from t=0 so the SMIL keyTimes list starts at zero.
-    pin_kts  = ["0"] + [FRAME_KTS[k] for k in pin_ks[1:]] + ["1"]
-    pin_vals = [pin_vals[0]] + pin_vals[1:] + ["0"]
-    attrs = dict(pin_full)
-    attrs["stroke-dasharray"]  = f"{pin_L:.{PREC}f}"
-    attrs["stroke-dashoffset"] = "0"
-    el = ET.SubElement(groups["pintrail"], f"{{{SVG_NS}}}path", attrib=attrs)
-    an = ET.SubElement(el, f"{{{SVG_NS}}}animate")
-    an.set("attributeName", "stroke-dashoffset")
-    an.set("values", ";".join(pin_vals))
-    an.set("keyTimes", ";".join(pin_kts))
-    an.set("calcMode", "linear")
-    an.set("dur", DUR)
-    an.set("begin", "0s")
-    an.set("repeatCount", REPEAT)
-    if FREEZE:
-        an.set("fill", "freeze")
-
-if HAS_SPREADING and spr_full is not None and spr_L > 0.01:
-    spr_ks   = [k for k in range(K) if frames[k]["ph"] == "s"]
-    # keyTime 0 with value spr_L keeps the spreading trail hidden during the
-    # entire pinning phase; the first real spreading frame is at k = KP.
-    spr_kts  = ["0"] + [FRAME_KTS[k] for k in spr_ks] + ["1"]
-    spr_vals = [f"{spr_L:.{PREC}f}"] + [
-        f"{spr_L * (1 - spr_arc[frames[k]['row'] - js]):.{PREC}f}"
-        for k in spr_ks] + ["0"]
-    attrs = dict(spr_full)
-    attrs["stroke-dasharray"]  = f"{spr_L:.{PREC}f}"
-    attrs["stroke-dashoffset"] = "0"
-    el = ET.SubElement(groups["sprtrail"], f"{{{SVG_NS}}}path", attrib=attrs)
-    an = ET.SubElement(el, f"{{{SVG_NS}}}animate")
-    an.set("attributeName", "stroke-dashoffset")
-    an.set("values", ";".join(spr_vals))
-    an.set("keyTimes", ";".join(spr_kts))
-    an.set("calcMode", "linear")
-    an.set("dur", DUR)
-    an.set("begin", "0s")
-    an.set("repeatCount", REPEAT)
-    if FREEZE:
-        an.set("fill", "freeze")
 
 tree.write(OUT, encoding="utf-8", xml_declaration=True)
 kb = os.path.getsize(OUT) / 1024
