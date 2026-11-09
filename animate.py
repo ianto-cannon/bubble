@@ -5,7 +5,9 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.transforms import ScaledTranslation
+from matplotlib.transforms import ScaledTranslation, Affine2D
+from matplotlib.patches import PathPatch
+from matplotlib.textpath import TextPath
 import xml.etree.ElementTree as ET
 
 
@@ -327,17 +329,20 @@ ax_b.tick_params(which="both", direction="in", top=True, right=True)
 bub_line, = ax_b.plot([], [], lw=1.5, zorder=5, clip_on=False)
 bub_line.set_gid("bubble")
 
-# Match plot.py's phi_0 marker: black lw=2 arc of radius 0.15 at the bubble
-# foot, truncated by the profile, and a black label at (+0.12, +0.05).
+# phi_0 marker: arc of radius 0.15 centred on the right foot (lw=2, black),
+# plus a black label offset at (+0.12, +0.05) - matching plot.py.  The label
+# is rendered as a TextPath / PathPatch so it becomes a real SVG <path>.
 ARC_RADIUS = 0.15
-N_ARC = 21
+N_ARC = 51
 LABEL_DX, LABEL_DY = 0.12, 0.05
 
 arc_line, = ax_b.plot([], [], c="k", lw=2, zorder=5, clip_on=False)
 arc_line.set_gid("phi0arc")
 
-phi0_label = ax_b.text(0, 0, r"$\phi_0$", ha="left", va="bottom",
-                       c="k", zorder=4)
+_PHI0_TP = TextPath((0, 0), r"$\phi_0$", size=14, usetex=True)
+phi0_label = PathPatch(_PHI0_TP, facecolor="k", edgecolor="none",
+                       lw=0, zorder=4, clip_on=False)
+ax_b.add_patch(phi0_label)
 phi0_label.set_gid("phi0label")
 
 
@@ -468,29 +473,32 @@ dot = ax_phi.annotate(
 dot.arrow_patch.set_gid("magdot")
 
 
-# phi_0 arc truncation, mirroring plot.py: draw a semicircle of radius
-# ARC_RADIUS centred on the right contact line and stop where it would go
-# inside the bubble outline.
+# phi_0 arc: span the actual contact angle from sim data.  φ₀ = π√(phi2),
+# since phi2 = (1 - tab[i,2]/π)² and plot.py uses φ₀/π = 1 - tab[i,2]/π.
 def phi0_arc(fr):
-    x, y = fr["x"], fr["y"]
-    xFull = np.concatenate([-x[::-1], x])
-    yFull = np.concatenate([y[::-1], y])
-    xAn, yAn = x[-1], y[-1]
-    phi_max = np.pi
-    for phi_i in range(51):
-        phi = phi_i * np.pi / 50
-        X = xAn + ARC_RADIUS * np.cos(phi)
-        Y = yAn + ARC_RADIUS * np.sin(phi)
-        i = 0
-        for ii in reversed(range(len(xFull))):
-            if yFull[ii] > Y:
-                i = ii
-                break
-        if xFull[i] > X:
-            phi_max = phi
-            break
+    xAn, yAn = fr["x"][-1], fr["y"][-1]
+    phi_max = np.pi * np.sqrt(fr["phi2"])
     phis = np.linspace(0.0, phi_max, N_ARC)
     return xAn + ARC_RADIUS * np.cos(phis), yAn + ARC_RADIUS * np.sin(phis)
+
+
+# Force the aspect adjustment now so ax_b.get_position() reflects the
+# final position; then compute the fixed points-to-data scale for the label.
+fig.canvas.draw()
+fig_w, fig_h = fig.get_size_inches()
+ax_pos = ax_b.get_position()
+_SX = (right_xlim[1] - right_xlim[0]) / (ax_pos.width * fig_w * 72)
+_SY = (right_ylim[1] - right_ylim[0]) / (ax_pos.height * fig_h * 72)
+_EXT_X0 = _PHI0_TP.get_extents().x0
+_EXT_Y0 = _PHI0_TP.get_extents().y0
+
+
+def _phi0_label_transform(foot_x, foot_y):
+    """Position the label's bottom-left at (foot + LABEL_DX, foot + LABEL_DY),
+    matching plot.py's ha='left', va='bottom' placement."""
+    tx = foot_x + LABEL_DX - _EXT_X0 * _SX
+    ty = foot_y + LABEL_DY - _EXT_Y0 * _SY
+    return Affine2D().scale(_SX, _SY).translate(tx, ty) + ax_b.transData
 
 
 # Axes positions are adjusted explicitly to retain the tight paper-style gap.
@@ -501,10 +509,11 @@ def update(k):
     bub_line.set_color("r" if fr["ph"] == "p" else "b")
     bub_line.set_data(X, Y)
 
+    foot_x, foot_y = fr["x"][-1], fr["y"][-1]
+    phi0_label.set_transform(_phi0_label_transform(foot_x, foot_y))
+
     Xarc, Yarc = phi0_arc(fr)
     arc_line.set_data(Xarc, Yarc)
-    phi0_label.set_position((fr["x"][-1] + LABEL_DX,
-                             fr["y"][-1] + LABEL_DY))
 
     dot.xy = (fr["r0"], fr["phi2"])
     dot.arrow_patch.set_color("r" if fr["ph"] == "p" else "b")
@@ -790,12 +799,10 @@ if all(arc_ds):
             add_visibility(el, k)
 
 
-# --- phi0 label: translation, matching the magdot's pattern ---
+# --- phi0 label: translate animation on a fixed shape ---
 if all(ex[k]["phi0label"] for k in range(K)):
     if args.morph:
         attrs_lbl = dict(ex[-1]["phi0label"])
-        # matplotlib stores stroke/fill in `style`; strip to avoid
-        # overriding presentation attributes when translated.
         lbl_move = ET.SubElement(groups["phi0label"], f"{{{SVG_NS}}}g")
         ET.SubElement(lbl_move, f"{{{SVG_NS}}}path", attrib=attrs_lbl)
 
