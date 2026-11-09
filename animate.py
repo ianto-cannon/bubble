@@ -24,8 +24,10 @@ overruns the source array; a warning is printed with the count.
 
 * The parameter-space trajectory is static, grey, and marked with direction
   arrows, matching the paper; it is not animated.
-* Dot — one path (frame K-1) translated by `animateTransform`; discrete
-  `fill` tween at the pinning→spreading transition.
+* Marker — an `ax.annotate` arrow in the same "->" style as the arrowheads
+  in plot.py (frame K-1), translated and rotated by `animateTransform` so it
+  points along the trajectory in the direction of increasing volume;
+  discrete `stroke` tween at the pinning→spreading transition.
 * Bubble outline — morphing is the default; use --no-morph for a flipbook.
   It falls back to a flipbook if the frame vertex counts differ.
 
@@ -43,6 +45,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse, PathPatch
 from matplotlib.path import Path
+from matplotlib.transforms import ScaledTranslation
 import xml.etree.ElementTree as ET
 
 
@@ -486,16 +489,27 @@ left_y_range = 1.05
 rx_data = 0.045
 ry_data = rx_data * left_y_range / (left_x_range * common_aspect)
 
-dot, = ax_phi.plot(
-    [RC], [0],
-    marker=">",
-    markersize=8,
-    markerfacecolor="r",
-    markeredgecolor="black",
-    linestyle="none",
-    zorder=5
+# Moving marker: an ax.annotate arrow in the same style as the arrowheads in
+# plot.py (arrowstyle "->", default linewidth and mutation_scale).  It is always
+# rendered pointing along +x in display space and centred on the data point;
+# the per-frame heading (direction of increasing volume) is applied
+# afterwards as an animated SVG rotation.
+ARROW_LEN_PT = 6.0   # shaft length; the open head sits at its tip
+arrow_tr = ax_phi.transData + ScaledTranslation(
+    ARROW_LEN_PT / 2 / 72.0, 0, fig.dpi_scale_trans)
+dot = ax_phi.annotate(
+    "",
+    xy=(RC, 0), xycoords=arrow_tr,                  # head: point + L/2
+    xytext=(-ARROW_LEN_PT, 0), textcoords="offset points",  # tail: head - L
+    annotation_clip=False,
+    zorder=5,
+    arrowprops=dict(
+        arrowstyle="->", color="r",   # as plot.py: default lw and mutation_scale
+        shrinkA=0, shrinkB=0,         # keep the head centred on the data point
+    ),
 )
-dot.set_gid("magdot")
+dot.arrow_patch.set_gid("magdot")
+
 
 # Axes positions are adjusted explicitly to retain the tight paper-style gap.
 def update(k):
@@ -504,8 +518,8 @@ def update(k):
     Y = np.concatenate([fr["y"][::-1], fr["y"]])
     bub_line.set_color("r" if fr["ph"] == "p" else "b")
     bub_line.set_data(X, Y)
-    dot.set_data([fr["r0"]], [fr["phi2"]])
-    dot.set_markerfacecolor("r" if fr["ph"] == "p" else "b")
+    dot.xy = (fr["r0"], fr["phi2"])
+    dot.arrow_patch.set_color("r" if fr["ph"] == "p" else "b")
 
 # --------------- Render frames ---------------
 WORK_SVG = tempfile.mkdtemp(prefix="animsg_")
@@ -514,6 +528,30 @@ print(f"rendering {K} frame SVGs into {WORK_SVG}")
 update(0)
 fig.canvas.draw()
 tight_bbox = fig.get_tightbbox(fig.canvas.get_renderer())
+
+
+# Heading of the marker per frame: direction of increasing volume along the
+# (r0/lambda, phi0^2/pi^2) trajectory, measured in display space so the
+# plot's axis scaling is respected.  Returned as SVG rotation angles (deg).
+def frame_heading_svg_deg():
+    thetas, prev = [], 0.0
+    for fr in frames:
+        tab = pr if fr["ph"] == "p" else sp
+        lo, hi = (0, jp) if fr["ph"] == "p" else (js, len(sp) - 1)
+        a, b = max(lo, fr["row"] - 3), min(hi, fr["row"] + 3)
+        if tab[b, 6] / tab[b, 4] ** 3 < tab[a, 6] / tab[a, 4] ** 3:
+            a, b = b, a  # make sure we point towards larger volume
+        pa, pb = (ax_phi.transData.transform(
+            (tab[i, 0] / tab[i, 4], (1 - tab[i, 2] / np.pi) ** 2))
+            for i in (a, b))
+        dx, dy = pb - pa
+        prev = float(np.arctan2(dy, dx)) if np.hypot(dx, dy) > 0 else prev
+        thetas.append(prev)
+    # display y points up, SVG y points down -> negate; unwrap for smooth tween
+    return -np.degrees(np.unwrap(thetas))
+
+
+heading_deg = frame_heading_svg_deg()
 
 svg_files = []
 for k in range(K):
@@ -552,19 +590,27 @@ def find_group(root, gid):
     return None
 
 
-def group_path(root, gid):
+def group_path(root, gid, merge=False):
+    """Attributes of the first path in group `gid`.  With merge=True the `d`
+    of every path in the group is joined into one multi-subpath string
+    (an "->" arrow is drawn as separate shaft and head paths)."""
     g = find_group(root, gid)
     if g is None:
         return None
 
+    out = None
     for el in g.iter():
         if el.tag.endswith("path") and el.get("d"):
-            at = dict(el.attrib)
-            at.pop("clip-path", None)
-            at["d"] = compact(at["d"])
-            return at
+            if out is None:
+                out = dict(el.attrib)
+                out.pop("clip-path", None)
+                out["d"] = compact(out["d"])
+                if not merge:
+                    return out
+            else:
+                out["d"] += " " + compact(el.get("d"))
 
-    return None
+    return out
 
 
 def path_bbox_center(d_string):
@@ -581,7 +627,8 @@ print("extracting frame paths …")
 ex = []
 for p in svg_files:
     root_k = ET.parse(p).getroot()
-    ex.append({g: group_path(root_k, g) for g in ("bubble", "magdot")})
+    ex.append({g: group_path(root_k, g, merge=(g == "magdot"))
+               for g in ("bubble", "magdot")})
 
 dot_centers = [
     path_bbox_center(ex[k]["magdot"]["d"])
@@ -713,12 +760,34 @@ else:
 
 # --- Dot: animateTransform on a single path ---
 attrs = dict(ex[-1]["magdot"])
-attrs.setdefault("fill", "#0000ff")
-dot_el = ET.SubElement(
-    groups["magdot"], f"{{{SVG_NS}}}path", attrib=attrs
-)
+# matplotlib puts stroke/fill in `style`, which would override an animated
+# `stroke` attribute; move them to presentation attributes.  The "->" arrow
+# is stroke-only, so the colour change animates `stroke`.
+style = {}
+for item in attrs.pop("style", "").split(";"):
+    if ":" in item:
+        key, val = item.split(":", 1)
+        style[key.strip()] = val.strip()
+style.pop("fill", None)
+style.pop("stroke", None)
+if style:
+    attrs["style"] = ";".join(f"{k}:{v}" for k, v in style.items())
+attrs["fill"] = "none"
+attrs["stroke"] = "blue" if HAS_SPREADING else "red"
 
 cx_last, cy_last = dot_centers[-1]
+
+# <g translate-anim> <g rotate-anim, base = final heading> <path/> </g></g>
+# Rotation (about the final-frame centre) is applied inside the translation,
+# so the arrow turns about its own centre while it travels.  The base
+# transform keeps the final frame correct in renderers that ignore SMIL.
+dot_move = ET.SubElement(groups["magdot"], f"{{{SVG_NS}}}g")
+dot_turn = ET.SubElement(dot_move, f"{{{SVG_NS}}}g")
+dot_turn.set(
+    "transform",
+    f"rotate({heading_deg[-1]:.2f} {cx_last:.{PREC}f} {cy_last:.{PREC}f})")
+dot_el = ET.SubElement(dot_turn, f"{{{SVG_NS}}}path", attrib=attrs)
+
 dot_vals = [
     f"{(dot_centers[k][0] - cx_last):.{PREC}f},"
     f"{(dot_centers[k][1] - cy_last):.{PREC}f}"
@@ -734,7 +803,7 @@ dot_kts = (
 )
 
 at_el = ET.SubElement(
-    dot_el, f"{{{SVG_NS}}}animateTransform"
+    dot_move, f"{{{SVG_NS}}}animateTransform"
 )
 at_el.set("attributeName", "transform")
 at_el.set("type", "translate")
@@ -748,8 +817,24 @@ at_el.set("repeatCount", REPEAT)
 if FREEZE:
     at_el.set("fill", "freeze")
 
+rot_vals = [f"{a:.2f} {cx_last:.{PREC}f} {cy_last:.{PREC}f}"
+            for a in heading_deg]
+rot_vals = rot_vals + [rot_vals[-1], rot_vals[-1]]
+rot_el = ET.SubElement(dot_turn, f"{{{SVG_NS}}}animateTransform")
+rot_el.set("attributeName", "transform")
+rot_el.set("type", "rotate")
+rot_el.set("values", ";".join(rot_vals))
+rot_el.set("keyTimes", ";".join(f"{t:.6f}" for t in dot_kts))
+rot_el.set("calcMode", "linear")
+rot_el.set("dur", DUR)
+rot_el.set("begin", "0s")
+rot_el.set("repeatCount", REPEAT)
+
+if FREEZE:
+    rot_el.set("fill", "freeze")
+
 fill_el = ET.SubElement(dot_el, f"{{{SVG_NS}}}animate")
-fill_el.set("attributeName", "fill")
+fill_el.set("attributeName", "stroke")
 fill_el.set("values", "red;blue")
 fill_el.set("keyTimes", f"0;{ALPHA:.6f}")
 fill_el.set("calcMode", "discrete")
