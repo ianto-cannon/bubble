@@ -1,50 +1,10 @@
 #!/usr/bin/env python3
-"""animatePort.py — animated SVG of bubble evolution, built to play in Safari.
-
-Left panel   φ₀²/π² vs r₀/λ — plot.py's axA[1] verbatim (grey arcs,
-             decile highlights, blue reference, arrowheads)
-Right panel  interface profile — plot_profiles style
-
-Run with no arguments from the repo directory:
-
-    python animateU_typical.py      ->  ./plots/growing.svg
-
-Defaults: phi/pi=0.7, cavity radius=1, output=plots/growing.svg.
-
-Optional:  python animateU.py [repo_dir] [work_dir] [out.svg]
-                              [--phi2 0.49] [--radius 1] [--fill-rate 1]
-                              [--single-shot] [--opaque] [--no-morph]
-
-How the animation works (and why it is portable)
-------------------------------------------------
-Frames are sampled at uniform Δ(volume) so the animation fills at a constant
-volume rate.  Duplicate row indices (which would produce frame-to-frame
-stalls) are nudged, with the last index clamped so the schedule never
-overruns the source array; a warning is printed with the count.
-
-* The parameter-space trajectory is static, grey, and marked with direction
-  arrows, matching the paper; it is not animated.
-* Marker — an `ax.annotate` arrow in the same "->" style as the arrowheads
-  in plot.py (frame K-1), translated and rotated by `animateTransform` so it
-  points along the trajectory in the direction of increasing volume;
-  discrete `stroke` tween at the pinning→spreading transition.
-* Bubble outline — morphing is the default; use --no-morph for a flipbook.
-  It falls back to a flipbook if the frame vertex counts differ.
-
-Timing: keyTimes follow the dimensionless volume increase at a constant
-fill rate shared by pinning and spreading.  Every animate element holds its
-last value until loop end, then snaps back.
-
-Fallback: renderers that ignore SMIL (Quick Look, Keynote, some Markdown
-viewers) see the final frame with fully-revealed trails.
-"""
+"""Create an animated SVG of bubble evolution from simulation data."""
 import os, sys, glob, subprocess, tempfile, shutil, re, argparse
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.patches import Ellipse, PathPatch
-from matplotlib.path import Path
 from matplotlib.transforms import ScaledTranslation
 import xml.etree.ElementTree as ET
 
@@ -244,10 +204,6 @@ rows_p = volume_schedule(pr[:jp + 1, 6], KP + 1)[1:]
 rows_s = (volume_schedule(sp[js:, 6], KS) + js
           if HAS_SPREADING else np.array([], dtype=int))
 
-if len(set(rows_p)) < KP:
-    print(f"WARNING: pinning schedule has {KP - len(set(rows_p))} duplicate rows")
-if HAS_SPREADING and len(set(rows_s)) < KS:
-    print(f"WARNING: spreading schedule has {KS - len(set(rows_s))} duplicate rows")
 
 
 # --------------- Frame profiles ---------------
@@ -449,15 +405,9 @@ except FileNotFoundError:
     print(f"WARNING: {BLUE_REF} not found")
 
 
-# Static parameter-space trajectories with direction arrows.
-def plot_static_path(x, y, color="grey"):
-    ax_phi.plot(x, y, color=color, lw=0.9, zorder=3)
-    if len(x) < 3:
-        return
-
-plot_static_path(r0_p_all, ph_p_all)
+ax_phi.plot(r0_p_all, ph_p_all, color="grey", lw=0.9, zorder=3)
 if HAS_SPREADING:
-    plot_static_path(r0_s_all, ph_s_all)
+    ax_phi.plot(r0_s_all, ph_s_all, color="grey", lw=0.9, zorder=3)
 
 
 # Red detachment boundary from BinRadMaxVol.txt.
@@ -484,10 +434,6 @@ else:
     print(f"WARNING: {detachment_file} not found; red detachment line omitted")
 
 
-left_x_range = 4.0
-left_y_range = 1.05
-rx_data = 0.045
-ry_data = rx_data * left_y_range / (left_x_range * common_aspect)
 
 # Moving marker: an ax.annotate arrow in the same style as the arrowheads in
 # plot.py (arrowstyle "->", default linewidth and mutation_scale).  It is always
