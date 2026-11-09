@@ -53,6 +53,7 @@ import xml.etree.ElementTree as ET
 
 warnings.filterwarnings("ignore", message=".*tight_layout.*")
 
+plt.rcParams.update({"text.usetex": True, "font.size": 14})
 plt.rcParams["svg.fonttype"] = "path"      # text -> outlines, no font deps
 plt.rcParams["path.simplify"] = False
 plt.rcParams["svg.hashsalt"] = "animsvg"   # deterministic ids
@@ -370,8 +371,8 @@ for a, b, c, d_ in [(-xlim_b, -RC, 0, 0), (RC, xlim_b, 0, 0),
 ax_b.set_xlim(right_xlim)
 ax_b.set_ylim(right_ylim)
 ax_b.set_aspect('equal', adjustable='box')
-ax_b.set_xlabel(r'$r/\lambda$', fontsize=13)
-ax_b.set_ylabel(r'$z/\lambda$', rotation=0, labelpad=16, fontsize=13)
+ax_b.set_xlabel(r'$r/\lambda$')
+ax_b.set_ylabel(r'$\frac{ z }{\lambda}$', rotation=0, labelpad=15, size=22)
 ax_b.tick_params(which='both', direction='in', top=True, right=True)
 
 bub_line, = ax_b.plot([], [], lw=2.5, zorder=5, clip_on=False)
@@ -381,9 +382,9 @@ bub_line.set_gid("bubble")
 ax_phi.set_xlim([0, 4])
 ax_phi.set_ylim([0, 1.05])
 ax_phi.set_yticks([0, 0.25, 0.5, 0.75, 1])
-ax_phi.set_xlabel(r'$r_0/\lambda$', fontsize=13)
-ax_phi.set_ylabel(r'$\dfrac{\phi_0^2}{\pi^2}$', rotation=0,
-                  labelpad=10, size=18)
+ax_phi.set_xlabel(r'$r_0/\lambda$')
+ax_phi.set_ylabel(r'$\frac{\phi_0^2}{\pi^2}$', rotation=0,
+                  labelpad=10, size=22)
 ax_phi.tick_params(which='both', direction='in', top=True, right=True)
 ax_phi.set_box_aspect(common_aspect)
 ax_phi.axvspan(R_GUIDE, R_BAND_END, color='whitesmoke', zorder=0)
@@ -746,3 +747,4 @@ plt.close(fig)
 shutil.rmtree(WORK_SVG, ignore_errors=True)
 if args.work is None:
     shutil.rmtree(WORK, ignore_errors=True)
+
