@@ -299,7 +299,7 @@ spr_duration = ((vspr[-1] - vspr[0]) / FILL_RATE
                 if HAS_SPREADING else 0.0)
 TRANSITION_EPS = 1e-6 if HAS_SPREADING else 0.0
 ANIMATION_DURATION = pin_duration + spr_duration + TRANSITION_EPS
-FINAL_HOLD = 1.0
+FINAL_HOLD = 0.0
 DURATION = ANIMATION_DURATION + FINAL_HOLD
 
 frame_times = []
@@ -325,6 +325,7 @@ print(f"fill rate: {FILL_RATE:g} lambda^3/s "
 # --------------- Figure ---------------
 # Two-panel figure using the paper's 10 x 3 inch proportions.
 fig, (ax_phi, ax_b) = plt.subplots(1, 2, figsize=(10, 3))
+fig.subplots_adjust(wspace=0.0)
 
 # ---- RIGHT: bubble profile ----
 xmax_p = max(f["x"].max() for f in frames)
@@ -361,7 +362,7 @@ ax_b.set_xlim(right_xlim)
 ax_b.set_ylim(right_ylim)
 ax_b.set_aspect("equal", adjustable="box")
 ax_b.set_xlabel(r"$r/\lambda$")
-ax_b.set_ylabel(r"$\frac{ z }{\lambda}$", rotation=0, labelpad=10, size=22)
+ax_b.set_ylabel(r"$\frac{ z }{\lambda}$", rotation=0, labelpad=5, size=22)
 ax_b.tick_params(which="both", direction="in", top=True, right=True)
 
 bub_line, = ax_b.plot([], [], lw=2.5, zorder=5, clip_on=False)
@@ -451,19 +452,6 @@ def plot_static_path(x, y, color="grey"):
     if len(x) < 3:
         return
 
-    for idx in np.linspace(1, len(x) - 1, min(7, len(x) - 1), dtype=int):
-        prev = max(0, idx - max(1, len(x) // 35))
-        ax_phi.annotate(
-            "",
-            xy=(x[idx], y[idx]),
-            xytext=(x[prev], y[prev]),
-            arrowprops=dict(
-                arrowstyle="->", color=color, lw=0.8, mutation_scale=9
-            ),
-            zorder=4
-        )
-
-
 plot_static_path(r0_p_all, ph_p_all)
 if HAS_SPREADING:
     plot_static_path(r0_s_all, ph_s_all)
@@ -498,19 +486,16 @@ left_y_range = 1.05
 rx_data = 0.045
 ry_data = rx_data * left_y_range / (left_x_range * common_aspect)
 
-dot = Ellipse(
-    (RC, 0.0),
-    width=2 * rx_data,
-    height=2 * ry_data,
-    facecolor="r",
-    edgecolor="black",
-    linewidth=1.0,
-    zorder=5,
-    clip_on=False
+dot, = ax_phi.plot(
+    [RC], [0],
+    marker=">",
+    markersize=8,
+    markerfacecolor="r",
+    markeredgecolor="black",
+    linestyle="none",
+    zorder=5
 )
-ax_phi.add_patch(dot)
 dot.set_gid("magdot")
-
 
 # Axes positions are adjusted explicitly to retain the tight paper-style gap.
 def update(k):
@@ -519,9 +504,8 @@ def update(k):
     Y = np.concatenate([fr["y"][::-1], fr["y"]])
     bub_line.set_color("r" if fr["ph"] == "p" else "b")
     bub_line.set_data(X, Y)
-    dot.center = (fr["r0"], fr["phi2"])
-    dot.set_facecolor("r" if fr["ph"] == "p" else "b")
-
+    dot.set_data([fr["r0"]], [fr["phi2"]])
+    dot.set_markerfacecolor("r" if fr["ph"] == "p" else "b")
 
 # --------------- Render frames ---------------
 WORK_SVG = tempfile.mkdtemp(prefix="animsg_")
