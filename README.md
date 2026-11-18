@@ -4,10 +4,6 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2609.24342-b31b1b.svg)](https://arxiv.org/abs/2609.24342) 
 [![Zenodo](https://img.shields.io/badge/Zenodo-20720640-1682C4)](https://doi.org/10.5281/zenodo.20720640)
 
-![Bubble growing](plots/growing.svg)
-
-*Evolution of a growing bubble interface (right) and its trajectory in the contact angle - contact radius phase space (left), transitioning from a pinned contact line at the cavity edge (red) to a spreading contact line on the flat surface (blue).*
-
 Calculate **interface shapes, volumes, and detachment thresholds** for fluid bubbles and pendant drops on flat surfaces.
 
 This toolkit solves the **Young–Laplace equation** using the **Adams–Bashforth integration method** across a range of wetting states, including pinned and spreading/moving contact lines. The results are validated against classical experimental datasets from the literature.
@@ -18,6 +14,10 @@ The method and results are described in:
 > *Bubble detachment from circular cavities and flat surfaces*,
 > **Faraday Discussions** (2026).
 > https://doi.org/10.1039/D6FD00113K
+
+![Bubble growing](plots/growing.svg)
+
+*Evolution of a growing bubble interface (right) and its trajectory in the contact angle - contact radius phase space (left), transitioning from a pinned contact line at the cavity edge (red) to a spreading contact line on the flat surface (blue).*
 
 ## Requirements
 
