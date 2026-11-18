@@ -6,7 +6,7 @@
 
 ![Bubble growing](plots/growing.svg)
 
-*Evolution of a growing bubble interface (right) and its trajectory in the $(\phi_0^2/\pi^2, r_0/\lambda)$ phase space (left), transitioning from a pinned contact line at the cavity edge (red) to a spreading contact line on the flat surface (blue).*
+*Evolution of a growing bubble interface (right) and its trajectory in the contact angle - contact radius phase space (left), transitioning from a pinned contact line at the cavity edge (red) to a spreading contact line on the flat surface (blue).*
 
 Calculate **interface shapes, volumes, and detachment thresholds** for fluid bubbles and pendant drops on flat surfaces.
 
