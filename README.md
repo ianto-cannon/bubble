@@ -4,8 +4,9 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2609.24342-b31b1b.svg)](https://arxiv.org/abs/2609.24342) 
 [![Zenodo](https://img.shields.io/badge/Zenodo-20720640-1682C4)](https://doi.org/10.5281/zenodo.20720640)
 
-![Bubble detachment](plots/abstract.svg)
 ![Bubble growing](plots/growing.svg)
+
+*Evolution of a growing bubble interface (right) and its trajectory in the $(\phi_0^2/\pi^2, r_0/\lambda)$ phase space (left), transitioning from a pinned contact line at the cavity edge (red) to a spreading contact line on the flat surface (blue).*
 
 Calculate **interface shapes, volumes, and detachment thresholds** for fluid bubbles and pendant drops on flat surfaces.
 
@@ -46,8 +47,24 @@ Install the required Python packages:
 pip install numpy matplotlib
 ```
 
-Generate the plots:
+Generate the static plots:
 
 ```bash
 python plot.py
 ```
+
+Generate an animation of the bubble growing (`plots/growing.svg`):
+
+```bash
+python animate.py
+```
+
+Optional flags for `animate.py`:
+
+* `--radius`: Target dimensionless cavity radius $r_c/\lambda$ (default: `1.0`).
+* `--phi2`: Target dimensionless contact angle parameter $\phi^2/\pi^2$ (default: `0.49`).
+* `--fill-rate`: Dimensionless volumetric fill rate $\mathrm{d}(V/\lambda^3)/\mathrm{d}t$ (default: `1.0`).
+* `--single-shot`: Play the animation once instead of looping indefinitely.
+* `--opaque`: Use an opaque background instead of transparent.
+* `--no-morph`: Use discrete frame switching instead of smooth path morphing.
+
