@@ -5,6 +5,7 @@
 [![Zenodo](https://img.shields.io/badge/Zenodo-20720640-1682C4)](https://doi.org/10.5281/zenodo.20720640)
 
 ![Bubble detachment](plots/abstract.svg)
+![Bubble growing](plots/growing.svg)
 
 Calculate **interface shapes, volumes, and detachment thresholds** for fluid bubbles and pendant drops on flat surfaces.
 
