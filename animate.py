@@ -932,6 +932,74 @@ else:
         el.set("visibility", "visible" if k == K - 1 else "hidden")
         add_visibility(el, k)
 
+SKIP_GROUPS = {"bubble", "arrowhead", "phi0arc", "phi0label"}
+DARK_FG = "#e6edf3"    # GitHub dark mode primary text/axes color
+DARK_BAND = "#21262d"  # Subtle dark shading for R_GUIDE..R_BAND_END
+DARK_REF = "#8b949e"   # Muted grey for background reference lines
+
+def add_css_class(el, cls_name):
+    existing = el.get("class", "").split()
+    if cls_name not in existing:
+        existing.append(cls_name)
+        el.set("class", " ".join(existing))
+
+def classify_for_theme(el, in_skip=False):
+    if el.get("id") in SKIP_GROUPS:
+        in_skip = True
+
+    style_str = el.get("style", "")
+    # Tag light shaded band (whitesmoke -> #f5f5f5)
+    if "#f5f5f5" in style_str or "whitesmoke" in style_str:
+        add_css_class(el, "plot-band")
+
+    # Tag static black axes, ticks, text paths, and cavity walls
+    if not in_skip:
+        if "stroke: #000000" in style_str or "stroke:#000000" in style_str:
+            add_css_class(el, "plot-fg-stroke")
+        if "fill: #000000" in style_str or "fill:#000000" in style_str:
+            add_css_class(el, "plot-fg-fill")
+        if "stroke: #808080" in style_str or "stroke:#808080" in style_str:
+            add_css_class(el, "plot-ref-stroke")
+        if "fill: #808080" in style_str or "fill:#808080" in style_str:
+            add_css_class(el, "plot-ref-fill")
+
+    for child in el:
+        classify_for_theme(child, in_skip)
+
+classify_for_theme(root)
+
+# Also tag the animated phi0 arc & label (which stay black in light mode)
+for gid in ("phi0arc", "phi0label"):
+    g = find_group(root, gid)
+    if g is not None:
+        for el in g.iter():
+            if el.tag.endswith("path"):
+                st = el.get("style", "")
+                if "stroke: #000000" in st:
+                    add_css_class(el, "plot-fg-stroke")
+                if "fill: #000000" in st:
+                    add_css_class(el, "plot-fg-fill")
+
+# Inject dark mode rules into <defs><style>
+defs = root.find(f"{{{SVG_NS}}}defs")
+if defs is None:
+    defs = ET.Element(f"{{{SVG_NS}}}defs")
+    root.insert(0, defs)
+
+style_el = defs.find(f"{{{SVG_NS}}}style")
+if style_el is None:
+    style_el = ET.SubElement(defs, f"{{{SVG_NS}}}style", {"type": "text/css"})
+    style_el.text = ""
+
+style_el.text = (style_el.text or "") + f"""
+@media (prefers-color-scheme: dark) {{
+  .plot-band {{ fill: {DARK_BAND} !important; stroke: {DARK_BAND} !important; }}
+  .plot-fg-stroke {{ stroke: {DARK_FG} !important; }}
+  .plot-fg-fill {{ fill: {DARK_FG} !important; }}
+  .plot-ref-stroke {{ stroke: {DARK_REF} !important; }}
+  .plot-ref-fill {{ fill: {DARK_REF} !important; }}
+}}
+"""
 
 os.makedirs(os.path.dirname(os.path.abspath(OUT)), exist_ok=True)
 tree.write(OUT, encoding="utf-8", xml_declaration=True)
