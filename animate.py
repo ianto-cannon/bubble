@@ -5,9 +5,10 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.transforms import ScaledTranslation, Affine2D
+from matplotlib.transforms import Affine2D
 from matplotlib.patches import PathPatch
 from matplotlib.textpath import TextPath
+from matplotlib.path import Path
 import xml.etree.ElementTree as ET
 
 
@@ -451,26 +452,21 @@ else:
 
 
 
-# Moving marker: an ax.annotate arrow in the same style as the arrowheads in
-# plot.py (arrowstyle "->", default linewidth and mutation_scale).  It is always
-# rendered pointing along +x in display space and centred on the data point;
-# the per-frame heading (direction of increasing volume) is applied
-# afterwards as an animated SVG rotation.
-ARROW_LEN_PT = 6.0   # shaft length; the open head sits at its tip
-arrow_tr = ax_phi.transData + ScaledTranslation(
-    ARROW_LEN_PT / 2 / 72.0, 0, fig.dpi_scale_trans)
-dot = ax_phi.annotate(
-    "",
-    xy=(RC, 0), xycoords=arrow_tr,                  # head: point + L/2
-    xytext=(-ARROW_LEN_PT, 0), textcoords="offset points",  # tail: head - L
-    annotation_clip=False,
-    zorder=5,
-    arrowprops=dict(
-        arrowstyle="->", color="r",   # as plot.py: default lw and mutation_scale
-        shrinkA=0, shrinkB=0,         # keep the head centred on the data point
-    ),
+# Moving arrowhead: two straight lines forming a "V" with the tip at
+# (r0/lambda, phi0^2/pi^2).  The head is a single PathPatch with two
+# subpaths (tip->left, tip->right) so it can be morphed as one `d`.
+HEAD_LEN_PT = 15.0          # length of each head line, in points
+HEAD_HALF_ANGLE = np.deg2rad(25.0)  # half-opening angle of the "V"
+PX_PER_PT = fig.dpi / 72.0
+
+arrow_patch = PathPatch(
+    Path(np.zeros((4, 2)),
+         [Path.MOVETO, Path.LINETO, Path.MOVETO, Path.LINETO]),
+    facecolor="none", edgecolor="r", lw=1.0,
+    zorder=5, clip_on=False,
 )
-dot.arrow_patch.set_gid("magdot")
+ax_phi.add_patch(arrow_patch)
+arrow_patch.set_gid("arrowhead")
 
 
 # phi_0 arc: span the actual contact angle from sim data.  φ₀ = π√(phi2),
@@ -481,6 +477,34 @@ def phi0_arc(fr):
     phis = np.linspace(0.0, phi_max, N_ARC)
     return xAn + ARC_RADIUS * np.cos(phis), yAn + ARC_RADIUS * np.sin(phis)
 
+
+# Per-frame heading in display space (radians, matplotlib convention: y up).
+# Uses frame neighbours within the same phase so the tangent follows the
+# visible trajectory and does not jump across the pinning/spreading boundary.
+def compute_headings_display():
+    P = [ax_phi.transData.transform((fr["r0"], fr["phi2"])) for fr in frames]
+    headings = []
+    prev = 0.0
+    for k in range(K):
+        lo = max(0, k - 1)
+        hi = min(K - 1, k + 1)
+        # Stay inside the same phase so the transition doesn't produce a
+        # spurious chord direction.
+        if lo < k and frames[lo]["ph"] != frames[k]["ph"]:
+            lo = k
+        if hi > k and frames[hi]["ph"] != frames[k]["ph"]:
+            hi = k
+        if lo == hi:
+            headings.append(prev)
+            continue
+        dx = P[hi][0] - P[lo][0]
+        dy = P[hi][1] - P[lo][1]
+        if np.hypot(dx, dy) > 0:
+            prev = float(np.arctan2(dy, dx))
+        headings.append(prev)
+    return headings
+
+headings_disp = compute_headings_display()
 
 # Force the aspect adjustment now so ax_b.get_position() reflects the
 # final position; then compute the fixed points-to-data scale for the label.
@@ -515,8 +539,25 @@ def update(k):
     Xarc, Yarc = phi0_arc(fr)
     arc_line.set_data(Xarc, Yarc)
 
-    dot.xy = (fr["r0"], fr["phi2"])
-    dot.arrow_patch.set_color("r" if fr["ph"] == "p" else "b")
+    # Arrowhead: tip at data point, V opening backwards along the heading.
+    tip_data = np.array([fr["r0"], fr["phi2"]])
+    tip_disp = ax_phi.transData.transform(tip_data)
+    theta = headings_disp[k]
+    back = np.array([-np.cos(theta), -np.sin(theta)])
+    ca, sa = np.cos(HEAD_HALF_ANGLE), np.sin(HEAD_HALF_ANGLE)
+    left_dir = np.array([back[0]*ca - back[1]*sa, back[0]*sa + back[1]*ca])
+    right_dir = np.array([back[0]*ca + back[1]*sa, -back[0]*sa + back[1]*ca])
+    L_px = HEAD_LEN_PT * PX_PER_PT
+    left_disp = tip_disp + L_px * left_dir
+    right_disp = tip_disp + L_px * right_dir
+    inv = ax_phi.transData.inverted()
+    left_data = inv.transform(left_disp)
+    right_data = inv.transform(right_disp)
+    verts = np.array([tip_data, left_data, tip_data, right_data])
+    arrow_patch.set_path(
+        Path(verts, [Path.MOVETO, Path.LINETO, Path.MOVETO, Path.LINETO])
+    )
+    arrow_patch.set_edgecolor("r" if fr["ph"] == "p" else "b")
 
 # --------------- Render frames ---------------
 WORK_SVG = tempfile.mkdtemp(prefix="animsg_")
@@ -526,29 +567,6 @@ update(0)
 fig.canvas.draw()
 tight_bbox = fig.get_tightbbox(fig.canvas.get_renderer())
 
-
-# Heading of the marker per frame: direction of increasing volume along the
-# (r0/lambda, phi0^2/pi^2) trajectory, measured in display space so the
-# plot's axis scaling is respected.  Returned as SVG rotation angles (deg).
-def frame_heading_svg_deg():
-    thetas, prev = [], 0.0
-    for fr in frames:
-        tab = pr if fr["ph"] == "p" else sp
-        lo, hi = (0, jp) if fr["ph"] == "p" else (js, len(sp) - 1)
-        a, b = max(lo, fr["row"] - 3), min(hi, fr["row"] + 3)
-        if tab[b, 6] / tab[b, 4] ** 3 < tab[a, 6] / tab[a, 4] ** 3:
-            a, b = b, a  # make sure we point towards larger volume
-        pa, pb = (ax_phi.transData.transform(
-            (tab[i, 0] / tab[i, 4], (1 - tab[i, 2] / np.pi) ** 2))
-            for i in (a, b))
-        dx, dy = pb - pa
-        prev = float(np.arctan2(dy, dx)) if np.hypot(dx, dy) > 0 else prev
-        thetas.append(prev)
-    # display y points up, SVG y points down -> negate; unwrap for smooth tween
-    return -np.degrees(np.unwrap(thetas))
-
-
-heading_deg = frame_heading_svg_deg()
 
 svg_files = []
 for k in range(K):
@@ -624,14 +642,9 @@ print("extracting frame paths …")
 ex = []
 for p in svg_files:
     root_k = ET.parse(p).getroot()
-    ex.append({g: group_path(root_k, g, merge=(g in ("magdot", "phi0label")))
-               for g in ("bubble", "magdot", "phi0arc", "phi0label")})
+    ex.append({g: group_path(root_k, g, merge=False)
+               for g in ("bubble", "arrowhead", "phi0arc", "phi0label")})
 
-dot_centers = [
-    path_bbox_center(ex[k]["magdot"]["d"])
-    if ex[k]["magdot"] else (0.0, 0.0)
-    for k in range(K)
-]
 bubble_ds = [
     ex[k]["bubble"]["d"] if ex[k]["bubble"] else None
     for k in range(K)
@@ -687,7 +700,7 @@ for ch in list(root):
         root.remove(ch)
 
 groups = {}
-for gid in ("bubble", "magdot", "phi0arc", "phi0label"):
+for gid in ("bubble", "arrowhead", "phi0arc", "phi0label"):
     g = find_group(root, gid)
     if g is None:
         sys.exit(f"ERROR: group '{gid}' not found in the SVG")
@@ -709,6 +722,14 @@ if args.morph:
         print(f"  bubble morph: {nL[0]} vertices / frame")
 
 
+# Common keyTimes for `d` animations (bubble and arrowhead).
+kts = (
+    [0.0]
+    + [t / DURATION for t in frame_times[1:]]
+    + [ANIM_END, 1.0]
+)
+
+
 # --- Bubble outline ---
 if args.morph:
     attrs = dict(ex[-1]["bubble"])
@@ -720,11 +741,6 @@ if args.morph:
     # Hold the first sampled pinning shape from t=0.
     d_vals = ";".join(
         [bubble_ds[0]] + bubble_ds[1:] + [bubble_ds[-1], bubble_ds[-1]]
-    )
-    kts = (
-        [0.0]
-        + [t / DURATION for t in frame_times[1:]]
-        + [ANIM_END, 1.0]
     )
 
     an = ET.SubElement(bub_el, f"{{{SVG_NS}}}animate")
@@ -843,92 +859,78 @@ if all(ex[k]["phi0label"] for k in range(K)):
             add_visibility(el, k)
 
 
-# --- Dot: animateTransform on a single path ---
-attrs = dict(ex[-1]["magdot"])
-# matplotlib puts stroke/fill in `style`, which would override an animated
-# `stroke` attribute; move them to presentation attributes.  The "->" arrow
-# is stroke-only, so the colour change animates `stroke`.
-style = {}
-for item in attrs.pop("style", "").split(";"):
-    if ":" in item:
-        key, val = item.split(":", 1)
-        style[key.strip()] = val.strip()
-style.pop("fill", None)
-style.pop("stroke", None)
-if style:
-    attrs["style"] = ";".join(f"{k}:{v}" for k, v in style.items())
-attrs["fill"] = "none"
-attrs["stroke"] = "blue" if HAS_SPREADING else "red"
+# --- Arrowhead ---
+arrow_ds = [ex[k]["arrowhead"]["d"] if ex[k]["arrowhead"] else None
+            for k in range(K)]
+if not all(arrow_ds):
+    sys.exit("ERROR: some frames have no arrowhead path")
 
-cx_last, cy_last = dot_centers[-1]
+if args.morph:
+    nL_arrow = [d.count("L") for d in arrow_ds]
+    if len(set(nL_arrow)) != 1:
+        print(f"WARNING: arrowhead --morph disabled (L counts differ: "
+              f"{sorted(set(nL_arrow))})")
+        arrow_morph = False
+    else:
+        arrow_morph = True
+        print(f"  arrowhead morph: {nL_arrow[0]} line segments / frame")
+else:
+    arrow_morph = False
 
-# <g translate-anim> <g rotate-anim, base = final heading> <path/> </g></g>
-# Rotation (about the final-frame centre) is applied inside the translation,
-# so the arrow turns about its own centre while it travels.  The base
-# transform keeps the final frame correct in renderers that ignore SMIL.
-dot_move = ET.SubElement(groups["magdot"], f"{{{SVG_NS}}}g")
-dot_turn = ET.SubElement(dot_move, f"{{{SVG_NS}}}g")
-dot_turn.set(
-    "transform",
-    f"rotate({heading_deg[-1]:.2f} {cx_last:.{PREC}f} {cy_last:.{PREC}f})")
-dot_el = ET.SubElement(dot_turn, f"{{{SVG_NS}}}path", attrib=attrs)
+if arrow_morph:
+    attrs = dict(ex[-1]["arrowhead"])
+    # Move stroke/fill out of `style` so the stroke animation works.
+    style = {}
+    for item in attrs.pop("style", "").split(";"):
+        if ":" in item:
+            key, val = item.split(":", 1)
+            style[key.strip()] = val.strip()
+    style.pop("fill", None)
+    style.pop("stroke", None)
+    if style:
+        attrs["style"] = ";".join(f"{k}:{v}" for k, v in style.items())
+    attrs["fill"] = "none"
+    attrs["stroke"] = "blue" if HAS_SPREADING else "red"
+    attrs["d"] = arrow_ds[-1]
 
-dot_vals = [
-    f"{(dot_centers[k][0] - cx_last):.{PREC}f},"
-    f"{(dot_centers[k][1] - cy_last):.{PREC}f}"
-    for k in range(K)
-]
+    arr_el = ET.SubElement(
+        groups["arrowhead"], f"{{{SVG_NS}}}path", attrib=attrs
+    )
 
-# Anchor the first sampled marker position at keyTime 0.
-dot_vals = dot_vals[:1] + dot_vals[1:] + ["0,0", "0,0"]
-dot_kts = (
-    [0.0]
-    + [t / DURATION for t in frame_times[1:]]
-    + [ANIM_END, 1.0]
-)
+    d_vals = ";".join(
+        [arrow_ds[0]] + arrow_ds[1:] + [arrow_ds[-1], arrow_ds[-1]]
+    )
+    an = ET.SubElement(arr_el, f"{{{SVG_NS}}}animate")
+    an.set("attributeName", "d")
+    an.set("values", d_vals)
+    an.set("keyTimes", ";".join(f"{t:.9f}" for t in kts))
+    an.set("calcMode", "linear")
+    an.set("dur", DUR)
+    an.set("begin", "0s")
+    an.set("repeatCount", REPEAT)
 
-at_el = ET.SubElement(
-    dot_move, f"{{{SVG_NS}}}animateTransform"
-)
-at_el.set("attributeName", "transform")
-at_el.set("type", "translate")
-at_el.set("values", ";".join(dot_vals))
-at_el.set("keyTimes", ";".join(f"{t:.6f}" for t in dot_kts))
-at_el.set("calcMode", "linear")
-at_el.set("dur", DUR)
-at_el.set("begin", "0s")
-at_el.set("repeatCount", REPEAT)
+    if FREEZE:
+        an.set("fill", "freeze")
 
-if FREEZE:
-    at_el.set("fill", "freeze")
+    an2 = ET.SubElement(arr_el, f"{{{SVG_NS}}}animate")
+    an2.set("attributeName", "stroke")
+    an2.set("values", "red;blue")
+    an2.set("keyTimes", f"0;{ALPHA:.6f}")
+    an2.set("calcMode", "discrete")
+    an2.set("dur", DUR)
+    an2.set("begin", "0s")
+    an2.set("repeatCount", REPEAT)
 
-rot_vals = [f"{a:.2f} {cx_last:.{PREC}f} {cy_last:.{PREC}f}"
-            for a in heading_deg]
-rot_vals = rot_vals + [rot_vals[-1], rot_vals[-1]]
-rot_el = ET.SubElement(dot_turn, f"{{{SVG_NS}}}animateTransform")
-rot_el.set("attributeName", "transform")
-rot_el.set("type", "rotate")
-rot_el.set("values", ";".join(rot_vals))
-rot_el.set("keyTimes", ";".join(f"{t:.6f}" for t in dot_kts))
-rot_el.set("calcMode", "linear")
-rot_el.set("dur", DUR)
-rot_el.set("begin", "0s")
-rot_el.set("repeatCount", REPEAT)
-
-if FREEZE:
-    rot_el.set("fill", "freeze")
-
-fill_el = ET.SubElement(dot_el, f"{{{SVG_NS}}}animate")
-fill_el.set("attributeName", "stroke")
-fill_el.set("values", "red;blue")
-fill_el.set("keyTimes", f"0;{ALPHA:.6f}")
-fill_el.set("calcMode", "discrete")
-fill_el.set("dur", DUR)
-fill_el.set("begin", "0s")
-fill_el.set("repeatCount", REPEAT)
-
-if FREEZE:
-    fill_el.set("fill", "freeze")
+    if FREEZE:
+        an2.set("fill", "freeze")
+else:
+    for k in range(K):
+        at = ex[k]["arrowhead"]
+        el = ET.SubElement(
+            groups["arrowhead"], f"{{{SVG_NS}}}path", attrib=at
+        )
+        el.set("visibility", "visible" if k == K - 1 else "hidden")
+        add_visibility(el, k)
 
 
 os.makedirs(os.path.dirname(os.path.abspath(OUT)), exist_ok=True)
