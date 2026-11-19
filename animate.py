@@ -24,8 +24,8 @@ ET.register_namespace("xlink", "http://www.w3.org/1999/xlink")
 # --------------- CLI (everything optional) ---------------
 ap = argparse.ArgumentParser(description=__doc__,
               formatter_class=argparse.RawDescriptionHelpFormatter)
-ap.add_argument("-o", "--out", default=os.path.join("plots", "growing.svg"),
-        help="output SVG path (default: plots/growing.svg)")
+ap.add_argument("-o", "--out", default=os.path.join("plots", "hydrophobic.svg"),
+        help="output SVG path (default: plots/hydrophobic.svg)")
 ap.add_argument("--fill-rate", type=float, default=1.0,
         help="dimensionless fill rate d(V/lambda^3)/dt [lambda^3/s]")
 ap.add_argument("-p", "--phi", type=float, default=0.7,
@@ -422,9 +422,10 @@ except FileNotFoundError:
   print(f"WARNING: {BLUE_REF} not found")
 
 
-ax_phi.plot(r0_p_all, ph_p_all, color="grey", zorder=3)
+# Keep the grey path trajectories above the blue and red reference lines.
+ax_phi.plot(r0_p_all, ph_p_all, color="grey", zorder=7)
 if HAS_SPREADING:
-  ax_phi.plot(r0_s_all, ph_s_all, color="grey", zorder=3)
+  ax_phi.plot(r0_s_all, ph_s_all, color="grey", zorder=7)
 
 
 # Red detachment boundary from BinRadMaxVol.txt.
@@ -463,7 +464,7 @@ arrow_patch = PathPatch(
   Path(np.zeros((4, 2)),
     [Path.MOVETO, Path.LINETO, Path.MOVETO, Path.LINETO]),
   facecolor="none", edgecolor="r", lw=1.0,
-  zorder=5, clip_on=False,
+  zorder=10, clip_on=False,
 )
 ax_phi.add_patch(arrow_patch)
 arrow_patch.set_gid("arrowhead")
@@ -936,7 +937,7 @@ else:
 # --------------- Light / Dark Mode CSS Injection ---------------
 SKIP_GROUPS = {"bubble", "arrowhead", "phi0arc", "phi0label"}
 DARK_BG = "#0d1117"    # GitHub dark mode canvas background
-DARK_FG = "#e6edf3"    # GitHub dark mode primary text/axes color
+DARK_FG = "#ffffff"    # White text and foreground elements in dark mode
 DARK_BAND = "#21262d"  # Subtle dark shading for R_GUIDE..R_BAND_END
 DARK_REF = "#8b949e"   # Muted grey for background reference lines
 
@@ -951,7 +952,7 @@ def classify_for_theme(el, in_skip=False):
  if el.get("id") in SKIP_GROUPS:
   in_skip = True
 
- style_str = el.get("style", "")
+ style_str = " ".join(el.attrib.values()).lower()
 
  # Tag opaque white background patches (#ffffff).
  if "fill: #ffffff" in style_str or "fill:#ffffff" in style_str:
@@ -1002,6 +1003,22 @@ if style_el is None:
 
 style_el.text = (style_el.text or "") + f"""
 @media (prefers-color-scheme: dark) {{
+ text, tspan, use {{ fill: {DARK_FG} !important; }}
+ /* Matplotlib/LaTeX converts labels, including fraction bars, into paths
+    inside text_* groups. Override both fill and stroke for those paths. */
+ g[id^="text_"] path,
+ g[id^="text_"] use,
+ #phi0label path,
+ #phi0label use {{
+   fill: {DARK_FG} !important;
+   stroke: none !important;
+ }}
+ path[fill="#000000"], path[fill="#000"],
+ path[style*="fill: #000000"], path[style*="fill:#000000"],
+ use[fill="#000000"], use[fill="#000"] {{
+   fill: {DARK_FG} !important;
+   stroke: {DARK_FG} !important;
+ }}
  .plot-bg {{ fill: {DARK_BG} !important; }}
  .plot-band {{ fill: {DARK_BAND} !important; stroke: {DARK_BAND} !important; }}
  .plot-fg-stroke {{ stroke: {DARK_FG} !important; }}

@@ -15,7 +15,7 @@ The method and results are described in:
 > **Faraday Discussions** (2026).
 > https://doi.org/10.1039/D6FD00113K
 
-![Bubble growing](plots/growing.svg)
+![Bubble growing](plots/hydrophobic.svg)
 
 *Evolution of a growing bubble interface (right) and its trajectory in the contact angle - contact radius phase space (left), transitioning from a pinned contact line at the cavity edge (red) to a spreading contact line on the flat surface (blue).*
 
