@@ -62,6 +62,6 @@ python animate.py
 Generate an animation of a bubble growing with a three phase contact angle of zero, and a cavity radius of 1 capillary length:
 
 ```bash
-python animate.py -o plots/hydrophobic.svg -p 0 -r 1
+python animate.py -o plots/hydrophillic.svg -p 0 -r 1
 ```
 

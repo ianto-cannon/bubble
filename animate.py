@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
 """Create an animated SVG of bubble evolution from simulation data."""
-import os, sys, glob, subprocess, tempfile, shutil, re, argparse
-import numpy as np
+import argparse
+import glob
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import xml.etree.ElementTree as ET
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.transforms import Affine2D
+import numpy as np
 from matplotlib.patches import PathPatch
-from matplotlib.textpath import TextPath
 from matplotlib.path import Path
-import xml.etree.ElementTree as ET
+from matplotlib.textpath import TextPath
+from matplotlib.transforms import Affine2D
 
 
 plt.rcParams.update({"text.usetex": True, "font.size": 14})
@@ -47,7 +55,6 @@ if FILL_RATE <= 0:
 REPEAT = "1" if args.single_shot else "indefinite"
 TRANSPARENT = args.transparent
 WORK = tempfile.mkdtemp(prefix="animwork_")
-os.makedirs(WORK, exist_ok=True)
 
 SIM = "simData/"
 RUN = os.path.join(".", "run")
@@ -245,7 +252,6 @@ for ph, rows, tab in (("p", rows_p, pr), ("s", rows_s, sp)):
     x, y = half_profile(tab[i])
     frames.append(dict(
       ph=ph, x=x, y=y, row=int(i),
-      V=tab[i, 6] / tab[i, 4] ** 3,
       r0=tab[i, 0] / tab[i, 4],
       phi2=(1 - tab[i, 2] / np.pi) ** 2,
     ))
@@ -264,16 +270,13 @@ ANIMATION_DURATION = pin_duration + spr_duration + TRANSITION_EPS
 FINAL_HOLD = 0.0
 DURATION = ANIMATION_DURATION + FINAL_HOLD
 
-frame_times = []
-for fr in frames:
-  if fr["ph"] == "p":
-    frame_times.append((vpin[fr["row"]] - vpin[0]) / FILL_RATE)
-  elif HAS_SPREADING:
-    frame_times.append(
-      pin_duration + TRANSITION_EPS
-      + (vspr[fr["row"] - js] - vspr[0]) / FILL_RATE
-    )
-frame_times = np.asarray(frame_times)
+frame_times = np.asarray([
+  (vpin[fr["row"]] - vpin[0]) / FILL_RATE
+  if fr["ph"] == "p" else
+  pin_duration + TRANSITION_EPS
+  + (vspr[fr["row"] - js] - vspr[0]) / FILL_RATE
+  for fr in frames
+])
 
 if np.any(np.diff(frame_times) <= 0):
   raise ValueError("Frame times are not strictly increasing; check simulation volumes")
@@ -306,19 +309,12 @@ else:
   right_ylim = (-CAV - 0.3, ymax_p + 0.4)
   right_xlim = (-xlim_b, xlim_b)
 
-right_y_range = right_ylim[1] - right_ylim[0]
-right_x_range = right_xlim[1] - right_xlim[0]
-common_aspect = right_y_range / right_x_range
-
 # Cavity and substrate: three straight segments, with axes linewidth.
 # Lines are clipped by the plotting axes.
-cavity_lw = 1
-ax_b.plot([-100, -RC], [0, 0], color="k", lw=cavity_lw,
-     zorder=4, clip_on=True)
-ax_b.plot([RC, 100], [0, 0], color="k", lw=cavity_lw,
-     zorder=4, clip_on=True)
-ax_b.plot([-RC, -RC, RC, RC], [0, -CAV, -CAV, 0], color="k",
-     lw=cavity_lw, zorder=4, clip_on=True)
+ax_b.plot([-100, -RC], [0, 0], color="k", lw=1, zorder=4, clip_on=True)
+ax_b.plot([RC, 100], [0, 0], color="k", lw=1, zorder=4, clip_on=True)
+ax_b.plot([-RC, -RC, RC, RC], [0, -CAV, -CAV, 0],
+          color="k", lw=1, zorder=4, clip_on=True)
 
 ax_b.set_xlim(right_xlim)
 ax_b.set_ylim(right_ylim)
@@ -529,16 +525,14 @@ def _phi0_label_transform(foot_x, foot_y):
 # Axes positions are adjusted explicitly to retain the tight paper-style gap.
 def update(k):
   fr = frames[k]
-  X = np.concatenate([-fr["x"][::-1], fr["x"]])
-  Y = np.concatenate([fr["y"][::-1], fr["y"]])
   bub_line.set_color("r" if fr["ph"] == "p" else "b")
-  bub_line.set_data(X, Y)
+  bub_line.set_data(np.r_[-fr["x"][::-1], fr["x"]],
+                    np.r_[fr["y"][::-1], fr["y"]])
 
   foot_x, foot_y = fr["x"][-1], fr["y"][-1]
   phi0_label.set_transform(_phi0_label_transform(foot_x, foot_y))
 
-  Xarc, Yarc = phi0_arc(fr)
-  arc_line.set_data(Xarc, Yarc)
+  arc_line.set_data(*phi0_arc(fr))
 
   # Arrowhead: tip at data point, V opening backwards along the heading.
   tip_data = np.array([fr["r0"], fr["phi2"]])
