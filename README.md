@@ -53,18 +53,15 @@ Generate the static plots:
 python plot.py
 ```
 
-Generate an animation of the bubble growing (`plots/growing.svg`):
+Generate an animation of the bubble growing:
 
 ```bash
 python animate.py
 ```
 
-Optional flags for `animate.py`:
+Generate an animation of a bubble growing with a three phase contact angle of zero, and a cavity radius of 1 capillary length:
 
-* `--radius`: Target dimensionless cavity radius $r_c/\lambda$ (default: `1.0`).
-* `--phi2`: Target dimensionless contact angle parameter $\phi^2/\pi^2$ (default: `0.49`).
-* `--fill-rate`: Dimensionless volumetric fill rate $\mathrm{d}(V/\lambda^3)/\mathrm{d}t$ (default: `1.0`).
-* `--single-shot`: Play the animation once instead of looping indefinitely.
-* `--opaque`: Use an opaque background instead of transparent.
-* `--no-morph`: Use discrete frame switching instead of smooth path morphing.
+```bash
+python animate.py -o plots/hydrophobic.svg -p 0 -r 1
+```
 
