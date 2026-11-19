@@ -24,23 +24,22 @@ ET.register_namespace("xlink", "http://www.w3.org/1999/xlink")
 # --------------- CLI (everything optional) ---------------
 ap = argparse.ArgumentParser(description=__doc__,
                              formatter_class=argparse.RawDescriptionHelpFormatter)
-ap.add_argument("repo", nargs="?", default=".")
-ap.add_argument("work", nargs="?", default=None)
-ap.add_argument("out", nargs="?", default=os.path.join("plots", "growing.svg"))
+ap.add_argument("-o", "--out", default=os.path.join("plots", "hydrophobic.svg"),
+                help="output SVG path (default: plots/growing.svg)")
 ap.add_argument("--fill-rate", type=float, default=1.0,
                 help="dimensionless fill rate d(V/lambda^3)/dt [lambda^3/s]")
-ap.add_argument("--phi2", type=float, default=0.7 ** 2,
-                help="target dimensionless y-axis value phi^2/pi^2 (default: 0.49, phi/pi=0.7)")
-ap.add_argument("--radius", type=float, default=1.0,
+ap.add_argument("-p", "--phi", type=float, default=0.7,
+                help="target dimensionless y-axis value phi/pi (default: 0.7)")
+ap.add_argument("-r", "--radius", type=float, default=1.0,
                 help="target cavity radius r_c/lambda")
-ap.add_argument("--single-shot", action="store_true")
-ap.add_argument("--transparent", action="store_true",
+ap.add_argument("-s", "--single-shot", action="store_true")
+ap.add_argument("-y", "--transparent", action="store_true",
                 help="use a transparent background (opaque by default)")
-ap.add_argument("--morph", action=argparse.BooleanOptionalAction, default=True,
+ap.add_argument("-m", "--morph", action=argparse.BooleanOptionalAction, default=True,
                 help="animate bubble outline `d` (default; use --no-morph for flipbook)")
 args = ap.parse_args()
 
-REPO, OUT = args.repo, args.out
+OUT = args.out
 FILL_RATE = args.fill_rate
 if FILL_RATE <= 0:
     ap.error("--fill-rate must be positive")
@@ -49,16 +48,16 @@ TRANSPARENT = args.transparent
 WORK = args.work or tempfile.mkdtemp(prefix="animwork_")
 os.makedirs(WORK, exist_ok=True)
 
-SIM = os.path.join(REPO, "simData") + "/"
-RUN = os.path.join(REPO, "run")
+SIM = "simData/"
+RUN = "run"
 
 # Geometry and dataset selection.
 RC_TARGET = args.radius
-PHI2_TARGET = args.phi2
+PHI_TARGET = args.phi
 if not 0.0 < RC_TARGET:
     ap.error("--radius must be positive")
-if not 0.0 <= PHI2_TARGET <= 1.0:
-    ap.error("--phi2 must be between 0 and 1")
+if not 0.0 <= PHI_TARGET <= 1.0:
+    ap.error("--phi must be between 0 and 1")
 if not os.path.isdir(SIM):
     ap.error(f"simulation data directory not found: {SIM}")
 
@@ -134,7 +133,7 @@ else:
 PRIN = os.path.basename(rad_path)
 print(f"cavity radius r_c/lambda: requested {RC_TARGET:g}, selected {RC:g} "
       f"({PRIN}; difference {abs(RC - RC_TARGET):.4g})")
-print(f"phi^2/pi^2 target: {PHI2_TARGET:.8g}; selected {PHI2_SELECTED:.8g} "
+print(f"phi/pi target: {PHI_TARGET:.8g}; selected {PHI_SELECTED:.8g} "
       f"(inside angle {CONTACT_ANGLE_DEG:.4g} deg)")
 print(f"configuration: Rc={RC:g} lambda")
 print(f"pinned: {PRIN}; rows used: {jp + 1}")
@@ -295,13 +294,13 @@ ymax_p = max(f["y"].max() for f in frames)
 xlim_b = xmax_p + 0.6
 
 DEFAULT_CONFIGURATION = (
-    np.isclose(PHI2_TARGET, 0.7 ** 2)
+    PHI_TARGET < 0.8
     and np.isclose(RC_TARGET, 1.0)
 )
 
 if DEFAULT_CONFIGURATION:
     right_xlim = (-2.0, 2.0)
-    right_ylim = (-0.5, 2.5)
+    right_ylim = (-0.5, 3)
 else:
     right_ylim = (-CAV - 0.3, ymax_p + 0.4)
     right_xlim = (-xlim_b, xlim_b)
@@ -313,9 +312,9 @@ common_aspect = right_y_range / right_x_range
 # Cavity and substrate: three straight segments, with axes linewidth.
 # Lines are clipped by the plotting axes.
 cavity_lw = 1
-ax_b.plot([-xlim_b, -RC], [0, 0], color="k", lw=cavity_lw,
+ax_b.plot([-100, -RC], [0, 0], color="k", lw=cavity_lw,
           zorder=4, clip_on=True)
-ax_b.plot([RC, xlim_b], [0, 0], color="k", lw=cavity_lw,
+ax_b.plot([RC, 100], [0, 0], color="k", lw=cavity_lw,
           zorder=4, clip_on=True)
 ax_b.plot([-RC, -RC, RC, RC], [0, -CAV, -CAV, 0], color="k",
           lw=cavity_lw, zorder=4, clip_on=True)
