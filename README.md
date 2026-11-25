@@ -15,7 +15,7 @@ The method and results are described in:
 > **Faraday Discussions** (2026).
 > https://doi.org/10.1039/D6FD00113K
 
-![Bubble growing](plots/hydrophobic.svg)
+![Bubble growing](plots/S2_spreading.svg)
 
 *Evolution of a growing bubble interface (right) and its trajectory in the contact angle - contact radius phase space (left), transitioning from a pinned contact line at the cavity edge (red) to a spreading contact line on the flat surface (blue).*
 
@@ -53,15 +53,10 @@ Generate the static plots:
 python plot.py
 ```
 
-Generate an animation of the bubble growing:
+Generate animations of bubbles growing:
 
 ```bash
-python animate.py
-```
-
-Generate an animation of a bubble growing with a three phase contact angle of zero, and a cavity radius of 1 capillary length:
-
-```bash
-python animate.py -o plots/hydrophillic.svg -p 0 -r 1
+python animate.py -r 1.5 -o plots/S1_pinned.svg
+python animate.py -r 1.5 -p 0.9 -o plots/S2_spreading.svg
 ```
 

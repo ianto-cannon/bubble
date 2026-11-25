@@ -325,14 +325,16 @@ def plot_volume_and_angle():
       axV[0].plot( df[:indVol, 0], df[:indVol, 6], c='grey')
       axR[0].plot( df[:indVol, 0], df[:indVol, 5], c='grey')
       axI.plot( df[:indVol, 0], df[:indVol, 6], c='grey')
+      if 1.45 < df[0, 0] < 1.55:
+        axA[axInd].plot( [df[0, 0], df[extremInd, 0]], [ (1 - df[0, 2] / np.pi)**2, (1 - df[extremInd, 2] / np.pi)**2], c='magenta', zorder=4)
     if 'ang' in fname:
       if round(angl * 100) % 20 != 10: continue
       axV[1].plot( [angl**3, angl**3], [0, df[indVol, 6]], c='grey')
       axR[1].plot( (1 - df[:indVol, 2] / np.pi), df[:indVol, 5], c='grey')
+      if round(angl * 100) == 90:
+        axA[axInd].plot( [1.5,1.5], [ (1 - df[0, 2] / np.pi)**2, 1], c='magenta')
+        axA[axInd].plot( [1.5, df[extremInd, 0]], [ (1 - df[0, 2] / np.pi)**2, (1 - df[extremInd, 2] / np.pi)**2], c='magenta', zorder=4)
     axA[axInd].plot( [df[0, 0], df[extremInd, 0]], [ (1 - df[0, 2] / np.pi)**2, (1 - df[extremInd, 2] / np.pi)**2], c='grey')
-    if 'ang' in fname and round(angl * 100) == 90:
-      axA[axInd].plot( [.5,.5], [ (1 - df[0, 2] / np.pi)**2, 1], c='magenta')
-      axA[axInd].plot( [.5, df[extremInd, 0]], [ (1 - df[0, 2] / np.pi)**2, (1 - df[extremInd, 2] / np.pi)**2], c='magenta')
     axHei[axInd].plot(df[:indVol + 1, 6], -df[:indVol + 1, 1], c='grey', zorder=3)
     for hei in range(5):
       if hei<4: col = 'grey'
@@ -597,7 +599,7 @@ def print_radius_in_water(vol):
 
 if __name__ == "__main__":
   #plot_profiles(nam='loop_rad loop_ang')
-  #plot_volume_and_angle()
+  plot_volume_and_angle()
   plot_graphical_abstract()
   print_radius_in_water(18.96)
   print_radius_in_water(10.62)

@@ -32,14 +32,14 @@ ET.register_namespace("xlink", "http://www.w3.org/1999/xlink")
 # --------------- CLI (everything optional) ---------------
 ap = argparse.ArgumentParser(description=__doc__,
               formatter_class=argparse.RawDescriptionHelpFormatter)
-ap.add_argument("-o", "--out", default=os.path.join("plots", "hydrophobic.svg"),
-        help="output SVG path (default: plots/hydrophobic.svg)")
-ap.add_argument("--fill-rate", type=float, default=1.0,
+ap.add_argument("-o", "--out", default=os.path.join("plots", "growing.svg"),
+        help="output SVG path (default: plots/growing.svg)")
+ap.add_argument("-f", "--fill-rate", type=float, default=1.0,
         help="dimensionless fill rate d(V/lambda^3)/dt [lambda^3/s]")
-ap.add_argument("-p", "--phi", type=float, default=0.7,
-        help="target dimensionless contact angle parameter phi/pi (default: 0.7)")
-ap.add_argument("-r", "--radius", type=float, default=1.0,
-        help="target cavity radius r_c/lambda (default: 1.0)")
+ap.add_argument("-p", "--phi", type=float, default=0,
+        help="target dimensionless contact angle parameter phi/pi (default: 0)")
+ap.add_argument("-r", "--radius", type=float, default=1,
+        help="target cavity radius r_c/lambda (default: 1)")
 ap.add_argument("-s", "--single-shot", action="store_true",
         help="play the animation once instead of looping indefinitely")
 ap.add_argument("-y", "--transparent", action="store_true",
@@ -297,12 +297,8 @@ xmax_p = max(f["x"].max() for f in frames)
 ymax_p = max(f["y"].max() for f in frames)
 xlim_b = xmax_p + 0.6
 
-DEFAULT_CONFIGURATION = (
-  PHI_TARGET < 0.8
-  and np.isclose(RC_TARGET, 1.0)
-)
 
-if DEFAULT_CONFIGURATION:
+if PHI_TARGET < 0.8 and 0.4 < RC_TARGET < 1.1:
   right_xlim = (-2.0, 2.0)
   right_ylim = (-0.5, 3)
 else:
