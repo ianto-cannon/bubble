@@ -1,0 +1,245 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% faraday.sty -- Faraday Discussions (Royal Society of Chemistry) style
+% for pdfLaTeX. Single-column 156 x 234 mm page, Charter text,
+% Fira Sans headings, dark-blue article-type bar, RSC running heads/feet.
+%
+% Based on the RSC LaTeX article template (c) The Royal Society of
+% Chemistry 2016, restyled to follow the typeset Faraday Discussions
+% layout. Not an official RSC file.
+%
+% Usage:
+%   \documentclass[9pt]{extarticle}
+%   \usepackage{faraday}          % options: rsccopyright, lineno
+%   \faradaysetup{year=2026, volume=xx, doi=10.1039/xxxxxxxxxx, ...}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{faraday}[2026/11/25 Faraday Discussions style]
+
+\RequirePackage{kvoptions}
+\RequirePackage{etoolbox}
+\newif\iffaraday@rsccopyright
+\newif\iffaraday@lineno
+\DeclareOption{rsccopyright}{\faraday@rsccopyrighttrue}
+\DeclareOption{lineno}{\faraday@linenotrue}
+\ProcessOptions\relax
+
+%---------------------------------------------------------------- fonts
+\RequirePackage[T1]{fontenc}
+\RequirePackage[charter]{mathdesign}   % Charter text + matching maths
+\RequirePackage[lining]{FiraSans}              % sans serif for heads, captions, abstract
+\RequirePackage{microtype}
+\RequirePackage[english]{babel}
+\RequirePackage{amsmath}
+\RequirePackage[version=3]{mhchem}
+\RequirePackage[super,sort&compress,comma]{natbib}
+\RequirePackage{graphicx}
+\RequirePackage[dvipsnames]{xcolor}
+\RequirePackage{array}
+\RequirePackage{float}
+\RequirePackage{setspace}
+\RequirePackage{titlesec}
+\RequirePackage{fancyhdr}
+\RequirePackage{lastpage}
+\RequirePackage{tikz}
+\RequirePackage{url}
+\RequirePackage{hyperref}
+\hypersetup{hidelinks}
+
+\newcommand{\faradayfira}[1]{\fontfamily{\sfdefault}\fontseries{#1}\selectfont}
+%--------------------------------------------------------------- colours
+\definecolor{faradayblue}{RGB}{0,71,120}      % article-type bar
+\definecolor{faradayslate}{RGB}{48,59,65}     % journal name / running heads
+\definecolor{cream}{RGB}{222,217,201}         % rules around floats/footnotes
+\definecolor{orcidgreen}{RGB}{139,198,72}
+\definecolor{linenogrey}{RGB}{142,127,124}
+
+%------------------------------------------------------- page geometry
+% 156 x 234 mm page; 318.8 pt measure; ~49 lines/page.
+\RequirePackage[paperwidth=156mm,paperheight=234mm,
+  left=61.7pt,right=61.7pt,top=26pt,bottom=49pt,
+  headheight=9pt,headsep=6pt,footskip=19pt]{geometry}
+\@twosidetrue\@mparswitchtrue
+\setlength{\parindent}{11.9pt}
+\setlength{\parskip}{0pt}
+\setlength{\columnsep}{6.5mm}
+\raggedbottom
+\sloppy
+
+% 9 pt text on 11.9 pt leading
+\renewcommand\normalsize{\@setfontsize\normalsize{9}{11.9}%
+  \abovedisplayskip 9\p@ \@plus2\p@ \@minus3\p@
+  \abovedisplayshortskip 3\p@ \@plus1\p@
+  \belowdisplayshortskip 6\p@ \@plus2\p@ \@minus2\p@
+  \belowdisplayskip \abovedisplayskip \let\@listi\@listI}
+\renewcommand\small{\@setfontsize\small{8}{10}}
+\renewcommand\footnotesize{\@setfontsize\footnotesize{7}{8.6}}
+\renewcommand\large{\@setfontsize\large{10}{12}}
+\renewcommand\Large{\@setfontsize\Large{14}{16}}
+\renewcommand\LARGE{\@setfontsize\LARGE{16}{18.4}}
+\normalsize
+\setlength{\jot}{7pt}
+
+%---------------------------------------------------------- settings
+\newcommand{\faraday@journal}{Faraday Discussions}
+\newcommand{\faraday@abbrev}{Faraday Discuss.}
+\newcommand{\faraday@type}{PAPER}
+\newcommand{\faraday@year}{2026}
+\newcommand{\faraday@volume}{xx}
+\newcommand{\faraday@doi}{10.1039/xxxxxxxxxx}
+\newcommand{\faraday@received}{Received Date}
+\newcommand{\faraday@accepted}{Accepted Date}
+\newcommand{\faraday@footer}{Preprint submitted to Faraday Discussions}
+\iffaraday@rsccopyright
+  \renewcommand{\faraday@footer}{This journal is \textcopyright\ The Royal Society of Chemistry \faraday@year}
+\fi
+
+\SetupKeyvalOptions{family=faraday,prefix=faraday@kv@}
+\DeclareStringOption[Faraday Discussions]{journal}
+\DeclareStringOption[Faraday Discuss.]{abbrev}
+\DeclareStringOption[PAPER]{articletype}
+\DeclareStringOption[2026]{year}
+\DeclareStringOption[xx]{volume}
+\DeclareStringOption[10.1039/xxxxxxxxxx]{doi}
+\DeclareStringOption[Received Date]{received}
+\DeclareStringOption[Accepted Date]{accepted}
+\DeclareStringOption[]{footer}
+\newcommand{\faradaysetup}[1]{%
+  \setkeys{faraday}{#1}%
+  \edef\faraday@journal{\faraday@kv@journal}%
+  \edef\faraday@abbrev{\faraday@kv@abbrev}%
+  \edef\faraday@type{\faraday@kv@articletype}%
+  \edef\faraday@year{\faraday@kv@year}%
+  \edef\faraday@volume{\faraday@kv@volume}%
+  \edef\faraday@doi{\faraday@kv@doi}%
+  \edef\faraday@received{\faraday@kv@received}%
+  \edef\faraday@accepted{\faraday@kv@accepted}%
+  \ifdefempty{\faraday@kv@footer}{}{\renewcommand{\faraday@footer}{\faraday@kv@footer}}%
+}
+
+%---------------------------------------------- running heads and feet
+\newcommand{\faraday@headfont}{\faradayfira{regular}\fontsize{8}{9}\selectfont\color{faradayslate}}
+\newcommand{\faraday@footfont}{\faradayfira{regular}\fontsize{7.4}{9}\selectfont}
+\newcommand{\faraday@cite}{\textit{\faraday@abbrev}, \faraday@year, \textbf{\faraday@volume}, 1--\pageref{LastPage}}
+\newcommand{\faraday@titlecase}{\expandafter\faraday@tc\faraday@type\relax}
+\def\faraday@tc#1#2\relax{#1\lowercase{#2}}   % PAPER -> Paper
+
+\fancypagestyle{faraday}{%
+  \fancyhf{}%
+  \renewcommand{\headrulewidth}{0pt}\renewcommand{\footrulewidth}{0pt}%
+  \fancyhead[LE]{\faraday@headfont\faraday@journal}%
+  \fancyhead[RE]{\faraday@headfont\textbf{\faraday@titlecase}}%
+  \fancyhead[LO]{\faraday@headfont\textbf{\faraday@titlecase}}%
+  \fancyhead[RO]{\faraday@headfont\textbf{\faraday@journal}}%
+  \fancyfoot[LE]{\faraday@footfont\textbf{\thepage}\,\,|\,\,\faraday@cite}%
+  \fancyfoot[RE]{\faraday@footfont\faraday@footer}%
+  \fancyfoot[LO]{\faraday@footfont\faraday@footer}%
+  \fancyfoot[RO]{\faraday@footfont\faraday@cite\,\,|\,\,\textbf{\thepage}}%
+}
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \renewcommand{\headrulewidth}{0pt}\renewcommand{\footrulewidth}{0pt}%
+  \fancyfoot[L]{\faraday@footfont\faraday@footer}%
+  \fancyfoot[R]{\faraday@footfont\faraday@cite\,\,|\,\,\textbf{\thepage}}%
+}
+\pagestyle{faraday}
+
+%---------------------------------------------------------- ORCID icon
+\newcommand{\orcid}[1]{\,\href{https://orcid.org/#1}{%
+  \tikz[baseline=-0.8ex]{\fill[orcidgreen] (0,0) circle (4.6pt);
+    \node[white,font=\faradayfira{bold}\fontsize{4.6}{5}\selectfont,inner sep=0pt] at (0,0) {iD};}}}
+
+%------------------------------------------------------------ title block
+\renewcommand{\@maketitle}{}
+\renewcommand{\maketitle}{%
+  \thispagestyle{plain}%
+  \begingroup
+  \setlength{\parindent}{0pt}\sffamily
+  \vspace*{-13pt}%
+  {\faradayfira{regular}\fontsize{15}{17}\selectfont\color{faradayslate}\faraday@journal\par}%
+  \vspace{8pt}%
+  {\fontsize{7.6}{9}\selectfont\textbf{Cite this:} \faraday@doi@cite\par}%
+  \vspace{9pt}%
+  \noindent\begin{tikzpicture}
+    \fill[faradayblue,rounded corners=3.5pt] (0,0) rectangle (\textwidth,-28.5pt);
+    \node[white,anchor=west,font=\faradayfira{semibold}\fontsize{14}{16}\selectfont] at (9pt,-14.25pt) {\faraday@type};
+  \end{tikzpicture}\par
+  \vspace{13pt}%
+  {\faradayfira{medium}\fontsize{16}{18.2}\selectfont\raggedright\@title\par}%
+  \vspace{11pt}%
+  {\faradayfira{regular}\fontsize{10}{12.3}\selectfont\raggedright\@author\par}%
+  \vspace{19pt}%
+  {\faradayfira{light}\fontsize{7.3}{12}\selectfont
+   \faraday@received\ifdefempty{\faraday@accepted}{}{, \faraday@accepted}\par
+   DOI: \faraday@doi\par}%
+  \vspace{9pt}%
+  {\faradayfira{light}\fontsize{8}{12}\selectfont\faraday@abstracttext\par}
+  \vspace{4pt}%
+  \endgroup
+}
+\newcommand{\faraday@doi@cite}{DOI: \faraday@doi}
+\RequirePackage{environ}
+\def\faraday@abstracttext{}
+\RenewEnviron{abstract}{\global\let\faraday@abstracttext\BODY}
+\renewcommand{\and}{\unskip\ \ignorespaces}
+
+%--------------------------------------------------------------- sections
+\setcounter{secnumdepth}{5}
+\titleformat{\section}{\faradayfira{regular}\fontsize{14}{16}\selectfont}{\thesection}{13pt}{}
+\titleformat{\subsection}{\faradayfira{semibold}\fontsize{9}{11}\selectfont}{\thesubsection}{9pt}{}
+\titleformat{\subsubsection}{\faradayfira{semibold}\fontsize{9}{11}\selectfont}{\thesubsubsection}{9pt}{}
+\titleformat{\paragraph}[runin]{\faradayfira{semibold}\fontsize{9}{11}\selectfont}{}{0pt}{}[.]
+\titlespacing*{\section}{0pt}{22pt}{9pt}
+\titlespacing*{\subsection}{0pt}{16pt}{3pt}
+\titlespacing*{\subsubsection}{0pt}{10pt}{2pt}
+\titlespacing*{\paragraph}{0pt}{4pt}{0.55em}
+% first paragraph after a heading is indented, as in the journal
+\RequirePackage{indentfirst}
+
+%-------------------------------------------------- captions and floats
+\RequirePackage[format=plain,justification=justified,singlelinecheck=false,
+  font={sf,small,stretch=1.05},
+  labelfont={bf},labelsep=space,skip=5pt]{caption}
+\addto\captionsenglish{\renewcommand{\figurename}{Fig.}}
+\setlength{\textfloatsep}{14pt plus 2pt minus 2pt}
+\setlength{\floatsep}{14pt plus 2pt minus 2pt}
+\setlength{\intextsep}{14pt plus 2pt minus 2pt}
+\setlength{\arrayrulewidth}{0.5pt}
+\renewcommand{\arraystretch}{1.1}
+
+\makeatletter
+\newlength{\figrulesep}\setlength{\figrulesep}{0.5\textfloatsep}
+\newcommand{\topfigrule}{\vspace*{-1pt}\noindent{\color{cream}\rule[-\figrulesep]{\columnwidth}{1.5pt}}}
+\newcommand{\botfigrule}{\vspace*{-2pt}\noindent{\color{cream}\rule[\figrulesep]{\columnwidth}{1.5pt}}}
+\newcommand{\dblfigrule}{\vspace*{-1pt}\noindent{\color{cream}\rule[-\figrulesep]{\textwidth}{1.5pt}}}
+
+%-------------------------------------------------------------- footnotes
+\renewcommand{\footnoterule}{\vspace*{1pt}\color{cream}\hrule width 3.5in height 0.4pt\color{black}\vspace*{5pt}}
+\setlength{\skip\footins}{0.7cm}
+\setlength{\footnotesep}{0.2cm}
+\renewcommand{\thefootnote}{\arabic{footnote}}
+\newif\iffaraday@isaffil
+\long\def\@makefntext#1{\noindent
+  \iffaraday@isaffil\else\textsuperscript{\@thefnmark}\,\fi #1}
+% \affil{a}{Address} puts an italic affiliation footnote on the first page
+\newcommand{\affil}[2]{\faraday@isaffiltrue
+  \footnotetext{\textit{\textsuperscript{#1}~#2}}\faraday@isaffilfalse
+}
+
+%------------------------------------------------ bibliography, extras
+\addto\captionsenglish{\renewcommand{\refname}{Notes and references}}
+\renewcommand\@biblabel[1]{#1}
+\setlength\bibsep{1pt}
+\renewcommand{\bibfont}{\rmfamily\small}
+\renewcommand\bibnumfmt[1]{#1}
+
+\renewcommand{\labelitemi}{$\bullet$}
+
+%------------------------------------------- optional proof line numbers
+\iffaraday@lineno
+  \RequirePackage{lineno}
+  \renewcommand{\linenumberfont}{\faradayfira{regular}\fontsize{7}{8}\selectfont\color{linenogrey}}
+  \setlength{\linenumbersep}{24pt}
+  \modulolinenumbers[5]
+  \AtBeginDocument{\linenumbers}
+\fi
+\endinput

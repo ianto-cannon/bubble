@@ -1,25 +1,33 @@
-\documentclass[twoside,9pt]{article}
-\usepackage{rsc}
-\bibliographystyle{rsc.bst}
-\hypersetup{colorlinks=true, allcolors=blue}
-\newcommand{\doi}[1]{\href{https://doi.org/#1}{doi:#1}}
+\documentclass[9pt]{extarticle}
+\usepackage{faraday}
 \usepackage{amsmath}
 \usepackage{tikz}
+\faradaysetup{
+  year      = 2026,
+  volume    = xx,
+  doi       = 10.1039/d6fd00113k,
+  received  = Received: 19th June 2026,
+  accepted  = Accepted: 16th September 2026,
+  articletype = PAPER
+}
+\hypersetup{colorlinks=true, allcolors=blue}
+\newcommand{\doi}[1]{\href{https://doi.org/#1}{doi:#1}}
 \usetikzlibrary{arrows.meta, positioning, shapes.geometric}
-\begin{document}
 \nocite{rsc-control}
-\begin{flushleft}
-{\fontsize{18pt}{20pt}\selectfont\textbf{Bubble detachment from circular cavities and flat surfaces}}
-\end{flushleft}
-{\fontsize{12pt}{14pt}\selectfont Ianto Cannon\textsuperscript{a\dag}, Stefan Endres\textsuperscript{b,c}, Lutz M\"adler\textsuperscript{b,c} and Marc Avila\textsuperscript{a,c}}\par\medskip
-Received 00th January 20xx, Accepted 00th January 20xx
-DOI: 10.1039/x0xx00000x\vspace{0.5cm}
+\title{Bubble detachment from circular cavities and flat surfaces}
+\author{Ianto Cannon,\orcid{0000-0002-1676-9338}\textsuperscript{*a}  Stefan Endres\textsuperscript{b,c}, Lutz M\"adler\textsuperscript{b,c} and Marc Avila\textsuperscript{a,c}}
+%\author{First Author,Second Author,$^{bc}$ and Third Author\orcid{0000-0000-0000-0000}$^{ac}$}
+\begin{abstract}
+We determine the maximum stable volume of bubbles attached to flat surfaces as a function of contact radius, contact angle, and capillary length $\lambda$. By solving the Young--Laplace equation using a shooting method, we calculate equilibrium bubble shapes and determine when bubbles detach through three distinct modes: necking at the cavity, sideways instability, and spreading followed by necking on the surrounding surface. The largest bubble that can stay attached has a volume of $18.96\,\lambda^3$, corresponding to a detached radius of $4.62\,\mathrm{mm}$ in water. It occurs for a pinned bubble in a cavity of radius $r_0=3.219\,\lambda$ and for a spreading bubble as the contact angle approaches $\pi$, and the two are the same shape. No stable bubble exists in cavities wider than $3.832\,\lambda$. For small cavities the detachment volume follows the Tate prediction $V=2\pi\lambda^2 r_0$, and for small contact angles the Fritz prediction $V=0.887\,\lambda^3\phi_0^3$, with deviations at larger sizes. A bubble in a cavity of radius $r_c$ unpins and spreads if $r_c<3.5\,\lambda\,(\phi_w/\pi)^2$, where $\phi_w$ is the wetting angle, and otherwise remains pinned. Our predicted detachment volumes agree well with experimental measurements of electrolytic, boiling, and carbonated bubbles, as well as pendant drops. These results bring together and extend previous analytical estimates and, by symmetry, also apply directly to pendant drops.
+\end{abstract}
+\begin{document}
+\maketitle
 
-We determine the maximum stable volume of bubbles attached to flat surfaces as a function of contact radius, contact angle, and capillary length. By solving the Young--Laplace equation using a shooting method, we calculate equilibrium bubble shapes and determine when bubbles detach through three distinct modes: necking at the cavity, sideways instability, and spreading followed by necking on the surrounding surface. Our predicted detachment volumes agree well with experimental measurements of electrolytic, boiling, and carbonated bubbles, as well as pendant drops. These results bring together and extend previous analytical estimates and, by symmetry, also apply directly to pendant drops.
-\vspace{1cm}
+\affil{a}{Center of Applied Space Technology and Microgravity -- ZARM, University of Bremen, 28359 Bremen, Germany. E-mail: \href{mailto:ianto.cannon@zarm.uni-bremen.de}{ianto.cannon@zarm.uni-bremen.de}}
+\affil{b}{Faculty of Production Engineering, Mechanical and Process Engineering, and MAPEX Center for Materials and Processes, University of Bremen, 28359 Bremen, Germany.}
+\affil{c}{Leibniz Institute for Materials Engineering -- IWT, University of Bremen, 28359 Bremen, Germany.}
 
 \section{Introduction}
-
 \subsection{Motivation}
 
 Annually, around $10^{11}$\,kg of hydrogen gas is used in industry, mostly to produce fertilisers via the Haber-Bosch process\cite{bosch32development} and to reduce metal ores in steelmaking and aluminium production\cite{kullmann23role}. Currently, more than 95\% of hydrogen is produced from fossil fuels, largely from natural gas via steam methane reforming\cite{franchi20hydrogen}, which releases significant quantities of CO$_2$. Diversifying away from fossil fuels is essential to maintain a stable Earth climate system and ensure the long-term survival of human society\cite{steffen18trajectories}. Water electrolysis driven by renewable electricity is a promising alternative\cite{kullmann23role}, splitting water into hydrogen and oxygen without direct CO$_2$ emissions. However, gas bubbles that form and remain attached to the electrode surface limit the efficiency of water electrolysis. These bubbles block the active area, impede ion transport, and increase ohmic resistance\cite{vogt89problem,penas19decoupling,angulo20influence,ross25impact,ross26transient}. Electrolysis will also be important for life-support systems on future manned lunar and Martian bases, where water extracted from local ice deposits could provide a source of hydrogen and oxygen\cite{matsushima06water}. Understanding and controlling bubble detachment is therefore relevant both to improving electrolysis efficiency on Earth and to enabling efficient resource utilisation in low-gravity environments\cite{brinkert22fundamentals}.
@@ -181,7 +189,7 @@ Figure~\ref{figRad} also shows the evolution of the bubble apex radius of curvat
 
 Figure~\ref{figAng}a tracks how the contact angle of pinned bubbles evolves up to detachment. Every pinned bubble starts as a flat interface, so $\phi_0=\pi$ initially. As the bubble inflates, the contact angle decreases until it reaches a minimum, coinciding with the appearance of a buoyancy-induced inflection point near the bubble's foot (visible in Figure~\ref{figProfile}), which then causes the contact angle to increase again before detachment. When the contact radius is small ($r_0<0.1\,\lambda$), the contact angle at detachment is close to $\pi/2$, consistent with the assumptions made by Tate and Chesters\cite{tate64magnitude,chesters77analytical}. For larger contact radii, however, $\phi_0$ at detachment exceeds $\pi/2$. This is why the Tate and Chesters predictions agree well with our results and experiments of others\cite{lesage13experimental,mori01bubble,sasetty23stability,gunde01measurement} for small contact radii but diverge as buoyancy effects grow stronger.
 
-Figure~\ref{figAng}b tracks how the contact radius $r_0$ of spreading bubbles evolves up to detachment. The contact radius initially grows as the bubbles inflate but, as with pinned bubbles, buoyancy induces an inflection point near the bubble's foot, causing the contact radius to reach a maximum before the contact line recedes and the bubble detaches. In the $(r_0,\phi_0)$ plane, the locus of maximum contact radii for spreading bubbles coincides with the locus of minimum contact angles for pinned bubbles, and both are reasonable close to the fit $\phi_0/\pi\approx\sqrt{r_0/(3.5\,\lambda)}$. At detachment, the contact radius scales roughly as the square of the contact angle, following $r_0=3.219\,\lambda(\phi_0/\pi)^2$.
+Figure~\ref{figAng}b tracks how the contact radius $r_0$ of spreading bubbles evolves up to detachment. The contact radius initially grows as the bubbles inflate but, as with pinned bubbles, buoyancy induces an inflection point near the bubble's foot, causing the contact radius to reach a maximum before the contact line recedes and the bubble detaches. In the $(r_0,\phi_0)$ plane, the locus of maximum contact radii for spreading bubbles coincides with the locus of minimum contact angles for pinned bubbles, and both are reasonably close to the fit $\phi_0/\pi\approx\sqrt{r_0/(3.5\,\lambda)}$. At detachment, the contact radius scales roughly as the square of the contact angle, following $r_0=3.219\,\lambda(\phi_0/\pi)^2$.
 
 \begin{figure}[h]
 \centering
@@ -221,7 +229,7 @@ Figure~\ref{figAng}b tracks how the contact radius $r_0$ of spreading bubbles ev
 \label{figTree}
 \end{figure}
 
-Up to this point in the discussion, we have considered the results for pinned and spreading bubbles separately. Bubbles typically nucleate in the pinned mode\cite{chi-yeh65mechanism} with $r_0=r_c$, the radius of the cavity. However, the contact line will become unpinned if the contact angle $\phi_0$ reaches the wetting angle $\phi_w$ of the three-phase system\cite{chesters78modes}, it will then spread with constant contact angle $\phi_0=\phi_w$. An example case $r_c=0.5\,\lambda, \phi_w=0.9\pi$ is illustrated in Figure~\ref{figAng}b; the bubble nucleates pinned, and during evolution it becomes unpinned, and its contact line spreads across the surface surrounding the cavity before it reaches the maximum radius, recedes a little, and finally detaches. In general, we can see that the unpinning transition will occur if the crossover between the pinned mode $r_0=r_c$ and the spreading mode $\phi_0=\phi_w$ is reached before the minimum contact angle is reached, i.e., if the crossover point is above the line of best fit:
+Up to this point in the discussion, we have considered the results for pinned and spreading bubbles separately. Bubbles typically nucleate in the pinned mode\cite{chi-yeh65mechanism} with $r_0=r_c$, the radius of the cavity. However, the contact line will become unpinned if the contact angle $\phi_0$ reaches the wetting angle $\phi_w$ of the three-phase system\cite{chesters78modes}, it will then spread with constant contact angle $\phi_0=\phi_w$. An example case $r_c=1.5\,\lambda, \phi_w=0.9\pi$ is illustrated in Figure~\ref{figAng}b; the bubble nucleates pinned, and during evolution it becomes unpinned, and its contact line spreads across the surface surrounding the cavity before it reaches the maximum radius, recedes a little, and finally detaches. In general, we can see that the unpinning transition will occur if the crossover between the pinned mode $r_0=r_c$ and the spreading mode $\phi_0=\phi_w$ is reached before the minimum contact angle is reached, i.e., if the crossover point is above the line of best fit:
 \begin{equation}
 r_c < 3.5\,\lambda\left(\frac{\phi_w}{\pi}\right)^2.
 \end{equation}
@@ -282,12 +290,6 @@ Future work could extend the model to heterogeneous surfaces, where contact angl
 \section{Data availability}
 
 The data and code that support the findings of this article are openly available on Zenodo at \url{https://doi.org/10.5281/zenodo.20720640} (ref.\citenum{cannon26bubble}). Supplementary Movies~S1 (\texttt{S1\_pinned.svg}) and S2 (\texttt{S2\_spreading.svg}) are animated plots that play in a web browser.
-
-\renewcommand{\thefootnote}{\alph{footnote}}
-\footnotetext{\textsuperscript{a}Center of Applied Space Technology and Microgravity -- ZARM, University of Bremen, 28359 Bremen, Germany.}
-\footnotetext{\textsuperscript{b}Faculty of Production Engineering, Mechanical and Process Engineering, and MAPEX Center for Materials and Processes, University of Bremen, 28359 Bremen, Germany.}
-\footnotetext{\textsuperscript{c}Leibniz Institute for Materials Engineering -- IWT, University of Bremen, 28359 Bremen, Germany.}
-\footnotetext{\textit{$^{\dag}$~E-mail: \href{mailto:ianto.cannon@zarm.uni-bremen.de}{ianto.cannon@zarm.uni-bremen.de}}}
 
 \section{Author Contributions}
 
