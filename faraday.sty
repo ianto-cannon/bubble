@@ -1,17 +1,3 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% faraday.sty -- Faraday Discussions (Royal Society of Chemistry) style
-% for pdfLaTeX. Single-column 156 x 234 mm page, Charter text,
-% Fira Sans headings, dark-blue article-type bar, RSC running heads/feet.
-%
-% Based on the RSC LaTeX article template (c) The Royal Society of
-% Chemistry 2016, restyled to follow the typeset Faraday Discussions
-% layout. Not an official RSC file.
-%
-% Usage:
-%   \documentclass[9pt]{extarticle}
-%   \usepackage{faraday}          % options: rsccopyright, lineno
-%   \faradaysetup{year=2026, volume=xx, doi=10.1039/xxxxxxxxxx, ...}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{faraday}[2026/11/25 Faraday Discussions style]
 
@@ -90,7 +76,7 @@
 \newcommand{\faraday@doi}{10.1039/xxxxxxxxxx}
 \newcommand{\faraday@received}{Received Date}
 \newcommand{\faraday@accepted}{Accepted Date}
-\newcommand{\faraday@footer}{Preprint submitted to Faraday Discussions}
+\newcommand{\faraday@footer}{Preprint submitted to The Royal Society of Chemistry}
 \iffaraday@rsccopyright
   \renewcommand{\faraday@footer}{This journal is \textcopyright\ The Royal Society of Chemistry \faraday@year}
 \fi
