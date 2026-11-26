@@ -41,23 +41,25 @@ Bubble detachment also plays a role in the transport of naturally occurring gase
 \label{figProfile}
 \end{figure}
 
-For a bubble attached to a horizontal surface (illustrated in Fig.~\ref{figProfile}) the scale over which surface tension $\sigma$ balances fluid density contrast $\rho_\mathrm{out} - \rho_\mathrm{in}$ and gravity $g$ is the capillary length\cite{laplace98traite},
+For a bubble attached to a horizontal surface (Fig.~\ref{figProfile}), the characteristic length over which surface tension $\sigma$ balances gravity acting on the density contrast $\rho_\mathrm{out}-\rho_\mathrm{in}$ is the capillary length\cite{laplace98traite},
 \begin{equation}
 \lambda \equiv \sqrt\frac{\sigma}{(\rho_\mathrm{out} - \rho_\mathrm{in})g}.
 \end{equation}
-The capillary length sets the radius of curvature of the bubble interface due to gravity. Two distinct attachment modes are recognised in the literature\cite{chesters78modes}. \emph{Pinned} bubbles have a fixed contact radius $r_0$, with contact angle $\phi_0$ changing as the bubble inflates. \emph{Spreading} bubbles have a fixed contact angle $\phi_0$, with contact radius $r_0$ changing as the bubble inflates.
+The capillary length sets the characteristic radius of curvature of the bubble interface under gravity. Two distinct modes of bubble attachment are recognised in the literature\cite{chesters78modes}. In the \emph{pinned} mode, the contact radius $r_0$ remains fixed while the contact angle $\phi_0$ changes as the bubble inflates. In the \emph{spreading} mode, the contact angle $\phi_0$ remains fixed while the contact radius $r_0$ varies.
 
-For \emph{pinned} bubbles, the classical Tate volume\cite{tate64magnitude} assumes that a bubble detaches when the contact angle reaches $\phi_0=\pi/2$, balancing buoyancy and surface tension to give 
+For \emph{pinned} bubbles, the classical Tate law\cite{tate64magnitude} assumes that detachment occurs when the contact angle reaches $\phi_0=\pi/2$. Balancing buoyancy against surface tension then gives
 \begin{equation}\label{eqTate}
 V=2\pi\lambda^2 r_0.
-\end{equation} 
-Chesters\cite{chesters77analytical} refined this in the limit $r_0/\lambda\to0$, also assuming detachment at $\phi_0=\pi/2$. Subsequent experiments, however, show systematic deviations from both models\cite{gerlach05quasistatic,lesage13experimental,mori01bubble,sasetty23stability,gunde01measurement}, due to non-spherical interfaces and the onset of asymmetrical instabilities. Stability analyses indicate that the bubble becomes unstable to asymmetrical perturbations for contact radii $r_0>3.219\,\lambda$\cite{michael76equilibrium}, and no stable bubble exists at fixed volume for $r_0>3.832\,\lambda$\cite{plateau73statique}. For such large cavities, lateral detachment from the rim is observed experimentally\cite{sasetty23stability}.
-
-The study of \emph{spreading} bubble departure dates back to Fritz\cite{fritz35berechnung}, who numerically estimated the maximum bubble volume as 
-\begin{equation}\label{eqFritz}
-V=0.887\lambda^3\phi_0^3
 \end{equation}
-in the limit of small contact angles $\phi_0$. Focusing instead on large contact angles, Phan et al.\cite{phan09surface} developed an empirical model for bubble departure from nanocoated surfaces. More recent models account for contact-angle hysteresis\cite{degennes85wetting}, using advancing, receding\cite{allred21role,demirkir24life}, or dynamic\cite{mukherjee07numerical} angles as inputs. Experiments, however, reveal systematic deviations from these predictions, particularly for bubbles on superhydrophobic and high-wetting-angle surfaces\cite{huang26effects}. Throughout this paper, we distinguish the cavity radius $r_c$ and the wetting angle $\phi_w$, which are fixed properties of the system, from the instantaneous contact radius $r_0$ and contact angle $\phi_0$ of the bubble. A pinned bubble has $r_0=r_c$ and a spreading bubble has $\phi_0=\phi_w$.
+Chesters\cite{chesters77analytical} refined this result in the limit $r_0/\lambda\to0$, retaining the assumption that detachment occurs at $\phi_0=\pi/2$. Subsequent experiments, however, have revealed systematic deviations from both predictions\cite{gerlach05quasistatic,lesage13experimental,mori01bubble,sasetty23stability,gunde01measurement}, attributable to non-spherical interface shapes and the onset of asymmetric instabilities. Stability analyses show that bubbles become unstable to asymmetric perturbations for contact radii $r_0>3.219\,\lambda$\cite{michael76equilibrium}, while no stable equilibrium exists at fixed volume for $r_0>3.832\,\lambda$\cite{plateau73statique}. Experiments further show that, for sufficiently large cavities, bubbles can detach laterally from the rim\cite{sasetty23stability}.
+
+The study of \emph{spreading} bubble departure dates back to Fritz\cite{fritz35berechnung}, who numerically estimated the maximum bubble volume in the limit of small contact angles $\phi_0$ as
+\begin{equation}\label{eqFritz}
+V=0.887\lambda^3\phi_0^3.
+\end{equation}
+For larger contact angles, Phan et al.\cite{phan09surface} developed an empirical model for bubble departure from nanocoated surfaces. More recent models incorporate contact-angle hysteresis\cite{degennes85wetting}, using advancing, receding\cite{allred21role,demirkir24life}, or dynamic\cite{mukherjee07numerical} contact angles as inputs. Experiments nevertheless reveal systematic deviations from these predictions, particularly for bubbles on superhydrophobic surfaces and surfaces with high wetting angles\cite{huang26effects}.
+
+Throughout this paper, we distinguish between the cavity radius $r_c$ and wetting angle $\phi_w$, which are fixed properties of the system, and the instantaneous contact radius $r_0$ and contact angle $\phi_0$ of the bubble. Thus, for a pinned bubble, $r_0=r_c$, whereas for a spreading bubble, $\phi_0=\phi_w$.
 
 Bubble detachment can also be triggered by coalescence with a neighbouring bubble. Whether neighbouring bubbles coalesce is determined by their width relative to the distance between nucleation sites\cite{bonjour00experimental,raman25electrolytic}. Following coalescence, the merged bubble may either remain attached or detach from the surface, depending on the balance between adhesion and viscous dissipation\cite{demirkir25jump}.
 
