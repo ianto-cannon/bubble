@@ -215,7 +215,7 @@
 \newcommand{\dblfigrule}{\vspace*{-1pt}\noindent{\color{cream}\rule[-\figrulesep]{\textwidth}{1.5pt}}}
 
 %-------------------------------------------------------------- footnotes
-\renewcommand{\footnoterule}{\vspace*{1pt}\color{cream}\hrule width 3.5in height 0.4pt\color{black}\vspace*{5pt}}
+\renewcommand{\footnoterule}{\vspace*{1pt}\color{cream}\hrule width \textwidth height 0.4pt\color{black}\vspace*{5pt}}
 \setlength{\skip\footins}{0.7cm}
 \setlength{\footnotesep}{0.2cm}
 \renewcommand{\thefootnote}{\arabic{footnote}}
@@ -228,7 +228,7 @@
 }
 
 %------------------------------------------------ bibliography, extras
-\addto\captionsenglish{\renewcommand{\refname}{Notes and references}}
+\addto\captionsenglish{\renewcommand{\refname}{References}}
 \renewcommand\@biblabel[1]{#1}
 \setlength\bibsep{1pt}
 \renewcommand{\bibfont}{\rmfamily\fontsize{8.6}{10.6}\selectfont}
