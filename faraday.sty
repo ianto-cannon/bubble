@@ -65,14 +65,16 @@
 \raggedbottom
 \sloppy
 
-% 9 pt text on 11.9 pt leading
-\renewcommand\normalsize{\@setfontsize\normalsize{9}{11.9}%
+% Charter-derived body face; the journal's text is ~2.5% wider than
+% Bitstream Charter at the same nominal size, so we set 9.2 pt on 11.9 pt
+% (this reproduces the journal's line breaks).
+\renewcommand\normalsize{\@setfontsize\normalsize{9.2}{11.9}%
   \abovedisplayskip 9\p@ \@plus2\p@ \@minus3\p@
   \abovedisplayshortskip 3\p@ \@plus1\p@
   \belowdisplayshortskip 6\p@ \@plus2\p@ \@minus2\p@
   \belowdisplayskip \abovedisplayskip \let\@listi\@listI}
-\renewcommand\small{\@setfontsize\small{8}{10}}
-\renewcommand\footnotesize{\@setfontsize\footnotesize{7}{8.6}}
+\renewcommand\small{\@setfontsize\small{8.1}{10}}
+\renewcommand\footnotesize{\@setfontsize\footnotesize{7.1}{8.6}}
 \renewcommand\large{\@setfontsize\large{10}{12}}
 \renewcommand\Large{\@setfontsize\Large{14}{16}}
 \renewcommand\LARGE{\@setfontsize\LARGE{16}{18.4}}
@@ -117,7 +119,7 @@
 }
 
 %---------------------------------------------- running heads and feet
-\newcommand{\faraday@headfont}{\faradayfira{regular}\fontsize{8}{9}\selectfont\color{faradayslate}}
+\newcommand{\faraday@headfont}{\faradayfira{medium}\fontsize{8.3}{9}\selectfont\color{faradayslate}}
 \newcommand{\faraday@footfont}{\faradayfira{regular}\fontsize{7.4}{9}\selectfont}
 \newcommand{\faraday@cite}{\textit{\faraday@abbrev}, \faraday@year, \textbf{\faraday@volume}, 1--\pageref{LastPage}}
 \newcommand{\faraday@titlecase}{\expandafter\faraday@tc\faraday@type\relax}
@@ -154,25 +156,25 @@
   \thispagestyle{plain}%
   \begingroup
   \setlength{\parindent}{0pt}\sffamily
-  \vspace*{-13pt}%
-  {\faradayfira{regular}\fontsize{15}{17}\selectfont\color{faradayslate}\faraday@journal\par}%
+  \vspace*{-21pt}%
+  {\faradayfira{medium}\fontsize{14.8}{17}\selectfont\color{faradayslate}\faraday@journal\par}%
   \vspace{8pt}%
-  {\fontsize{7.6}{9}\selectfont\textbf{Cite this:} \faraday@doi@cite\par}%
+  {\faradayfira{light}\fontsize{7.3}{9}\selectfont Cite this: \faraday@doi@cite\par}%
   \vspace{9pt}%
   \noindent\begin{tikzpicture}
     \fill[faradayblue,rounded corners=3.5pt] (0,0) rectangle (\textwidth,-28.5pt);
-    \node[white,anchor=west,font=\faradayfira{semibold}\fontsize{14}{16}\selectfont] at (9pt,-14.25pt) {\faraday@type};
+    \node[white,anchor=west,font=\faradayfira{semibold}\fontsize{14.4}{16}\selectfont] at (9pt,-14.25pt) {\faraday@type};
   \end{tikzpicture}\par
-  \vspace{13pt}%
-  {\faradayfira{medium}\fontsize{16}{18.2}\selectfont\raggedright\@title\par}%
+  \vspace{8pt}%
+  {\faradayfira{medium}\fontsize{16.5}{18.2}\selectfont\raggedright\@title\par}%
   \vspace{11pt}%
-  {\faradayfira{regular}\fontsize{10}{12.3}\selectfont\raggedright\@author\par}%
+  {\faradayfira{light}\fontsize{10.1}{12.3}\selectfont\raggedright\@author\par}%
   \vspace{19pt}%
   {\faradayfira{light}\fontsize{7.3}{12}\selectfont
    \faraday@received\ifdefempty{\faraday@accepted}{}{, \faraday@accepted}\par
    DOI: \faraday@doi\par}%
   \vspace{9pt}%
-  {\faradayfira{light}\fontsize{8}{12}\selectfont\faraday@abstracttext\par}
+  {\faradayfira{light}\fontsize{8.1}{12}\selectfont\faraday@abstracttext\par}
   \vspace{4pt}%
   \endgroup
 }
@@ -184,10 +186,10 @@
 
 %--------------------------------------------------------------- sections
 \setcounter{secnumdepth}{5}
-\titleformat{\section}{\faradayfira{regular}\fontsize{14}{16}\selectfont}{\thesection}{13pt}{}
-\titleformat{\subsection}{\faradayfira{semibold}\fontsize{9}{11}\selectfont}{\thesubsection}{9pt}{}
-\titleformat{\subsubsection}{\faradayfira{semibold}\fontsize{9}{11}\selectfont}{\thesubsubsection}{9pt}{}
-\titleformat{\paragraph}[runin]{\faradayfira{semibold}\fontsize{9}{11}\selectfont}{}{0pt}{}[.]
+\titleformat{\section}{\faradayfira{light}\fontsize{14.2}{16}\selectfont}{\thesection}{13pt}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{9pt}{}
+\titleformat{\subsubsection}{\normalfont\normalsize\bfseries}{\thesubsubsection}{9pt}{}
+\titleformat{\paragraph}[runin]{\normalfont\normalsize\bfseries}{}{0pt}{}[.]
 \titlespacing*{\section}{0pt}{22pt}{9pt}
 \titlespacing*{\subsection}{0pt}{16pt}{3pt}
 \titlespacing*{\subsubsection}{0pt}{10pt}{2pt}
@@ -229,8 +231,9 @@
 \addto\captionsenglish{\renewcommand{\refname}{Notes and references}}
 \renewcommand\@biblabel[1]{#1}
 \setlength\bibsep{1pt}
-\renewcommand{\bibfont}{\rmfamily\small}
+\renewcommand{\bibfont}{\rmfamily\fontsize{8.6}{10.6}\selectfont}
 \renewcommand\bibnumfmt[1]{#1}
+\renewcommand\citenumfont[1]{\textbf{#1}}   % bold superscript citation numbers, as in the journal
 
 \renewcommand{\labelitemi}{$\bullet$}
 
