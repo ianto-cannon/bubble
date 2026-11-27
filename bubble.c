@@ -30,13 +30,14 @@ enum {
 typedef double BinData[10];
 
 /* Per-bin files (angNNNNN.bin, radNNNNN.bin) are headerless streams of records
- * of FILE_COLS native-endian floats: the columns of the enum above, in order,
- * without IDX_CAPLEN. The Z column is stored negated.
+ * of FILE_COLS native-endian floats: the BinData columns listed in
+ * FILE_COLUMNS, in that order. The Z column is stored negated.
  *
  * During the sweep, records are collected as full BinData doubles in .raw files.
  * Reordering sorts them in double precision, writes the .bin file and removes
  * the .raw file. */
-#define FILE_COLS 9
+static const int FILE_COLUMNS[] = {IDX_R, IDX_Z, IDX_PSI, IDX_RADTOP, IDX_VOLUME};
+#define FILE_COLS ((int)(sizeof(FILE_COLUMNS) / sizeof(FILE_COLUMNS[0])))
 
 /* ------------------------------------------------------------------------- */
 /* Grid-based nearest neighbour routines                                      */
@@ -266,7 +267,7 @@ static int load_raw(const char *path, BinData **out_data, int *out_rows) {
   return 0;
 }
 
-/* Writes records as floats, omitting capLen. The data goes to a temporary file
+/* Writes the FILE_COLUMNS of each record as floats. The data goes to a temporary file
  * that is then renamed to the target, so no partial .bin file is left behind. */
 static int save_bin(const char *path, const BinData *data, int rows) {
   char tmp[1100];
@@ -278,9 +279,8 @@ static int save_bin(const char *path, const BinData *data, int rows) {
   int ok = 1;
   for (int i = 0; ok && i < rows; ++i) {
     float rec[FILE_COLS];
-    int c = 0;
-    for (int j = 0; j < 10; ++j)
-      if (j != IDX_CAPLEN) rec[c++] = (float)data[i][j];
+    for (int c = 0; c < FILE_COLS; ++c)
+      rec[c] = (float)data[i][FILE_COLUMNS[c]];
     ok = fwrite(rec, sizeof(rec), 1, f) == 1;
   }
 

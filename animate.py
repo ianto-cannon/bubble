@@ -15,7 +15,7 @@ from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 from matplotlib.textpath import TextPath
 from matplotlib.transforms import Affine2D
-from simdata import bin_files, load_bin
+from plot import bin_files, load_bin
 
 plt.rcParams.update({"text.usetex": True, "font.size": 14})
 plt.rcParams["svg.fonttype"] = "path"
@@ -298,44 +298,6 @@ ax_phi.axvspan(R_GUIDE, R_BAND_END, color="whitesmoke", zorder=0)
 
 xx = np.linspace(0, 4, 500)
 ax_phi.plot(xx, xx / 3.5, c="k", lw=0.1, zorder=1)
-
-# Plot decile reference trajectories.
-n_decile = 0
-for fpath in bin_files(SIM, "ang"):
-  try:
-    dl = load_bin(fpath)
-  except (OSError, ValueError):
-    continue
-  if len(dl) < 2:
-    continue
-  indVol = int(np.argmax(dl[:, 6]))
-  angl = 1 - dl[indVol, 2] / np.pi
-  extremInd = int(np.argmax(dl[:, 0]))
-  dl[0, 0] = 0
-  if round(angl * 100) == 100:
-    extremInd = 1
-    dl[extremInd, 0] = 3.831698723
-  y0 = (1 - dl[0, 2] / np.pi) ** 2
-  ye = (1 - dl[extremInd, 2] / np.pi) ** 2
-  x0, xe = dl[0, 0], dl[extremInd, 0]
-  # Omit near-horizontal grey reference segments.
-  if abs(ye - y0) < 0.015 or round(angl * 100) % 20 != 10:
-    continue
-  n_decile += 1
-  ax_phi.plot([x0, xe], [y0, ye], c="grey", lw=0.1, zorder=2)
-  if round(angl * 100) == 90:
-    ax_phi.plot([1.5, xe], [y0, ye], c="blue", zorder=2)
-  for hei in range(5):
-    target_h = (hei + 1) * dl[indVol, 1] / 5
-    heiInd = int(np.argmin(np.abs(target_h - dl[:indVol + 1, 1])))
-    heiPrev = max(0, heiInd - 1)
-    ax_phi.annotate("",
-      xy=(dl[heiInd, 0], (1 - dl[heiInd, 2] / np.pi) ** 2),
-      xytext=(dl[heiPrev, 0], (1 - dl[heiPrev, 2] / np.pi) ** 2),
-      arrowprops=dict(arrowstyle="->", color="grey" if hei < 4 else "b"),
-      zorder=3)
-
-print(f"plotted {n_decile} decile arcs with arrowheads")
 
 try:
   with open(SIM + BLUE_REF, encoding="utf-8") as f:

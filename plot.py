@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import re
 import subprocess
 from matplotlib.patches import RegularPolygon
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from simdata import bin_files, load_bin
 
 plt.rcdefaults()
 plt.rcParams.update({"text.usetex": True, 'font.size': 14})
@@ -15,6 +15,28 @@ plt.rcParams.update({"text.usetex": True, 'font.size': 14})
 inFol = 'simData/'
 outFol = 'plots/'
 cav = 0.3
+
+STORED_COLS = (0, 1, 2, 5, 6)
+CAPLEN_COL = 4  # not stored; always 1 in the parameter sweep
+
+def bin_files(folder, kind):
+  """Sorted paths of the `<kind>NNNNN.bin` files; kind is 'ang' or 'rad'."""
+  pattern = re.compile(rf"{re.escape(kind)}\d+\.bin")
+  return [os.path.join(folder, name) for name in sorted(os.listdir(folder))
+          if pattern.fullmatch(name)]
+
+def load_bin(path):
+  """Load one file as a float64 array with the 10-column layout of the text
+  files:  r  -z  psi  dPsi  capLen  RadTop  volume  area  centroid  maxRad
+  The columns that are not stored (dPsi, area, centroid, maxRad) are NaN."""
+  raw = np.fromfile(path, dtype=np.float32)
+  ncols = len(STORED_COLS)
+  if raw.size == 0 or raw.size % ncols:
+    raise ValueError(f"{path}: not a whole number of {ncols}-column records")
+  data = np.full((raw.size // ncols, 10), np.nan)
+  data[:, STORED_COLS] = raw.reshape(-1, ncols)
+  data[:, CAPLEN_COL] = 1.0
+  return data
 
 # ------------------------------------------------------------
 # Function 1: profiles and height vs volume
@@ -585,7 +607,7 @@ def plot_graphical_abstract(nam='rad ang'):
   axProf.text(-2.6, 1, "$\\lambda$", ha='right', va='center', c='k')
   axProf.text(p, -0.35, "$\\textrm{pinned}$", ha='center', va='center', c='k')
   axProf.text(s, -0.35, "$\\textrm{spreading}$", ha='center', va='center', c='k')
-  outName = 'plots/abstract.svg'
+  outName = 'plots/abstract.pdf'
   print('saving ', outName)
   figProf.savefig(outName, bbox_inches='tight', pad_inches=0)
 
