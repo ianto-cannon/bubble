@@ -53,10 +53,15 @@ Generate the static plots:
 python plot.py
 ```
 
-Generate animations of bubbles growing:
+Generate an animation of a pinned bubble growing in a cavity of radius 1.5 capillary lengths:
 
 ```bash
 python animate.py -r 1.5 -o plots/S1_pinned.svg
+```
+
+Generate an animation of a bubble growing in a cavity of radius 1.5 capillary lengths, with wetting angle 0.9π:
+
+```bash
 python animate.py -r 1.5 -p 0.9 -o plots/S2_spreading.svg
 ```
 
