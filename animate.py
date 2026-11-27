@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Create an animated SVG of bubble evolution from simulation data."""
 import argparse
-import glob
 import os
 import re
 import shutil
@@ -16,6 +15,7 @@ from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 from matplotlib.textpath import TextPath
 from matplotlib.transforms import Affine2D
+from simdata import bin_files, load_bin
 
 plt.rcParams.update({"text.usetex": True, "font.size": 14})
 plt.rcParams["svg.fonttype"] = "path"
@@ -76,13 +76,13 @@ R_GUIDE, R_BAND_END = 3.219, 3.832
 BLUE_REF = "BinAngMaxVol.txt"
 PREC = 2
 
-def load_candidates(pattern, extract):
-  """Load `loop_*` datasets, keeping those that satisfy `extract`."""
+def load_candidates(kind, extract):
+  """Load `ang` or `rad` datasets, keeping those that satisfy `extract`."""
   results = []
-  for path in sorted(glob.glob(os.path.join(SIM, pattern))):
+  for path in bin_files(SIM, kind):
     try:
-      data = np.loadtxt(path)
-      if data.ndim != 2 or data.shape[1] < 7 or len(data) < 2:
+      data = load_bin(path)
+      if len(data) < 2:
         continue
       result = extract(path, data)
       if result is not None:
@@ -103,12 +103,12 @@ def ang_extract(path, data):
   return None
 
 
-rad_candidates = load_candidates("loop_rad*.txt", rad_extract)
-ang_candidates = load_candidates("loop_ang*.txt", ang_extract)
+rad_candidates = load_candidates("rad", rad_extract)
+ang_candidates = load_candidates("ang", ang_extract)
 if not rad_candidates:
-  raise FileNotFoundError(f"No readable loop_rad*.txt datasets in {SIM}")
+  raise FileNotFoundError(f"No readable rad*.bin datasets in {SIM}")
 if not ang_candidates:
-  raise FileNotFoundError(f"No readable loop_ang*.txt datasets in {SIM}")
+  raise FileNotFoundError(f"No readable ang*.bin datasets in {SIM}")
 
 rad_path, pr, RC, phi_pin = min(
   rad_candidates, key=lambda item: abs(item[2] - RC_TARGET))
@@ -301,14 +301,13 @@ ax_phi.plot(xx, xx / 3.5, c="k", lw=0.1, zorder=1)
 
 # Plot decile reference trajectories.
 n_decile = 0
-for fpath in sorted(glob.glob(SIM + "loop_ang*.txt")):
+for fpath in bin_files(SIM, "ang"):
   try:
-    dl = np.loadtxt(fpath)
-  except Exception:
+    dl = load_bin(fpath)
+  except (OSError, ValueError):
     continue
-  if dl.ndim < 2 or len(dl) < 2:
+  if len(dl) < 2:
     continue
-  dl = dl.copy()
   indVol = int(np.argmax(dl[:, 6]))
   angl = 1 - dl[indVol, 2] / np.pi
   extremInd = int(np.argmax(dl[:, 0]))

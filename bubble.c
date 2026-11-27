@@ -29,9 +29,14 @@ enum {
 
 typedef double BinData[10];
 
-/* Per-bin files (angNNNNN.bin, radNNNNN.bin) are headerless streams of BinData
- * records: 10 native-endian doubles each, in the order of the enum above.
- * The Z column is stored negated. */
+/* Per-bin files (angNNNNN.bin, radNNNNN.bin) are headerless streams of records
+ * of FILE_COLS native-endian floats: the columns of the enum above, in order,
+ * without IDX_CAPLEN. The Z column is stored negated.
+ *
+ * During the sweep, records are collected as full BinData doubles in .raw files.
+ * Reordering sorts them in double precision, writes the .bin file and removes
+ * the .raw file. */
+#define FILE_COLS 9
 
 /* ------------------------------------------------------------------------- */
 /* Grid-based nearest neighbour routines                                      */
@@ -236,7 +241,7 @@ static void append_record(const char *path, const double *state) {
   if (fclose(f) != 0 || written != 1) { perror(path); exit(EXIT_FAILURE); }
 }
 
-static int load_bin(const char *path, BinData **out_data, int *out_rows) {
+static int load_raw(const char *path, BinData **out_data, int *out_rows) {
   FILE *f = fopen(path, "rb");
   if (!f) return -1;
 
@@ -261,39 +266,62 @@ static int load_bin(const char *path, BinData **out_data, int *out_rows) {
   return 0;
 }
 
-/* Writes to a temporary file first, then renames it over the target, so an
- * interrupted or failed write leaves the original data intact. */
-static int overwrite_bin(const char *path, const BinData *data, int rows) {
+/* Writes records as floats, omitting capLen. The data goes to a temporary file
+ * that is then renamed to the target, so no partial .bin file is left behind. */
+static int save_bin(const char *path, const BinData *data, int rows) {
   char tmp[1100];
   snprintf(tmp, sizeof(tmp), "%s.tmp", path);
 
   FILE *f = fopen(tmp, "wb");
   if (!f) return -1;
-  size_t written = fwrite(data, sizeof(BinData), (size_t)rows, f);
-  if (fclose(f) != 0 || written != (size_t)rows || rename(tmp, path) != 0) {
+
+  int ok = 1;
+  for (int i = 0; ok && i < rows; ++i) {
+    float rec[FILE_COLS];
+    int c = 0;
+    for (int j = 0; j < 10; ++j)
+      if (j != IDX_CAPLEN) rec[c++] = (float)data[i][j];
+    ok = fwrite(rec, sizeof(rec), 1, f) == 1;
+  }
+
+  if (fclose(f) != 0 || !ok || rename(tmp, path) != 0) {
     remove(tmp);
     return -1;
   }
   return 0;
 }
 
-/* True for names of the form <prefix>NNNNN.bin */
-static int is_bin_file(const char *fname, const char *prefix) {
+/* Saves the final .bin file; the .raw file is removed only if that succeeds. */
+static void finish_file(const char *rawpath, const char *binpath,
+                        const BinData *data, int rows) {
+  if (save_bin(binpath, data, rows) != 0)
+    fprintf(stderr, "Error writing %s\n", binpath);
+  else if (remove(rawpath) != 0)
+    perror(rawpath);
+  else
+    printf("saved %s\n", binpath);
+}
+
+/* True for names of the form <prefix>NNNNN<ext> */
+static int is_data_file(const char *fname, const char *prefix, const char *ext) {
   size_t plen = strlen(prefix);
   if (strncmp(fname, prefix, plen) != 0) return 0;
   const char *p = fname + plen;
   size_t digits = strspn(p, "0123456789");
-  return digits > 0 && strcmp(p + digits, ".bin") == 0;
+  return digits > 0 && strcmp(p + digits, ext) == 0;
 }
 
-/* Per-bin files are opened in append mode, so clear those left by an earlier run. */
-static void remove_old_bin_files(void) {
+/* Clear per-bin files left by an earlier run, so old and new data never mix. */
+static void remove_old_data_files(void) {
   DIR *dir = opendir(SIMDATA_DIR);
   if (!dir) { perror(SIMDATA_DIR); exit(EXIT_FAILURE); }
 
   struct dirent *de;
   while ((de = readdir(dir)) != NULL) {
-    if (!is_bin_file(de->d_name, "ang") && !is_bin_file(de->d_name, "rad")) continue;
+    const char *name = de->d_name;
+    if (!is_data_file(name, "ang", ".raw") && !is_data_file(name, "rad", ".raw") &&
+        !is_data_file(name, "ang", ".bin") && !is_data_file(name, "rad", ".bin"))
+      continue;
     char path[1024];
     snprintf(path, sizeof(path), "%s/%s", SIMDATA_DIR, de->d_name);
     if (remove(path) != 0) { perror(path); exit(EXIT_FAILURE); }
@@ -394,7 +422,7 @@ int AdamsBashforthProfile(double capLen, double RadTop,
       if (angBinLarge != angBinLargePrev) {
         int b = (angBinLarge > angBinLargePrev) ? angBinLarge : angBinLargePrev;
         char angFname[256];
-        snprintf(angFname, sizeof(angFname), "%s/ang%05d.bin", SIMDATA_DIR, b);
+        snprintf(angFname, sizeof(angFname), "%s/ang%05d.raw", SIMDATA_DIR, b);
         append_record(angFname, state);
       }
     }
@@ -406,7 +434,7 @@ int AdamsBashforthProfile(double capLen, double RadTop,
       if (radBinLarge != radBinLargePrev) {
         int b = (radBinLarge > radBinLargePrev) ? radBinLarge : radBinLargePrev;
         char radFname[256];
-        snprintf(radFname, sizeof(radFname), "%s/rad%05d.bin", SIMDATA_DIR, b);
+        snprintf(radFname, sizeof(radFname), "%s/rad%05d.raw", SIMDATA_DIR, b);
         append_record(radFname, state);
       }
     }
@@ -459,14 +487,18 @@ static double round10(double v)
   return strtod(text, NULL);
 }
 
-static void reorder_file(const char *path)
+static void reorder_file(const char *rawpath, const char *binpath)
 {
   BinData *df = NULL; int N = 0;
-  if (load_bin(path, &df, &N) != 0) {
-    fprintf(stderr, "Skipping unreadable file %s\n", path);
+  if (load_raw(rawpath, &df, &N) != 0) {
+    fprintf(stderr, "Skipping unreadable file %s\n", rawpath);
     return;
   }
-  if (N < 2) { free(df); return; }
+  if (N < 2) { /* nothing to reorder */
+    finish_file(rawpath, binpath, (const BinData *)df, N);
+    free(df);
+    return;
+  }
 
   BinData *dfLoop = calloc((size_t)N, sizeof(BinData));
   if (!dfLoop) { fprintf(stderr, "Memory allocation failed\n"); exit(EXIT_FAILURE); }
@@ -522,15 +554,12 @@ static void reorder_file(const char *path)
 
   free_grid(&grid);
 
-  if (overwrite_bin(path, (const BinData *)dfLoop, N) != 0)
-    fprintf(stderr, "Error overwriting %s\n", path);
-  else
-    printf("reordered %s\n", path);
+  finish_file(rawpath, binpath, (const BinData *)dfLoop, N);
 
   free(df); free(dfLoop); free(x); free(y); free(vol); free(used);
 }
 
-/* Reorders every <prefix>NNNNN.bin file in SIMDATA_DIR in place. */
+/* Reorders every <prefix>NNNNN.raw file in SIMDATA_DIR into <prefix>NNNNN.bin. */
 int reorder_drop_height_vs_vol(const char *prefix)
 {
   DIR *dir = opendir(SIMDATA_DIR);
@@ -542,7 +571,7 @@ int reorder_drop_height_vs_vol(const char *prefix)
   size_t count = 0, cap = 0;
   struct dirent *de;
   while ((de = readdir(dir)) != NULL) {
-    if (!is_bin_file(de->d_name, prefix)) continue;
+    if (!is_data_file(de->d_name, prefix, ".raw")) continue;
     if (count == cap) {
       cap = cap ? 2 * cap : 64;
       char (*grown)[256] = realloc(names, cap * sizeof(*names));
@@ -554,9 +583,11 @@ int reorder_drop_height_vs_vol(const char *prefix)
   closedir(dir);
 
   for (size_t n = 0; n < count; ++n) {
-    char path[1024];
-    snprintf(path, sizeof(path), "%s/%s", SIMDATA_DIR, names[n]);
-    reorder_file(path);
+    char rawpath[1024], binpath[1024];
+    int stem = (int)(strlen(names[n]) - strlen(".raw"));
+    snprintf(rawpath, sizeof(rawpath), "%s/%s", SIMDATA_DIR, names[n]);
+    snprintf(binpath, sizeof(binpath), "%s/%.*s.bin", SIMDATA_DIR, stem, names[n]);
+    reorder_file(rawpath, binpath);
   }
   free(names);
   return 0;
@@ -580,7 +611,7 @@ int main(int argc, char *argv[])
   }
 
   mkdir(SIMDATA_DIR, 0755);
-  remove_old_bin_files();
+  remove_old_data_files();
 
   const double angleSave_fine = 0.001;
   const double radSave_fine   = 0.0001;

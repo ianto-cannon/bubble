@@ -4,6 +4,7 @@ import os
 import subprocess
 from matplotlib.patches import RegularPolygon
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from simdata import bin_files, load_bin
 
 plt.rcdefaults()
 plt.rcParams.update({"text.usetex": True, 'font.size': 14})
@@ -30,12 +31,10 @@ def plot_profiles(nam='rad ang'):
     else:
       continue
 
-    for fname in reversed(sorted(os.listdir(inFol))):
-      if 'prof' in fname or 'txt' not in fname or cont not in fname:
-        continue
-      with open(inFol + fname, encoding='utf-8') as f:
-        df = np.loadtxt(f)
-      if df.ndim < 2:
+    for path in reversed(bin_files(inFol, 'ang' if axInd else 'rad')):
+      fname = os.path.basename(path)
+      df = load_bin(path)
+      if len(df) < 2:
         continue
 
       # Normalise
@@ -77,7 +76,7 @@ def plot_profiles(nam='rad ang'):
         elif 'rad' in fname: col = 'r'
         elif 'ang' in fname: col = 'b'
         heiInd = np.argmin(abs((hei + 1) * df[indVol, 1] / 5 - df[:indVol + 1, 1]))
-        fPath = os.path.join(inFol, f'prof{hei:05}' + fname)
+        fPath = os.path.join(inFol, f'prof{hei:05}' + fname.replace('.bin', '.txt'))
         if not os.path.exists(fPath):
           print("run", './run', '1', str(df[heiInd, 5]), fPath)
           subprocess.run(['./run', '1', str(df[heiInd, 5]), fPath])
@@ -286,12 +285,10 @@ def plot_volume_and_angle():
   #axA[0].plot(df[:,0], (df[:,0]-3.219)/3.6+1, c='k', lw=.5)
   
   kwargs = {'marker': 'o', 'ms': 5, 'clip_on': False, 'zorder': 4, 'alpha':.7, 'mew':0}
-  for fname in reversed(sorted(os.listdir(inFol))):
-    if 'txt' not in fname: continue
-    if 'loop' not in fname: continue
-    if 'prof' in fname: continue
-    with open(inFol + fname, encoding='utf-8') as f: df = np.loadtxt(f)
-    if df.ndim < 2: continue
+  for path in reversed(bin_files(inFol, 'ang') + bin_files(inFol, 'rad')):
+    fname = os.path.basename(path)
+    df = load_bin(path)
+    if len(df) < 2: continue
     indVol = np.argmax(df[:, 6])
     angl = 1 - df[indVol, 2] / np.pi
     if 'rad' in fname: 
@@ -536,11 +533,10 @@ def plot_graphical_abstract(nam='rad ang'):
   p = -1.2
   s = 1.2
   for cont in nam.split():
-    for fname in reversed(sorted(os.listdir(inFol))):
-      if 'prof' in fname or 'loop' not in fname or 'txt' not in fname or cont not in fname:
-        continue
-      with open(inFol + fname, encoding='utf-8') as f: df = np.loadtxt(f)
-      if df.ndim < 2:
+    for path in reversed(bin_files(inFol, cont)):
+      fname = os.path.basename(path)
+      df = load_bin(path)
+      if len(df) < 2:
         continue
       df[:, 0] /= df[:, 4]
       df[:, 1] /= df[:, 4]
@@ -564,7 +560,7 @@ def plot_graphical_abstract(nam='rad ang'):
         elif 'rad' in fname: col = 'r'
         elif 'ang' in fname: col = 'b'
         heiInd = np.argmin(abs((hei + 1) * df[indVol, 1] / 5 - df[:indVol + 1, 1]))
-        fPath = inFol + f'prof{hei:05}' + fname
+        fPath = inFol + f'prof{hei:05}' + fname.replace('.bin', '.txt')
         if not os.path.exists(fPath):
           print("run", './run', '1', str(df[heiInd, 5]), fPath)
           subprocess.run(['./run', '1', str(df[heiInd, 5]), fPath])
@@ -598,7 +594,7 @@ def print_radius_in_water(vol):
   return 
 
 if __name__ == "__main__":
-  #plot_profiles(nam='loop_rad loop_ang')
+  #plot_profiles(nam='rad ang')
   plot_volume_and_angle()
   plot_graphical_abstract()
   print_radius_in_water(18.96)
