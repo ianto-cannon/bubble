@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <ctype.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -30,34 +29,9 @@ enum {
 
 typedef double BinData[10];
 
-/* ------------------------------------------------------------------------- */
-/* Standard C Line Reader (Replaces POSIX getline)                            */
-/* ------------------------------------------------------------------------- */
-static char *read_line(FILE *f) {
-    size_t cap = 128;
-    char *buf = malloc(cap);
-    if (!buf) return NULL;
-    size_t len = 0;
-    int c;
-    
-    while ((c = fgetc(f)) != EOF) {
-        if (len + 1 >= cap) {
-            cap *= 2;
-            char *new_buf = realloc(buf, cap);
-            if (!new_buf) { free(buf); return NULL; }
-            buf = new_buf;
-        }
-        buf[len++] = (char)c;
-        if (c == '\n') break;
-    }
-    
-    if (len == 0 && c == EOF) {
-        free(buf);
-        return NULL;
-    }
-    buf[len] = '\0';
-    return buf;
-}
+/* Per-bin files (angNNNNN.bin, radNNNNN.bin) are headerless streams of BinData
+ * records: 10 native-endian doubles each, in the order of the enum above.
+ * The Z column is stored negated. */
 
 /* ------------------------------------------------------------------------- */
 /* Grid-based nearest neighbour routines                                      */
@@ -251,89 +225,80 @@ static int knn_grid(const Grid *g, const unsigned char *used,
 /* ------------------------------------------------------------------------- */
 /* File utilities                                                             */
 /* ------------------------------------------------------------------------- */
-static int parse_line_doubles(const char *line, double *out, int max_cols) {
-  int n = 0;
-  const char *p = line;
-  while (n < max_cols && *p) {
-    while (*p && isspace((unsigned char)*p)) p++;
-    if (!*p) break;
-    char *end;
-    double v = strtod(p, &end);
-    if (end == p) break;
-    out[n++] = v;
-    p = end;
-  }
-  return n;
+static void append_record(const char *path, const double *state) {
+  BinData rec;
+  memcpy(rec, state, sizeof(rec));
+  rec[IDX_Z] = -rec[IDX_Z];
+
+  FILE *f = fopen(path, "ab");
+  if (!f) { perror(path); exit(EXIT_FAILURE); }
+  size_t written = fwrite(rec, sizeof(rec), 1, f);
+  if (fclose(f) != 0 || written != 1) { perror(path); exit(EXIT_FAILURE); }
 }
 
-/* Two-pass pure C loader (Robust memory handling) */
-static int load_txt(const char *path, double **out_data, int *out_rows, int *out_cols) {
-  FILE *f = fopen(path, "r");
+static int load_bin(const char *path, BinData **out_data, int *out_rows) {
+  FILE *f = fopen(path, "rb");
   if (!f) return -1;
 
-  int rows = 0, cols = 0;
-  char *line = NULL;
-
-  /* Pass 1: Count rows and max cols */
-  while ((line = read_line(f)) != NULL) {
-    int c = 0;
-    const char *p = line;
-    while (*p) {
-      while (*p && isspace((unsigned char)*p)) p++;
-      if (!*p) break;
-      char *end; strtod(p, &end);
-      if (end == p) break;
-      c++;
-      p = end;
-    }
-    if (c > 0) {
-      rows++;
-      if (c > cols) cols = c;
-    }
-    free(line);
-  }
-
-  if (rows == 0 || cols == 0) {
+  long size = -1;
+  if (fseek(f, 0, SEEK_END) == 0) size = ftell(f);
+  if (size <= 0 || size % (long)sizeof(BinData) != 0) {
     fclose(f);
     return -1;
   }
-
-  double *buf = malloc((size_t)rows * cols * sizeof(double));
-  if (!buf) {
-    fclose(f);
-    return -1;
-  }
-  for (size_t i = 0; i < (size_t)rows * cols; ++i) buf[i] = 0.0;
-
-  /* Pass 2: Read data */
   rewind(f);
-  int r = 0;
-  while ((line = read_line(f)) != NULL && r < rows) {
-    double tmp[64];
-    int n = parse_line_doubles(line, tmp, (cols < 64 ? cols : 64));
-    for (int k = 0; k < n; ++k) {
-      buf[(size_t)r * cols + k] = tmp[k];
-    }
-    free(line);
-    r++;
+
+  size_t rows = (size_t)size / sizeof(BinData);
+  BinData *buf = malloc((size_t)size);
+  if (!buf || fread(buf, sizeof(BinData), rows, f) != rows) {
+    free(buf);
+    fclose(f);
+    return -1;
   }
 
   fclose(f);
-  *out_data = buf; *out_rows = rows; *out_cols = cols;
+  *out_data = buf; *out_rows = (int)rows;
   return 0;
 }
 
-static int save_txt(const char *path, const double *data, int rows, int cols) {
-  FILE *f = fopen(path, "w");
+/* Writes to a temporary file first, then renames it over the target, so an
+ * interrupted or failed write leaves the original data intact. */
+static int overwrite_bin(const char *path, const BinData *data, int rows) {
+  char tmp[1100];
+  snprintf(tmp, sizeof(tmp), "%s.tmp", path);
+
+  FILE *f = fopen(tmp, "wb");
   if (!f) return -1;
-  for (int i = 0; i < rows; ++i) {
-    for (int j = 0; j < cols; ++j) {
-      fprintf(f, "%.10e%s", data[(size_t)i * cols + j],
-          (j == cols - 1) ? "\n" : " ");
-    }
+  size_t written = fwrite(data, sizeof(BinData), (size_t)rows, f);
+  if (fclose(f) != 0 || written != (size_t)rows || rename(tmp, path) != 0) {
+    remove(tmp);
+    return -1;
   }
-  fclose(f);
   return 0;
+}
+
+/* True for names of the form <prefix>NNNNN.bin */
+static int is_bin_file(const char *fname, const char *prefix) {
+  size_t plen = strlen(prefix);
+  if (strncmp(fname, prefix, plen) != 0) return 0;
+  const char *p = fname + plen;
+  size_t digits = strspn(p, "0123456789");
+  return digits > 0 && strcmp(p + digits, ".bin") == 0;
+}
+
+/* Per-bin files are opened in append mode, so clear those left by an earlier run. */
+static void remove_old_bin_files(void) {
+  DIR *dir = opendir(SIMDATA_DIR);
+  if (!dir) { perror(SIMDATA_DIR); exit(EXIT_FAILURE); }
+
+  struct dirent *de;
+  while ((de = readdir(dir)) != NULL) {
+    if (!is_bin_file(de->d_name, "ang") && !is_bin_file(de->d_name, "rad")) continue;
+    char path[1024];
+    snprintf(path, sizeof(path), "%s/%s", SIMDATA_DIR, de->d_name);
+    if (remove(path) != 0) { perror(path); exit(EXIT_FAILURE); }
+  }
+  closedir(dir);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -429,17 +394,8 @@ int AdamsBashforthProfile(double capLen, double RadTop,
       if (angBinLarge != angBinLargePrev) {
         int b = (angBinLarge > angBinLargePrev) ? angBinLarge : angBinLargePrev;
         char angFname[256];
-        snprintf(angFname, sizeof(angFname), "%s/ang%05d.txt", SIMDATA_DIR, b);
-        FILE *ang_txt = fopen(angFname, "a");
-        if (ang_txt) {
-          for (int j = 0; j < 10; ++j) {
-            double val = state[j];
-            if (j == IDX_Z) val = -val;
-            fprintf(ang_txt, " %.10g", val);
-          }
-          fprintf(ang_txt, "\n");
-          fclose(ang_txt);
-        }
+        snprintf(angFname, sizeof(angFname), "%s/ang%05d.bin", SIMDATA_DIR, b);
+        append_record(angFname, state);
       }
     }
 
@@ -450,17 +406,8 @@ int AdamsBashforthProfile(double capLen, double RadTop,
       if (radBinLarge != radBinLargePrev) {
         int b = (radBinLarge > radBinLargePrev) ? radBinLarge : radBinLargePrev;
         char radFname[256];
-        snprintf(radFname, sizeof(radFname), "%s/rad%05d.txt", SIMDATA_DIR, b);
-        FILE *rad_txt = fopen(radFname, "a");
-        if (rad_txt) {
-          for (int j = 0; j < 10; ++j) {
-            double val = state[j];
-            if (j == IDX_Z) val = -val;
-            fprintf(rad_txt, " %.10g", val);
-          }
-          fprintf(rad_txt, "\n");
-          fclose(rad_txt);
-        }
+        snprintf(radFname, sizeof(radFname), "%s/rad%05d.bin", SIMDATA_DIR, b);
+        append_record(radFname, state);
       }
     }
 
@@ -502,92 +449,116 @@ void write_bin_file(const char *filename, BinData *bins, int max_bin_used)
 /* ------------------------------------------------------------------------- */
 /* reorder_drop_height_vs_vol (Restored POSIX Directory Listing)              */
 /* ------------------------------------------------------------------------- */
-int reorder_drop_height_vs_vol(const char *nam)
+/* Round to 10 significant digits. The greedy walk below penalises any drop in
+ * volume, so differences in the last bits between near-identical points would
+ * change the ordering. Used for comparisons only; stored data is not rounded. */
+static double round10(double v)
 {
-  char folName[1024];
-  snprintf(folName, sizeof(folName), "%s/", SIMDATA_DIR);
-  DIR *dir = opendir(folName);
+  char text[32];
+  snprintf(text, sizeof(text), "%.9e", v);
+  return strtod(text, NULL);
+}
+
+static void reorder_file(const char *path)
+{
+  BinData *df = NULL; int N = 0;
+  if (load_bin(path, &df, &N) != 0) {
+    fprintf(stderr, "Skipping unreadable file %s\n", path);
+    return;
+  }
+  if (N < 2) { free(df); return; }
+
+  BinData *dfLoop = calloc((size_t)N, sizeof(BinData));
+  if (!dfLoop) { fprintf(stderr, "Memory allocation failed\n"); exit(EXIT_FAILURE); }
+
+  double *x   = malloc(sizeof(double) * N);
+  double *y   = malloc(sizeof(double) * N);
+  double *vol = malloc(sizeof(double) * N);
+  for (int i = 0; i < N; ++i) {
+    double row1 = round10(df[i][IDX_Z]);
+    double row4 = round10(df[i][IDX_CAPLEN]);
+    double row6 = round10(df[i][IDX_VOLUME]);
+    x[i]   = row1 / row4;
+    y[i]   = cbrt(row6) / row4;
+    vol[i] = row6 / (row4 * row4 * row4);
+  }
+
+  unsigned char *used = calloc(N, sizeof(unsigned char));
+
+  Grid grid;
+  build_grid(&grid, x, y, N);
+
+  /* The walk starts from the origin. */
+  double x_prev = 0.0, y_prev = 0.0, vol_prev = 0.0;
+
+  for (int j = 0; j < N; ++j) {
+    int k = (20 < N) ? 20 : N;
+    int *idxs = malloc(sizeof(int) * k);
+    int found = knn_grid(&grid, used, x_prev, y_prev, k, idxs);
+
+    int best = -1;
+    double best_dist = HUGE_VAL;
+    for (int t = 0; t < found; ++t) {
+      int i = idxs[t];
+      if (used[i] || isnan(x[i])) continue;
+      double dx = x[i] - x_prev, dy = y[i] - y_prev;
+      double dis = dx*dx + dy*dy;
+      if (vol[i] < vol_prev) dis += 1.0;
+      if (dis < best_dist) { best = i; best_dist = dis; }
+    }
+    free(idxs);
+
+    if (best < 0) {
+      for (int i = 0; i < N; ++i) if (!used[i]) { best = i; break; }
+    }
+    if (best < 0) break;
+
+    memcpy(dfLoop[j], df[best], sizeof(BinData));
+    used[best] = 1;
+    x_prev = x[best];
+    y_prev = y[best];
+    vol_prev = vol[best];
+  }
+
+  free_grid(&grid);
+
+  if (overwrite_bin(path, (const BinData *)dfLoop, N) != 0)
+    fprintf(stderr, "Error overwriting %s\n", path);
+  else
+    printf("reordered %s\n", path);
+
+  free(df); free(dfLoop); free(x); free(y); free(vol); free(used);
+}
+
+/* Reorders every <prefix>NNNNN.bin file in SIMDATA_DIR in place. */
+int reorder_drop_height_vs_vol(const char *prefix)
+{
+  DIR *dir = opendir(SIMDATA_DIR);
   if (!dir) { perror("opendir"); return -1; }
 
+  /* Collect the names first: replacing files while readdir is still walking
+   * the directory could return the same file twice. */
+  char (*names)[256] = NULL;
+  size_t count = 0, cap = 0;
   struct dirent *de;
   while ((de = readdir(dir)) != NULL) {
-    const char *fname = de->d_name;
-
-    if (strstr(fname, "loop")) continue;
-    if (!strstr(fname, "txt")) continue;
-    if (nam && *nam && !strstr(fname, nam)) continue;
-
-    char path[1024];
-    snprintf(path, sizeof(path), "%s%s", folName, fname);
-
-    double *df = NULL; int N = 0, ncols = 0;
-    if (load_txt(path, &df, &N, &ncols) != 0) continue;
-    if (N < 2) { free(df); continue; }
-
-    double *dfLoop = calloc((size_t)N * ncols, sizeof(double));
-    for (int i = 0; i < N; ++i) dfLoop[(size_t)i * ncols + 4] = 1.0;
-
-    double *x   = malloc(sizeof(double) * N);
-    double *y   = malloc(sizeof(double) * N);
-    double *vol = malloc(sizeof(double) * N);
-    for (int i = 0; i < N; ++i) {
-      double row1 = df[(size_t)i * ncols + 1];
-      double row4 = df[(size_t)i * ncols + 4];
-      double row6 = df[(size_t)i * ncols + 6];
-      x[i]   = row1 / row4;
-      y[i]   = cbrt(row6) / row4;
-      vol[i] = row6 / (row4 * row4 * row4);
+    if (!is_bin_file(de->d_name, prefix)) continue;
+    if (count == cap) {
+      cap = cap ? 2 * cap : 64;
+      char (*grown)[256] = realloc(names, cap * sizeof(*names));
+      if (!grown) { free(names); closedir(dir); return -1; }
+      names = grown;
     }
-
-    unsigned char *used = calloc(N, sizeof(unsigned char));
-
-    Grid grid;
-    build_grid(&grid, x, y, N);
-
-    for (int j = 1; j < N; ++j) {
-      double row1 = dfLoop[(size_t)(j-1) * ncols + 1];
-      double row4 = dfLoop[(size_t)(j-1) * ncols + 4];
-      double row6 = dfLoop[(size_t)(j-1) * ncols + 6];
-      double x_prev   = row1 / row4;
-      double y_prev   = cbrt(row6) / row4;
-      double vol_prev = row6 / (row4 * row4 * row4);
-
-      int k = (20 < N) ? 20 : N;
-      int *idxs = malloc(sizeof(int) * k);
-      int found = knn_grid(&grid, used, x_prev, y_prev, k, idxs);
-
-      int best = -1;
-      double best_dist = HUGE_VAL;
-      for (int t = 0; t < found; ++t) {
-        int i = idxs[t];
-        if (used[i] || isnan(x[i])) continue;
-        double dx = x[i] - x_prev, dy = y[i] - y_prev;
-        double dis = dx*dx + dy*dy;
-        if (vol[i] < vol_prev) dis += 1.0;
-        if (dis < best_dist) { best = i; best_dist = dis; }
-      }
-      free(idxs);
-
-      if (best < 0) {
-        for (int i = 0; i < N; ++i) if (!used[i]) { best = i; break; }
-      }
-      if (best < 0) break;
-
-      for (int c = 0; c < ncols; ++c)
-        dfLoop[(size_t)j * ncols + c] = df[(size_t)best * ncols + c];
-      used[best] = 1;
-    }
-
-    free_grid(&grid);
-
-    char outpath[1024];
-    snprintf(outpath, sizeof(outpath), "%sloop_%s", folName, fname);
-    printf("save %s\n", outpath);
-    save_txt(outpath, dfLoop + ncols, N - 1, ncols);
-
-    free(df); free(dfLoop); free(x); free(y); free(vol); free(used);
+    snprintf(names[count++], sizeof(*names), "%.255s", de->d_name);
   }
   closedir(dir);
+
+  for (size_t n = 0; n < count; ++n) {
+    char path[1024];
+    snprintf(path, sizeof(path), "%s/%s", SIMDATA_DIR, names[n]);
+    reorder_file(path);
+  }
+  free(names);
   return 0;
 }
 
@@ -609,6 +580,7 @@ int main(int argc, char *argv[])
   }
 
   mkdir(SIMDATA_DIR, 0755);
+  remove_old_bin_files();
 
   const double angleSave_fine = 0.001;
   const double radSave_fine   = 0.0001;
